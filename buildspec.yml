@@ -7,8 +7,8 @@ phases:
   post_build:
     commands:
       - mvn install
-      - mv target/pylon-service-*.jar pylon-service.jar
+      - mv target/pylon-service-*.war pylon-service.war
 artifacts:
   files:
-    - pylon-service.jar
+    - pylon-service.war
     - .ebextensions/**/*
