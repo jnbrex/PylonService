@@ -6,9 +6,9 @@ phases:
       java: corretto11
   post_build:
     commands:
-      - mvn package
-      - mv target/my-web-app.war my-web-app.war
+      - mvn install
+      - mv target/pylon-service-*.jar pylon-service.jar
 artifacts:
   files:
-    - my-web-app.war
+    - pylon-service.jar
     - .ebextensions/**/*
