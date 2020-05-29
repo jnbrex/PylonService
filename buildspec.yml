@@ -7,7 +7,7 @@ phases:
   post_build:
     commands:
       - mvn install
-      - mv target/pylon-service-*.war pylon-service.war
+      - mv target/pylon-service-*.war ROOT.war
 artifacts:
   files:
-    - pylon-service.war
+    - ROOT.war
