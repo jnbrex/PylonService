@@ -11,3 +11,4 @@ phases:
 artifacts:
   files:
     - ROOT.war
+    - .ebextensions/**/*
