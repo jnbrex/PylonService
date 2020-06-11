@@ -1,7 +1,8 @@
 package com.pylon.pylonservice.controller;
 
-import com.pylon.pylonservice.model.JwtRequest;
-import com.pylon.pylonservice.model.JwtResponse;
+import com.pylon.pylonservice.model.jwt.JwtRequest;
+import com.pylon.pylonservice.model.jwt.JwtResponse;
+import com.pylon.pylonservice.services.JwtUserDetailsService;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,11 +11,13 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-import com.pylon.pylonservice.services.JwtUserDetailsService;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
-@RestController
 @CrossOrigin
+@RestController
 public class AuthenticateController {
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -24,7 +27,8 @@ public class AuthenticateController {
     private JwtUserDetailsService userDetailsService;
 
     @PostMapping(value = "/authenticate")
-    public ResponseEntity<JwtResponse> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest)
+        throws Exception {
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
         final UserDetails userDetails = userDetailsService
                 .loadUserByUsername(authenticationRequest.getUsername());

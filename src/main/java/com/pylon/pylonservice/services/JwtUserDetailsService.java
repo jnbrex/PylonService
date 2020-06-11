@@ -1,7 +1,11 @@
 package com.pylon.pylonservice.services;
 
 
-import org.springframework.security.core.userdetails.User;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.pylon.pylonservice.model.tables.User;
+import com.pylon.pylonservice.model.tables.UsernameUser;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -9,15 +13,31 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 
+@Log4j2
 @Service
 public class JwtUserDetailsService implements UserDetailsService {
+    @Autowired
+    private DynamoDBMapper dynamoDBMapper;
+
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if ("jason".equals(username)) {
-            return new User("jason", "$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6",
-                    new ArrayList<>());
-        } else {
-            throw new UsernameNotFoundException("User not found with username: " + username);
+    public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
+        final UsernameUser usernameUser = dynamoDBMapper.load(UsernameUser.class, username);
+        if (usernameUser == null) {
+            throw new UsernameNotFoundException(String.format("User not found with username %s", username));
         }
+
+        final String userId = usernameUser.getUserId();
+        final User user = dynamoDBMapper.load(User.class, userId);
+        if (user == null) {
+            final String message = String.format("No password found for user with username %s", username);
+            log.error(message);
+            throw new IllegalStateException(message);
+        }
+
+        return new org.springframework.security.core.userdetails.User(
+            usernameUser.getUsername(),
+            user.getPassword(),
+            new ArrayList<>()
+        );
     }
 }
