@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Date;
 import java.util.UUID;
 
 @RestController
@@ -82,6 +83,7 @@ public class RegisterController {
                 .username(username)
                 .email(email)
                 .password(encodedPassword)
+                .createdAt(new Date())
                 .build(),
             new DynamoDBTransactionWriteExpression().withConditionExpression(USER_ID_DOES_NOT_EXIST_CONDITION)
         );

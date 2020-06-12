@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 
+import java.util.Date;
+
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
@@ -23,6 +25,8 @@ public class User {
     String email;
     @NonNull
     String password;
+    @NonNull
+    Date createdAt;
 
     @DynamoDBHashKey
     public String getUserId() {
@@ -42,5 +46,9 @@ public class User {
     @DynamoDBAttribute
     public String getPassword() {
         return password;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
     }
 }
