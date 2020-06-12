@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Log4j2
 @Component
 public class JwtTokenUtil {
-    private static final long JWT_TOKEN_VALIDITY_MILLIS = 5 * 60 * 60 * 1000;
+    private static final long JWT_TOKEN_VALIDITY_MILLIS = 24 * 60 * 60 * 1000;
     private static final String BEARER_HEADER = "Bearer ";
 
     private final Key secretKey;

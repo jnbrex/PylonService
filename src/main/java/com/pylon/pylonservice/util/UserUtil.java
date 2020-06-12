@@ -1,5 +1,7 @@
 package com.pylon.pylonservice.util;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.pylon.pylonservice.model.tables.UsernameUser;
 import lombok.NonNull;
 
 import java.util.regex.Pattern;
@@ -11,5 +13,9 @@ public final class UserUtil {
 
     public static boolean isUsernameValid(@NonNull final String username) {
         return USERNAME_REGEX_PATTERN.matcher(username).matches();
+    }
+
+    public static String getUserIdForUsername(final DynamoDBMapper dynamoDBMapper, final String username) {
+        return dynamoDBMapper.load(UsernameUser.class, username).getUserId();
     }
 }

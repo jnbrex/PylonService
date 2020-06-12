@@ -46,7 +46,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             // We don't need CSRF because all authenticated endpoints require a JWT.
             .csrf().disable()
             // Don't authenticate /authenticate and /health
-            .authorizeRequests().antMatchers("/authenticate", "/register", "/health").permitAll()
+            .authorizeRequests().antMatchers("/authenticate", "/health", "/refresh", "/register").permitAll()
             // all other requests need to be authenticated
             .anyRequest().authenticated().and()
             .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()

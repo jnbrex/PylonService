@@ -23,7 +23,6 @@ public class User {
     String email;
     @NonNull
     String password;
-    Long version;
 
     @DynamoDBHashKey
     public String getUserId() {

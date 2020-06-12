@@ -19,7 +19,6 @@ public class UsernameUser {
     String username;
     @NonNull
     String userId;
-    Long version;
 
     @DynamoDBHashKey
     public String getUsername() {

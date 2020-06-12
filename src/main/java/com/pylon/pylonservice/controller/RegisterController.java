@@ -3,7 +3,7 @@ package com.pylon.pylonservice.controller;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.TransactionWriteRequest;
-import com.pylon.pylonservice.model.RegisterRequest;
+import com.pylon.pylonservice.model.requests.RegisterRequest;
 import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.model.tables.UsernameUser;
@@ -13,14 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
-@CrossOrigin
 @RestController
 public class RegisterController {
     private static final String USERNAME_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(username)";
@@ -33,7 +31,7 @@ public class RegisterController {
     private PasswordEncoder passwordEncoder;
 
     @PostMapping(value = "/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(@RequestBody final RegisterRequest registerRequest) {
         final String username = registerRequest.getUsername();
         final String email = registerRequest.getEmail();
 
