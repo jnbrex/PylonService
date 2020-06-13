@@ -13,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
 
 @Configuration
 @EnableWebSecurity
@@ -45,6 +46,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         httpSecurity
             // We don't need CSRF because all authenticated endpoints require a JWT.
             .csrf().disable()
+            // Enable CORS for all routes
+            .cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues()).and()
             // Don't authenticate /authenticate and /health
             .authorizeRequests().antMatchers("/authenticate", "/health", "/refresh", "/register").permitAll()
             // all other requests need to be authenticated
