@@ -49,7 +49,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             // Enable CORS for all routes
             .cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues()).and()
             // Don't authenticate /authenticate and /health
-            .authorizeRequests().antMatchers("/authenticate", "/health", "/refresh", "/register").permitAll()
+            .authorizeRequests().antMatchers(
+                "/authenticate",
+                "/collectemail",
+                "/health",
+                "/refresh",
+                "/register"
+            ).permitAll()
             // all other requests need to be authenticated
             .anyRequest().authenticated().and()
             .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
