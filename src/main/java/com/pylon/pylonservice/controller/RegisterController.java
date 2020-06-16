@@ -8,7 +8,6 @@ import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.model.tables.UsernameUser;
 import com.pylon.pylonservice.util.DynamoDbUtil;
-import com.pylon.pylonservice.util.UserUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,14 +32,13 @@ public class RegisterController {
 
     @PostMapping(value = "/register")
     public ResponseEntity<?> register(@RequestBody final RegisterRequest registerRequest) {
+        if (!registerRequest.isValid()) {
+            return ResponseEntity.unprocessableEntity().body("Invalid register request");
+        }
+
         final String username = registerRequest.getUsername();
         final String email = registerRequest.getEmail();
 
-        if (!UserUtil.isUsernameValid(username)) {
-            return new ResponseEntity<>(
-                String.format("Username %s is not valid", username), HttpStatus.UNPROCESSABLE_ENTITY
-            );
-        }
         if (dynamoDBMapper.load(UsernameUser.class, username) != null) {
             return new ResponseEntity<>(
                 String.format("Username %s is already in use", username), HttpStatus.CONFLICT
@@ -52,7 +50,7 @@ public class RegisterController {
             );
         }
 
-        persistUser(username,email, passwordEncoder.encode(registerRequest.getPassword()));
+        persistUser(username, email, passwordEncoder.encode(registerRequest.getPassword()));
 
         return new ResponseEntity<>(
             String.format("User created with username %s and email %s", username, email), HttpStatus.CREATED
