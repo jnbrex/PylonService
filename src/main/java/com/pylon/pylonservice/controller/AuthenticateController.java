@@ -47,12 +47,16 @@ public class AuthenticateController {
      *                           "refreshToken": "exampleRefreshToken"
      *                       }
      *         HTTP 401 Unauthorized - If the User was not authenticated successfully.
-     * @throws Exception
      */
     @PostMapping(value = "/authenticate")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody final JwtRequest authenticationRequest)
-        throws Exception {
-        authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody final JwtRequest authenticationRequest) {
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                authenticationRequest.getUsername(),
+                authenticationRequest.getPassword()
+            )
+        );
+
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
         final String jwtToken = jwtTokenUtil.generateJwtForUser(userDetails);
 
@@ -69,15 +73,5 @@ public class AuthenticateController {
                 .refreshToken(refresh.getRefreshToken())
                 .build()
         );
-    }
-
-    private void authenticate(String username, String password) throws Exception {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        } catch (DisabledException e) {
-            throw new Exception("USER_DISABLED", e);
-        } catch (BadCredentialsException e) {
-            throw new Exception("INVALID_CREDENTIALS", e);
-        }
     }
 }
