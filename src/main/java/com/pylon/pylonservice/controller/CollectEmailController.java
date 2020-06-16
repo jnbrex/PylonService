@@ -14,6 +14,15 @@ public class CollectEmailController {
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
 
+    /**
+     * Call to save an email address for future communications.
+     *
+     * @param collectEmailRequest A JSON body like
+     *                            {
+     *                                "email": "jason@gmail.com"
+     *                            }
+     * @return HTTP 200 OK - String body like "Saved email jason@gmail.com".
+     */
     @PostMapping(value = "/collectemail")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody final CollectEmailRequest collectEmailRequest) {
         final String email = collectEmailRequest.getEmail();

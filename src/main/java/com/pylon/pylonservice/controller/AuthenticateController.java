@@ -1,8 +1,8 @@
 package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.pylon.pylonservice.model.jwt.JwtRequest;
-import com.pylon.pylonservice.model.jwt.JwtResponse;
+import com.pylon.pylonservice.model.requests.JwtRequest;
+import com.pylon.pylonservice.model.responses.JwtResponse;
 import com.pylon.pylonservice.model.tables.Refresh;
 import com.pylon.pylonservice.services.JwtUserDetailsService;
 import com.pylon.pylonservice.util.JwtTokenUtil;
@@ -31,12 +31,29 @@ public class AuthenticateController {
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
 
+    /**
+     * Call to authenticate a User.
+     *
+     * @param authenticationRequest A JSON body containing the username and password of the User who is attempting to
+     *                              authenticate like
+     *                              {
+     *                                  "username": "exampleUsername",
+     *                                  "password": "examplePassword"
+     *                              }
+     *
+     * @return HTTP 200 OK - If the User was authenticated successfully with a JSON body like
+     *                       {
+     *                           "jwtToken": "exampleJwtToken",
+     *                           "refreshToken": "exampleRefreshToken"
+     *                       }
+     *         HTTP 401 Unauthorized - If the User was not authenticated successfully.
+     * @throws Exception
+     */
     @PostMapping(value = "/authenticate")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody final JwtRequest authenticationRequest)
         throws Exception {
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
-        final UserDetails userDetails = userDetailsService
-                .loadUserByUsername(authenticationRequest.getUsername());
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
         final String jwtToken = jwtTokenUtil.generateJwtForUser(userDetails);
 
         final Refresh refresh = Refresh.builder()

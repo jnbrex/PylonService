@@ -1,4 +1,4 @@
-package com.pylon.pylonservice.model.jwt;
+package com.pylon.pylonservice.model.requests;
 
 import lombok.NonNull;
 import lombok.Value;

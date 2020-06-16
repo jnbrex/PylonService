@@ -12,6 +12,12 @@ public class HelloController {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
+    /**
+     * Call to receive a hello message personalized to the calling User.
+     *
+     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
+     * @return HTTP 200 OK - String like "Hello Jason!".
+     */
     @GetMapping("/hello")
     public ResponseEntity<?> hello(@RequestHeader(value = "Authorization") final String authorizationHeader) {
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);

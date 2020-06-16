@@ -30,6 +30,21 @@ public class RegisterController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    /**
+     * Call to register a User.
+     *
+     * @param registerRequest A JSON body containing the username, password, and email address of the User who is
+     *                        attempting to register like
+     *                        {
+     *                            "username": "exampleUsername",
+     *                            "password": "examplePassword",
+     *                            "email": "exampleEmailAddress"
+     *                        }
+     * @return HTTP 201 Created - If the user was successfully registered.
+     *         HTTP 409 Conflict - If the username or email address in the registration request is already in use.
+     *         HTTP 422 Unprocessable Entity - If the username, password, or email address in the registration request
+     *                                         is not valid.
+     */
     @PostMapping(value = "/register")
     public ResponseEntity<?> register(@RequestBody final RegisterRequest registerRequest) {
         if (!registerRequest.isValid()) {
