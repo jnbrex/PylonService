@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.TransactionWriteRequest;
 import com.pylon.pylonservice.model.requests.RegisterRequest;
+import com.pylon.pylonservice.model.responses.RegisterResponse;
 import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.model.tables.UsernameUser;
@@ -65,14 +66,16 @@ public class RegisterController {
         final String username = registerRequest.getUsername();
         final String email = registerRequest.getEmail();
 
-        if (dynamoDBMapper.load(UsernameUser.class, username) != null) {
+        final boolean isUsernameInUse = dynamoDBMapper.load(UsernameUser.class, username) != null;
+        final boolean isEmailInUse = dynamoDBMapper.load(EmailUser.class, email) != null;
+
+        if (isUsernameInUse || isEmailInUse) {
             return new ResponseEntity<>(
-                String.format("Username %s is already in use", username), HttpStatus.CONFLICT
-            );
-        }
-        if (dynamoDBMapper.load(EmailUser.class, email) != null) {
-            return new ResponseEntity<>(
-                String.format("Email address %s is already in use", email), HttpStatus.CONFLICT
+                RegisterResponse.builder()
+                    .isUsernameInUse(isUsernameInUse)
+                    .isEmailInUse(isEmailInUse)
+                    .build(),
+                HttpStatus.CONFLICT
             );
         }
 
