@@ -40,6 +40,17 @@ public class RegisterController {
      *                            "password": "examplePassword",
      *                            "email": "exampleEmailAddress"
      *                        }
+     *
+     *                        Validation rules
+     *                        username: * Between 3 and 30 characters, inclusive
+     *                                  * Only contains alphanumeric characters, ".", and "_"
+     *                                  * Must start and end with an alphanumeric character
+     *                                  * Can't contain consecutive ".", consecutive "_", "._", or "_."
+     *                        password: * Between 8 and 256 characters, inclusive
+     *                                  * Must contain an uppercase letter, a lowercase letter, and a number
+     *                        email:    * Between 1 and 255 characters, inclusive
+     *                                  * Must be composed of two non-empty strings with an @ symbol between
+     *
      * @return HTTP 201 Created - If the user was successfully registered.
      *         HTTP 409 Conflict - If the username or email address in the registration request is already in use.
      *         HTTP 422 Unprocessable Entity - If the username, password, or email address in the registration request
