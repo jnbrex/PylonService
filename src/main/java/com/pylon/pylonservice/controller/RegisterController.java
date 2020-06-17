@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.TransactionWriteRequest;
 import com.pylon.pylonservice.model.requests.RegisterRequest;
 import com.pylon.pylonservice.model.responses.RegisterResponse;
 import com.pylon.pylonservice.model.tables.EmailUser;
+import com.pylon.pylonservice.model.tables.Profile;
 import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.model.tables.UsernameUser;
 import com.pylon.pylonservice.util.DynamoDbUtil;
@@ -88,8 +89,8 @@ public class RegisterController {
 
     private void persistUser(final String username, final String email, final String encodedPassword) {
         final String userId = UUID.randomUUID().toString();
-
         final TransactionWriteRequest transactionWriteRequest = new TransactionWriteRequest();
+
         transactionWriteRequest.addPut(
             UsernameUser.builder()
                 .username(username)
@@ -111,6 +112,13 @@ public class RegisterController {
                 .email(email)
                 .password(encodedPassword)
                 .createdAt(new Date())
+                .build(),
+            new DynamoDBTransactionWriteExpression().withConditionExpression(USER_ID_DOES_NOT_EXIST_CONDITION)
+        );
+        transactionWriteRequest.addPut(
+            Profile.builder()
+                .userId(userId)
+                .username(username)
                 .build(),
             new DynamoDBTransactionWriteExpression().withConditionExpression(USER_ID_DOES_NOT_EXIST_CONDITION)
         );

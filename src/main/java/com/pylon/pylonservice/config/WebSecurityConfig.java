@@ -53,6 +53,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 "/authenticate",
                 "/collectemail",
                 "/health",
+                "/profile/**",
                 "/refresh",
                 "/register"
             ).permitAll()
