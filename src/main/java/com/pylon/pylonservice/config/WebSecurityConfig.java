@@ -3,6 +3,7 @@ package com.pylon.pylonservice.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -48,15 +49,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .csrf().disable()
             // Enable CORS for all routes
             .cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues()).and()
-            // Don't authenticate /authenticate and /health
-            .authorizeRequests().antMatchers(
-                "/authenticate",
-                "/collectemail",
-                "/health",
-                "/profile/**",
-                "/refresh",
-                "/register"
-            ).permitAll()
+            // Don't authenticate the following <HttpMethod, antPattern> tuples
+            .authorizeRequests()
+                .antMatchers(HttpMethod.POST, "/authenticate", "/collectemail", "/refresh", "/register").permitAll()
+                .antMatchers(HttpMethod.GET, "/health", "/profile/**")
+            .permitAll()
             // all other requests need to be authenticated
             .anyRequest().authenticated().and()
             .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
