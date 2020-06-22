@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.util.IOUtils;
+import com.pylon.pylonservice.model.responses.ImageUploadResponse;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -87,7 +88,13 @@ public class ImageController {
      *
      * @param multipartFile A multipart file.
      *
-     * @return HTTP 201 Created - If the image was uploaded successfully. Returns a response like
+     * @return HTTP 201 Created - If the image was uploaded successfully. Returns a response with body like
+     *                            {
+     *                                "imageId": "a88fed16-330a-4b64-a704-eb9c81e33e10"
+     *                            }
+     *                            and a header like
+     *                            "Location": "http://localhost:8080/image/a88fed16-330a-4b64-a704-eb9c81e33e10"
+     *
      *         HTTP 422 Unprocessable Entity - If the submitted file is not an image.
      */
     @PostMapping(value = IMAGE_ROUTE)
@@ -118,7 +125,11 @@ public class ImageController {
                     imageId
                 )
             )
-        ).build();
+        ).body(
+            ImageUploadResponse.builder()
+                .imageId(imageId)
+                .build()
+        );
     }
 
     private static boolean isImage(final File file) {
