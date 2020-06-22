@@ -22,7 +22,8 @@ public class Profile {
     @NonNull
     String username;
 
-    String avatarUrl;
+    String avatarImageId;
+    String bannerImageId;
     String bio;
 
     // Social media urls
@@ -50,8 +51,13 @@ public class Profile {
     }
 
     @DynamoDBAttribute
-    public String getAvatarUrl() {
-        return avatarUrl;
+    public String getAvatarImageId() {
+        return avatarImageId;
+    }
+
+    @DynamoDBAttribute
+    public String getBannerImageId() {
+        return bannerImageId;
     }
 
     @DynamoDBAttribute

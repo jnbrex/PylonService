@@ -10,7 +10,8 @@ import java.io.Serializable;
 public class UpdateProfileRequest implements Serializable {
     private static final long serialVersionUID = 0L;
 
-    String avatarUrl;
+    String avatarImageId;
+    String bannerImageId;
     String bio;
 
     // Social media urls

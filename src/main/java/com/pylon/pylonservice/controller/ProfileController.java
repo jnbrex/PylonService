@@ -52,7 +52,8 @@ public class ProfileController {
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param updateProfileRequest A JSON body containing the public Profile data to update like
      *                             {
-     *                                 "avatarUrl": "exampleAvatarUrl",
+     *                                 "avatarImageId": "exampleAvatarImageId",
+     *                                 "bannerImageId": "exampleBannerImageId",
      *                                 "bio": "exampleBio",
      *                                 "facebookUrl": "exampleFacebookUrl",
      *                                 "twitterUrl": "exampleTwitterUrl",
@@ -96,9 +97,14 @@ public class ProfileController {
 
     private void updateProfileWithDataFromRequest(final Profile profile,
                                                   final UpdateProfileRequest updateProfileRequest) {
-        final String avatarUrl = updateProfileRequest.getAvatarUrl();
-        if (avatarUrl != null) {
-            profile.setAvatarUrl(avatarUrl);
+        final String avatarImageId = updateProfileRequest.getAvatarImageId();
+        if (avatarImageId != null) {
+            profile.setAvatarImageId(avatarImageId);
+        }
+
+        final String bannerImageId = updateProfileRequest.getBannerImageId();
+        if (bannerImageId != null) {
+            profile.setBannerImageId(bannerImageId);
         }
 
         final String bio = updateProfileRequest.getBio();
