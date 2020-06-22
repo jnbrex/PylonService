@@ -1,17 +1,18 @@
 package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.pylon.pylonservice.model.requests.JwtRequest;
+import com.pylon.pylonservice.model.requests.AuthenticateRequest;
 import com.pylon.pylonservice.model.responses.JwtResponse;
+import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.Refresh;
+import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.services.JwtUserDetailsService;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.UserUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,10 +35,17 @@ public class AuthenticateController {
     /**
      * Call to authenticate a User.
      *
-     * @param authenticationRequest A JSON body containing the username and password of the User who is attempting to
+     * @param authenticateRequest A JSON body containing the username and password of the User who is attempting to
      *                              authenticate like
      *                              {
-     *                                  "username": "exampleUsername",
+     *                                  "usernameOrEmail": "exampleUsername",
+     *                                  "password": "examplePassword"
+     *                              }
+     *
+     *                              or
+     *
+     *                              {
+     *                                  "usernameOrEmail": "exampleEmail@email.com",
      *                                  "password": "examplePassword"
      *                              }
      *
@@ -49,15 +57,30 @@ public class AuthenticateController {
      *         HTTP 401 Unauthorized - If the User was not authenticated successfully.
      */
     @PostMapping(value = "/authenticate")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody final JwtRequest authenticationRequest) {
+    public ResponseEntity<?> authenticate(@RequestBody final AuthenticateRequest authenticateRequest) {
+        String usernameOrEmail = authenticateRequest.getUsernameOrEmail();
+        if (usernameOrEmail.contains("@")) {
+            final EmailUser emailUser = dynamoDBMapper.load(EmailUser.class, usernameOrEmail);
+            if (emailUser == null) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+
+            final User user = dynamoDBMapper.load(User.class, emailUser.getUserId());
+            if (user == null) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+
+            usernameOrEmail = user.getUsername();
+        }
+
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
-                authenticationRequest.getUsername(),
-                authenticationRequest.getPassword()
+                usernameOrEmail,
+                authenticateRequest.getPassword()
             )
         );
 
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(usernameOrEmail);
         final String jwtToken = jwtTokenUtil.generateJwtForUser(userDetails);
 
         final Refresh refresh = Refresh.builder()
