@@ -59,6 +59,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             // Add a filter to validate the tokens with every request
-            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+            // A hack so that the real logout url can be /logout
+            .logout().logoutUrl("/defaultLogout");
     }
 }

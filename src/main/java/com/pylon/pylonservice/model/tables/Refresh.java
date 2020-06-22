@@ -18,7 +18,6 @@ import lombok.Setter;
 public class Refresh {
     @NonNull
     String refreshToken;
-    @NonNull
     String userId;
 
     @DynamoDBHashKey
