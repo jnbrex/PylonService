@@ -60,7 +60,6 @@ public class ProfileController {
      *                                 "instagramUrl": "exampleInstagramUrl",
      *                                 "twitchUrl": "exampleTwitchUrl",
      *                                 "youtubeUrl": "exampleYoutubeUrl",
-     *                                 "mixerUrl": "exampleMixerUrl"
      *                             }
      *                             If a field is not included in the JSON object, it is not updated.
      *
@@ -135,11 +134,6 @@ public class ProfileController {
         final String youtubeUrl = updateProfileRequest.getYoutubeUrl();
         if (youtubeUrl != null) {
             profile.setYoutubeUrl(youtubeUrl);
-        }
-
-        final String mixerUrl = updateProfileRequest.getMixerUrl();
-        if (mixerUrl != null) {
-            profile.setMixerUrl(mixerUrl);
         }
     }
 }

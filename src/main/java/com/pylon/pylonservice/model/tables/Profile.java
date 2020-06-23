@@ -32,7 +32,6 @@ public class Profile {
     String instagramUrl;
     String twitchUrl;
     String youtubeUrl;
-    String mixerUrl;
 
     Set<String> posts; // postId of Posts that are posted to this Profile
     Set<String> followers; // userId of Users that follow this Profile
@@ -88,11 +87,6 @@ public class Profile {
     @DynamoDBAttribute
     public String getYoutubeUrl() {
         return youtubeUrl;
-    }
-
-    @DynamoDBAttribute
-    public String getMixerUrl() {
-        return mixerUrl;
     }
 
     @DynamoDBAttribute
