@@ -2,6 +2,7 @@ package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.pylon.pylonservice.model.responses.ImageUploadResponse;
+import com.pylon.pylonservice.util.MetricsUtil;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,16 +18,18 @@ import java.awt.Image;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.util.UUID;
 
 @Log4j2
 @RestController
 public class ImageController {
+    private static final String IMAGE_METRIC_NAME = "Image";
     private static final String IMAGE_ROUTE = "/image";
 
     @Autowired
     private AmazonS3 amazonS3;
+    @Autowired
+    private MetricsUtil metricsUtil;
 
     @Value("${environment.url}")
     private String environmentUrl;
@@ -54,6 +57,9 @@ public class ImageController {
      */
     @PostMapping(value = IMAGE_ROUTE)
     public ResponseEntity<?> postImage(@RequestParam("file") final MultipartFile multipartFile) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(IMAGE_METRIC_NAME);
+
         final String imageId = UUID.randomUUID().toString();
         final File file = new File(imageId);
         try {
@@ -71,20 +77,16 @@ public class ImageController {
             file.delete();
         }
 
-        return ResponseEntity.created(
-            URI.create(
-                String.format(
-                    "%s%s/%s",
-                    environmentUrl,
-                    IMAGE_ROUTE,
-                    imageId
-                )
-            )
-        ).body(
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(
             ImageUploadResponse.builder()
                 .imageId(imageId)
-                .build()
+                .build(),
+            HttpStatus.CREATED
         );
+
+        metricsUtil.addSuccessMetric(IMAGE_METRIC_NAME);
+        metricsUtil.addLatencyMetric(IMAGE_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
     }
 
     private static boolean isImage(final File file) {

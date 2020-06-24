@@ -8,6 +8,7 @@ import com.pylon.pylonservice.model.tables.Refresh;
 import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.services.JwtUserDetailsService;
 import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.util.MetricsUtil;
 import com.pylon.pylonservice.util.UserUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,8 @@ import java.util.UUID;
 
 @RestController
 public class AuthenticateController {
+    private static final String AUTHENTICATE_METRIC_NAME = "Authenticate";
+
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
@@ -31,6 +34,8 @@ public class AuthenticateController {
     private JwtUserDetailsService userDetailsService;
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
+    @Autowired
+    private MetricsUtil metricsUtil;
 
     /**
      * Call to authenticate a User.
@@ -58,6 +63,9 @@ public class AuthenticateController {
      */
     @PostMapping(value = "/authenticate")
     public ResponseEntity<?> authenticate(@RequestBody final AuthenticateRequest authenticateRequest) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(AUTHENTICATE_METRIC_NAME);
+
         String usernameOrEmail = authenticateRequest.getUsernameOrEmail();
         if (usernameOrEmail.contains("@")) {
             final EmailUser emailUser = dynamoDBMapper.load(EmailUser.class, usernameOrEmail);
@@ -90,11 +98,15 @@ public class AuthenticateController {
 
         dynamoDBMapper.save(refresh);
 
-        return ResponseEntity.ok(
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok(
             JwtResponse.builder()
                 .jwtToken(jwtToken)
                 .refreshToken(refresh.getRefreshToken())
                 .build()
         );
+
+        metricsUtil.addSuccessMetric(AUTHENTICATE_METRIC_NAME);
+        metricsUtil.addLatencyMetric(AUTHENTICATE_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
     }
 }

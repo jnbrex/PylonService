@@ -10,6 +10,7 @@ import com.pylon.pylonservice.model.tables.Profile;
 import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.model.tables.UsernameUser;
 import com.pylon.pylonservice.util.DynamoDbUtil;
+import com.pylon.pylonservice.util.MetricsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import java.util.UUID;
 
 @RestController
 public class RegisterController {
+    private static final String REGISTER_METRIC_NAME = "Register";
     private static final String USERNAME_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(username)";
     private static final String EMAIL_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(email)";
     private static final String USER_ID_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(userId)";
@@ -31,6 +33,8 @@ public class RegisterController {
     private DynamoDBMapper dynamoDBMapper;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private MetricsUtil metricsUtil;
 
     /**
      * Call to register a User.
@@ -60,6 +64,9 @@ public class RegisterController {
      */
     @PostMapping(value = "/register")
     public ResponseEntity<?> register(@RequestBody final RegisterRequest registerRequest) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(REGISTER_METRIC_NAME);
+
         if (!registerRequest.isValid()) {
             return ResponseEntity.unprocessableEntity().body("Invalid register request");
         }
@@ -82,9 +89,13 @@ public class RegisterController {
 
         persistUser(username, email, passwordEncoder.encode(registerRequest.getPassword()));
 
-        return new ResponseEntity<>(
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(
             String.format("User created with username %s and email %s", username, email), HttpStatus.CREATED
         );
+
+        metricsUtil.addSuccessMetric(REGISTER_METRIC_NAME);
+        metricsUtil.addLatencyMetric(REGISTER_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
     }
 
     private void persistUser(final String username, final String email, final String encodedPassword) {

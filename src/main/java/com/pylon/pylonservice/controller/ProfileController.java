@@ -6,6 +6,7 @@ import com.pylon.pylonservice.model.responses.ProfileResponse;
 import com.pylon.pylonservice.model.tables.Profile;
 import com.pylon.pylonservice.model.tables.UsernameUser;
 import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.util.MetricsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +19,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class ProfileController {
+    private static final String GET_PROFILE_METRIC_NAME = "GetProfile";
+    private static final String PUT_PROFILE_METRIC_NAME = "PutProfile";
+
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
+    @Autowired
+    private MetricsUtil metricsUtil;
 
     /**
      * Call to retrieve a User's public profile data.
@@ -33,17 +39,24 @@ public class ProfileController {
      */
     @GetMapping(value = "/profile/{username}")
     public ResponseEntity<?> getProfile(@PathVariable final String username) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_PROFILE_METRIC_NAME);
+
         final UsernameUser usernameUser = dynamoDBMapper.load(UsernameUser.class, username);
 
         if (usernameUser == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return ResponseEntity.ok().body(
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(
             ProfileResponse.builder()
                 .profile(dynamoDBMapper.load(Profile.class, usernameUser.getUserId()))
                 .build()
         );
+
+        metricsUtil.addSuccessMetric(GET_PROFILE_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
     }
 
     /**
@@ -71,6 +84,9 @@ public class ProfileController {
     public ResponseEntity<?> updateProfile(@PathVariable final String username,
                                            @RequestHeader(value = "Authorization") final String authorizationHeader,
                                            @RequestBody final UpdateProfileRequest updateProfileRequest) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(PUT_PROFILE_METRIC_NAME);
+
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String jwtUsername = jwtTokenUtil.getUsernameFromToken(jwt);
 
@@ -91,7 +107,11 @@ public class ProfileController {
         updateProfileWithDataFromRequest(profile, updateProfileRequest);
         dynamoDBMapper.save(profile);
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+
+        metricsUtil.addSuccessMetric(PUT_PROFILE_METRIC_NAME);
+        metricsUtil.addLatencyMetric(PUT_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
     }
 
     private void updateProfileWithDataFromRequest(final Profile profile,

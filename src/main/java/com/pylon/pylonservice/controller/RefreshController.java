@@ -6,6 +6,7 @@ import com.pylon.pylonservice.model.requests.RefreshRequest;
 import com.pylon.pylonservice.model.tables.Refresh;
 import com.pylon.pylonservice.services.JwtUserDetailsService;
 import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.util.MetricsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,12 +17,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class RefreshController {
+    private static final String REFRESH_METRIC_NAME = "Refresh";
+
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
     @Autowired
     private JwtUserDetailsService userDetailsService;
+    @Autowired
+    private MetricsUtil metricsUtil;
 
     /**
      * Call to authenticate a User.
@@ -39,6 +44,9 @@ public class RefreshController {
      */
     @PostMapping(value = "/refresh")
     public ResponseEntity<?> refresh(@RequestBody final RefreshRequest refreshRequest) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(REFRESH_METRIC_NAME);
+
         final Refresh refresh = dynamoDBMapper.load(Refresh.class, refreshRequest.getRefreshToken());
 
         if (refresh == null) {
@@ -48,10 +56,14 @@ public class RefreshController {
         final UserDetails userDetails = userDetailsService.loadUserByUserId(refresh.getUserId());
         final String jwtToken = jwtTokenUtil.generateJwtForUser(userDetails);
 
-        return ResponseEntity.ok(
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok(
             JwtResponse.builder()
                 .jwtToken(jwtToken)
                 .build()
         );
+
+        metricsUtil.addSuccessMetric(REFRESH_METRIC_NAME);
+        metricsUtil.addLatencyMetric(REFRESH_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
     }
 }
