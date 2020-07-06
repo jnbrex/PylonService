@@ -29,7 +29,7 @@ public class CollectEmailController {
      * @return HTTP 200 OK - String body like "Saved email jason@gmail.com".
      */
     @PostMapping(value = "/collectemail")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody final CollectEmailRequest collectEmailRequest) {
+    public ResponseEntity<?> collectEmail(@RequestBody final CollectEmailRequest collectEmailRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(COLLECT_EMAIL_METRIC_NAME);
 
