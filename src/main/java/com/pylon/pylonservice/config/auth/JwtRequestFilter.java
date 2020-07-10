@@ -1,4 +1,4 @@
-package com.pylon.pylonservice.config;
+package com.pylon.pylonservice.config.auth;
 
 import java.io.IOException;
 

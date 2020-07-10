@@ -1,4 +1,4 @@
-package com.pylon.pylonservice.config;
+package com.pylon.pylonservice.config.aws;
 
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder;

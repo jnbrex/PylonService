@@ -1,4 +1,4 @@
-package com.pylon.pylonservice.config;
+package com.pylon.pylonservice.config.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -52,7 +52,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             // Don't authenticate the following <HttpMethod, antPattern> tuples
             .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/authenticate", "/collectemail", "/refresh", "/register").permitAll()
-                .antMatchers(HttpMethod.GET, "/health", "/image/**", "/profile/**")
+                .antMatchers(HttpMethod.GET, "/health", "/profile/**")
             .permitAll()
             // all other requests need to be authenticated
             .anyRequest().authenticated().and()

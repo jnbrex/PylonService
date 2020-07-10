@@ -1,4 +1,4 @@
-package com.pylon.pylonservice.config;
+package com.pylon.pylonservice.config.auth;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;

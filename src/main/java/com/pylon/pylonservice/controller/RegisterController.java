@@ -6,12 +6,13 @@ import com.amazonaws.services.dynamodbv2.datamodeling.TransactionWriteRequest;
 import com.pylon.pylonservice.model.requests.RegisterRequest;
 import com.pylon.pylonservice.model.responses.RegisterResponse;
 import com.pylon.pylonservice.model.tables.EmailUser;
-import com.pylon.pylonservice.model.tables.Profile;
 import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.model.tables.UsernameUser;
 import com.pylon.pylonservice.util.DynamoDbUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,11 +27,12 @@ import java.util.UUID;
 public class RegisterController {
     private static final String REGISTER_METRIC_NAME = "Register";
     private static final String USERNAME_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(username)";
-    private static final String EMAIL_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(email)";
-    private static final String USER_ID_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(userId)";
 
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
+    @Qualifier("writer")
+    @Autowired
+    private GraphTraversalSource wG;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
@@ -89,6 +91,16 @@ public class RegisterController {
 
         persistUser(username, email, passwordEncoder.encode(registerRequest.getPassword()));
 
+        final Date createdAt = new Date();
+        wG.addV("profile")
+                .property("createdAt", createdAt)
+                .as("profile").
+            addV("user")
+                .property("username", username)
+                .property("createdAt", createdAt)
+            .addE("has").to("profile")
+            .iterate();
+
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(
             String.format("User created with username %s and email %s", username, email), HttpStatus.CREATED
         );
@@ -99,39 +111,16 @@ public class RegisterController {
     }
 
     private void persistUser(final String username, final String email, final String encodedPassword) {
-        final String userId = UUID.randomUUID().toString();
         final TransactionWriteRequest transactionWriteRequest = new TransactionWriteRequest();
 
         transactionWriteRequest.addPut(
-            UsernameUser.builder()
-                .username(username)
-                .userId(userId)
-                .build(),
-            new DynamoDBTransactionWriteExpression().withConditionExpression(USERNAME_DOES_NOT_EXIST_CONDITION)
-        );
-        transactionWriteRequest.addPut(
-            EmailUser.builder()
-                .email(email)
-                .userId(userId)
-                .build(),
-            new DynamoDBTransactionWriteExpression().withConditionExpression(EMAIL_DOES_NOT_EXIST_CONDITION)
-        );
-        transactionWriteRequest.addPut(
             User.builder()
-                .userId(userId)
                 .username(username)
                 .email(email)
                 .password(encodedPassword)
                 .createdAt(new Date())
                 .build(),
-            new DynamoDBTransactionWriteExpression().withConditionExpression(USER_ID_DOES_NOT_EXIST_CONDITION)
-        );
-        transactionWriteRequest.addPut(
-            Profile.builder()
-                .userId(userId)
-                .username(username)
-                .build(),
-            new DynamoDBTransactionWriteExpression().withConditionExpression(USER_ID_DOES_NOT_EXIST_CONDITION)
+            new DynamoDBTransactionWriteExpression().withConditionExpression(USERNAME_DOES_NOT_EXIST_CONDITION)
         );
 
         DynamoDbUtil.executeTransactionWrite(dynamoDBMapper, transactionWriteRequest);
