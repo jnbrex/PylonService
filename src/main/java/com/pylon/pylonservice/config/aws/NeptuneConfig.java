@@ -1,7 +1,6 @@
 package com.pylon.pylonservice.config.aws;
 
 import org.apache.tinkerpop.gremlin.driver.Cluster;
-import org.apache.tinkerpop.gremlin.driver.SigV4WebSocketChannelizer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,8 +13,6 @@ import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalS
 @Component
 public class NeptuneConfig {
     private static final int NEPTUNE_PORT = 8182;
-    private static final int NEPTUNE_MIN_CONNECTION_POOL_SIZE = 2;
-    private static final int NEPTUNE_MAX_CONNECTION_POOL_SIZE = 512;
 
     @Bean(name = "writerCluster")
     public Cluster writerCluster(@Value("${neptune.writer.endpoint}") final String writerEndpoint) {
@@ -31,10 +28,7 @@ public class NeptuneConfig {
         return Cluster.build()
             .addContactPoint(endpoint)
             .port(NEPTUNE_PORT)
-            .minConnectionPoolSize(NEPTUNE_MIN_CONNECTION_POOL_SIZE)
-            .maxConnectionPoolSize(NEPTUNE_MAX_CONNECTION_POOL_SIZE)
             .enableSsl(true)
-            .channelizer(SigV4WebSocketChannelizer.class)
             .keyCertChainFile("SFSRootCAG2.pem")
             .create();
     }
