@@ -1,6 +1,7 @@
 package com.pylon.pylonservice.config.aws;
 
 import org.apache.tinkerpop.gremlin.driver.Cluster;
+import org.apache.tinkerpop.gremlin.driver.SigV4WebSocketChannelizer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,6 +34,7 @@ public class NeptuneConfig {
             .minConnectionPoolSize(NEPTUNE_MIN_CONNECTION_POOL_SIZE)
             .maxConnectionPoolSize(NEPTUNE_MAX_CONNECTION_POOL_SIZE)
             .enableSsl(true)
+            .channelizer(SigV4WebSocketChannelizer.class)
             .create();
     }
 
