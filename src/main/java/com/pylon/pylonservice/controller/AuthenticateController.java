@@ -9,7 +9,6 @@ import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.services.JwtUserDetailsService;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
-import com.pylon.pylonservice.util.UserUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -93,7 +92,7 @@ public class AuthenticateController {
 
         final Refresh refresh = Refresh.builder()
             .refreshToken(UUID.randomUUID().toString())
-            .userId(UserUtil.getUserIdForUsername(dynamoDBMapper, userDetails.getUsername()))
+            .username(userDetails.getUsername())
             .build();
 
         dynamoDBMapper.save(refresh);

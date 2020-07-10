@@ -53,7 +53,7 @@ public class RefreshController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final UserDetails userDetails = userDetailsService.loadUserByUserId(refresh.getUserId());
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(refresh.getUsername());
         final String jwtToken = jwtTokenUtil.generateJwtForUser(userDetails);
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok(

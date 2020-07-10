@@ -35,6 +35,7 @@ public class NeptuneConfig {
             .maxConnectionPoolSize(NEPTUNE_MAX_CONNECTION_POOL_SIZE)
             .enableSsl(true)
             .channelizer(SigV4WebSocketChannelizer.class)
+            .keyCertChainFile("SFSRootCAG2.pem")
             .create();
     }
 

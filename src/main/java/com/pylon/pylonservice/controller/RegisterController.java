@@ -76,7 +76,7 @@ public class RegisterController {
         final String username = registerRequest.getUsername();
         final String email = registerRequest.getEmail();
 
-        final boolean isUsernameInUse = dynamoDBMapper.load(UsernameUser.class, username) != null;
+        final boolean isUsernameInUse = dynamoDBMapper.load(User.class, username) != null;
         final boolean isEmailInUse = dynamoDBMapper.load(EmailUser.class, email) != null;
 
         if (isUsernameInUse || isEmailInUse) {
