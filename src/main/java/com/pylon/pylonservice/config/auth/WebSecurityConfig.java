@@ -51,8 +51,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues()).and()
             // Don't authenticate the following <HttpMethod, antPattern> tuples
             .authorizeRequests()
-                .antMatchers(HttpMethod.POST, "/authenticate", "/collectemail", "/refresh", "/register").permitAll()
-                .antMatchers(HttpMethod.GET, "/health", "/profile/**")
+                .antMatchers(HttpMethod.POST, "/authenticate", "/collectemail", "/neptuneTest/**", "/refresh", "/register").permitAll()
+                .antMatchers(HttpMethod.GET, "/health", "/neptuneTest/**", "/profile/**")
             .permitAll()
             // all other requests need to be authenticated
             .anyRequest().authenticated().and()

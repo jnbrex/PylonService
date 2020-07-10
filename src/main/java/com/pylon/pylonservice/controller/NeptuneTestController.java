@@ -16,7 +16,7 @@ public class NeptuneTestController {
     @Autowired
     private GraphTraversalSource rG;
 
-    @GetMapping(value = "/vertexCount")
+    @GetMapping(value = "/neptuneTest/vertexCount")
     public ResponseEntity<?> vertexCount(@RequestBody final RegisterRequest registerRequest) {
         long count = rG.V().count().next();
 
