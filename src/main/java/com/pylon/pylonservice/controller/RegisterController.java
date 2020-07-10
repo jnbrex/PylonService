@@ -7,7 +7,6 @@ import com.pylon.pylonservice.model.requests.RegisterRequest;
 import com.pylon.pylonservice.model.responses.RegisterResponse;
 import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.User;
-import com.pylon.pylonservice.model.tables.UsernameUser;
 import com.pylon.pylonservice.util.DynamoDbUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
-import java.util.UUID;
 
 @RestController
 public class RegisterController {
