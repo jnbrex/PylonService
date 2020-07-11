@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 
+import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
+
 @RestController
 public class RegisterController {
     private static final String REGISTER_METRIC_NAME = "Register";
@@ -91,11 +93,11 @@ public class RegisterController {
 
         final Date createdAt = new Date();
         wG.addV("profile")
-                .property("createdAt", createdAt)
-                .as("profile").
-            addV("user")
-                .property("username", username)
-                .property("createdAt", createdAt)
+                .property(single, "createdAt", createdAt)
+                .as("profile")
+            .addV("user")
+                .property(single, "username", username)
+                .property(single, "createdAt", createdAt)
             .addE("has").to("profile")
             .iterate();
 

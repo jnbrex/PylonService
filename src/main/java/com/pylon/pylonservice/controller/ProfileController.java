@@ -1,9 +1,9 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
-import com.pylon.pylonservice.model.tables.Profile;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,12 +20,16 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
+import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
 @RestController
 public class ProfileController {
     private static final String GET_PROFILE_METRIC_NAME = "GetProfile";
     private static final String PUT_PROFILE_METRIC_NAME = "PutProfile";
 
+    @Qualifier("writer")
+    @Autowired
+    private GraphTraversalSource wG;
     @Qualifier("reader")
     @Autowired
     private GraphTraversalSource rG;
@@ -100,6 +104,8 @@ public class ProfileController {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
+        updateProfileWithDataFromRequest(username, updateProfileRequest);
+
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
         metricsUtil.addSuccessMetric(PUT_PROFILE_METRIC_NAME);
@@ -107,46 +113,57 @@ public class ProfileController {
         return responseEntity;
     }
 
-    private void updateProfileWithDataFromRequest(final Profile profile,
+    private void updateProfileWithDataFromRequest(final String username,
                                                   final UpdateProfileRequest updateProfileRequest) {
+        GraphTraversal graphTraversal =
+            wG.V().has("user", "username", username) // user vertex of user with username: {username}
+            .out("has"); // profile vertex of user with username: {username}
+
         final String avatarImageId = updateProfileRequest.getAvatarImageId();
         if (avatarImageId != null) {
-            profile.setAvatarImageId(avatarImageId);
+            graphTraversal = graphTraversal.property(single, "avatarImageId", avatarImageId);
         }
 
         final String bannerImageId = updateProfileRequest.getBannerImageId();
         if (bannerImageId != null) {
-            profile.setBannerImageId(bannerImageId);
+            graphTraversal = graphTraversal.property(single, "bannerImageId", bannerImageId);
         }
 
         final String bio = updateProfileRequest.getBio();
         if (bio != null) {
-            profile.setBio(bio);
+            graphTraversal = graphTraversal.property(single, "bio", bio);
         }
 
         final String facebookUrl = updateProfileRequest.getFacebookUrl();
         if (facebookUrl != null) {
-            profile.setFacebookUrl(facebookUrl);
+            graphTraversal = graphTraversal.property(single, "facebookUrl", facebookUrl);
         }
 
         final String twitterUrl = updateProfileRequest.getTwitterUrl();
         if (twitterUrl != null) {
-            profile.setTwitterUrl(twitterUrl);
+            graphTraversal = graphTraversal.property(single, "twitterUrl", twitterUrl);
         }
 
         final String instagramUrl = updateProfileRequest.getInstagramUrl();
         if (instagramUrl != null) {
-            profile.setInstagramUrl(instagramUrl);
+            graphTraversal = graphTraversal.property(single, "instagramUrl", instagramUrl);
         }
 
         final String twitchUrl = updateProfileRequest.getTwitchUrl();
         if (twitchUrl != null) {
-            profile.setTwitchUrl(twitchUrl);
+            graphTraversal = graphTraversal.property(single, "twitchUrl", twitchUrl);
         }
 
         final String youtubeUrl = updateProfileRequest.getYoutubeUrl();
         if (youtubeUrl != null) {
-            profile.setYoutubeUrl(youtubeUrl);
+            graphTraversal = graphTraversal.property(single, "youtubeUrl", youtubeUrl);
         }
+
+        final String tiktokUrl = updateProfileRequest.getTiktokUrl();
+        if (tiktokUrl != null) {
+            graphTraversal = graphTraversal.property(single, "tiktokUrl", tiktokUrl);
+        }
+
+        graphTraversal.iterate();
     }
 }
