@@ -20,4 +20,5 @@ public class UpdateProfileRequest implements Serializable {
     String instagramUrl;
     String twitchUrl;
     String youtubeUrl;
+    String tiktokUrl;
 }

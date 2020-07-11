@@ -3,7 +3,6 @@ package com.pylon.pylonservice.controller;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
 import com.pylon.pylonservice.model.tables.Profile;
-import com.pylon.pylonservice.model.tables.UsernameUser;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -27,8 +26,6 @@ public class ProfileController {
     private static final String GET_PROFILE_METRIC_NAME = "GetProfile";
     private static final String PUT_PROFILE_METRIC_NAME = "PutProfile";
 
-    @Autowired
-    private DynamoDBMapper dynamoDBMapper;
     @Qualifier("reader")
     @Autowired
     private GraphTraversalSource rG;
@@ -50,11 +47,9 @@ public class ProfileController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_METRIC_NAME);
 
-        final UsernameUser usernameUser = dynamoDBMapper.load(UsernameUser.class, username);
-
-        if (usernameUser == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+//        if ( == null) {
+//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//        }
 
         final Map<Object, Object> profile =
             rG.V().has("user", "username", username) // user vertex of user with username: {username}
@@ -103,19 +98,6 @@ public class ProfileController {
         if (!username.equals(jwtUsername)) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-
-        final UsernameUser usernameUser = dynamoDBMapper.load(UsernameUser.class, username);
-        if (usernameUser == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        final Profile profile = dynamoDBMapper.load(Profile.class, usernameUser.getUserId());
-        if (profile == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        updateProfileWithDataFromRequest(profile, updateProfileRequest);
-        dynamoDBMapper.save(profile);
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
