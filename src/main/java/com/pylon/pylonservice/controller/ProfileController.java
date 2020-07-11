@@ -1,6 +1,5 @@
 package com.pylon.pylonservice.controller;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
 import com.pylon.pylonservice.model.tables.Profile;
 import com.pylon.pylonservice.util.JwtTokenUtil;
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 
@@ -47,15 +47,16 @@ public class ProfileController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_METRIC_NAME);
 
-//        if ( == null) {
-//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//        }
-
-        final Map<Object, Object> profile =
-            rG.V().has("user", "username", username) // user vertex of user with username: {username}
-            .out("has") // profile vertex of user with username: {username}
-            .valueMap().by(unfold()) // values of all properties on profile, unfolded
-            .next();
+        final Map<Object, Object> profile;
+        try {
+            profile =
+                rG.V().has("user", "username", username) // user vertex of user with username: {username}
+                    .out("has") // profile vertex of user with username: {username}
+                    .valueMap().by(unfold()) // values of all properties on profile, unfolded
+                    .next();
+        } catch (final NoSuchElementException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(profile);
 
