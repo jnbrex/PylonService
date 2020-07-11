@@ -2,12 +2,13 @@ package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
-import com.pylon.pylonservice.model.responses.ProfileResponse;
 import com.pylon.pylonservice.model.tables.Profile;
 import com.pylon.pylonservice.model.tables.UsernameUser;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
+
 @RestController
 public class ProfileController {
     private static final String GET_PROFILE_METRIC_NAME = "GetProfile";
@@ -24,6 +29,9 @@ public class ProfileController {
 
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
+    @Qualifier("reader")
+    @Autowired
+    private GraphTraversalSource rG;
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
     @Autowired
@@ -48,11 +56,13 @@ public class ProfileController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(
-            ProfileResponse.builder()
-                .profile(dynamoDBMapper.load(Profile.class, usernameUser.getUserId()))
-                .build()
-        );
+        final Map<Object, Object> profile =
+            rG.V().has("user", "username", username) // user vertex of user with username: {username}
+            .out("has") // profile vertex of user with username: {username}
+            .valueMap().by(unfold()) // values of all properties on profile, unfolded
+            .next();
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(profile);
 
         metricsUtil.addSuccessMetric(GET_PROFILE_METRIC_NAME);
         metricsUtil.addLatencyMetric(GET_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
