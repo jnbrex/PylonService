@@ -77,6 +77,24 @@ public class PostController {
         return responseEntity;
     }
 
+    /**
+     * Call to create a Post in a Shard.
+     *
+     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param name The name of a Shard
+     * @param createPostRequest A JSON body containing the Post data for the post to create like
+     *                             {
+     *                                 "title": "exampleTitle",
+     *                                 "imageId": "exampleImageId",
+     *                                 "contentUrl": "exampleContentUrl",
+     *                                 "body": "exampleBody
+     *                             }
+     *                             If a field is not included in the JSON object, it is not included.
+     *
+     * @return HTTP 201 Created - If the Post was created successfully.
+     *         HTTP 401 Unauthorized - If the User isn't authenticated.
+     *         HTTP 404 Not Found - If the Shard with name={name} doesn't exist.
+     */
     @PostMapping(value = "/post/shard/{name}")
     public ResponseEntity<?> shardPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                        @PathVariable final String name,
@@ -110,6 +128,22 @@ public class PostController {
         return responseEntity;
     }
 
+    /**
+     * Call to create a Post in the authenticated User's public profile.
+     *
+     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param createPostRequest A JSON body containing the Post data for the post to create like
+     *                             {
+     *                                 "title": "exampleTitle",
+     *                                 "imageId": "exampleImageId",
+     *                                 "contentUrl": "exampleContentUrl",
+     *                                 "body": "exampleBody
+     *                             }
+     *                             If a field is not included in the JSON object, it is not included.
+     *
+     * @return HTTP 201 Created - If the Post was created successfully.
+     *         HTTP 401 Unauthorized - If the User isn't authenticated.
+     */
     @PostMapping(value = "/post/profile")
     public ResponseEntity<?> profilePost(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                          @RequestBody final CreatePostRequest createPostRequest) {
@@ -139,6 +173,7 @@ public class PostController {
     }
 
     /**
+     * Call to create a Post as a comment on another Post.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param parentPostId A postId of the parent Post
@@ -151,9 +186,9 @@ public class PostController {
      *                             }
      *                             If a field is not included in the JSON object, it is not included.
      *
-     * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
+     * @return HTTP 201 Created - If the Post was created successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
-     *         HTTP 403 Forbidden - If the User if attempting to update another User's public Profile data.
+     *         HTTP 404 Not Found - If the Post with postId={parentPostId} doesn't exist.
      */
     @PostMapping(value = "/post/comment/{parentPostId}")
     public ResponseEntity<?> commentPost(@RequestHeader(value = "Authorization") final String authorizationHeader,

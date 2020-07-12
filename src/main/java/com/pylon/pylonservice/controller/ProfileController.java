@@ -89,7 +89,7 @@ public class ProfileController {
      *
      * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
-     *         HTTP 403 Forbidden - If the User if attempting to update another User's public Profile data.
+     *         HTTP 403 Forbidden - If the User is attempting to update another User's public Profile data.
      */
     @PutMapping(value = "/profile/{username}")
     public ResponseEntity<?> updateProfile(@PathVariable final String username,
