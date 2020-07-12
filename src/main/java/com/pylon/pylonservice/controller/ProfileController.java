@@ -71,7 +71,6 @@ public class ProfileController {
 
     /**
      *
-     * @param username A String containing the username of the User's public Profile data to update.
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param updateProfileRequest A JSON body containing the public Profile data to update like
      *                             {
@@ -89,21 +88,15 @@ public class ProfileController {
      *
      * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
-     *         HTTP 403 Forbidden - If the User is attempting to update another User's public Profile data.
      */
-    @PutMapping(value = "/profile/{username}")
-    public ResponseEntity<?> updateProfile(@PathVariable final String username,
-                                           @RequestHeader(value = "Authorization") final String authorizationHeader,
+    @PutMapping(value = "/profile")
+    public ResponseEntity<?> updateProfile(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                            @RequestBody final UpdateProfileRequest updateProfileRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(PUT_PROFILE_METRIC_NAME);
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String jwtUsername = jwtTokenUtil.getUsernameFromToken(jwt);
-
-        if (!username.equals(jwtUsername)) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        }
+        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
 
         updateProfileWithDataFromRequest(username, updateProfileRequest);
 
