@@ -99,7 +99,8 @@ public class RegisterController {
             .addV("user")
                 .property(single, "username", username)
                 .property(single, "createdAt", createdAt)
-            .addE("has").to("profile")
+                .as("user")
+            .addE("has").from("user").to("profile")
             .iterate();
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(
