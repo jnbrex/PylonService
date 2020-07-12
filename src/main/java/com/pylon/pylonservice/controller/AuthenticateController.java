@@ -72,7 +72,7 @@ public class AuthenticateController {
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
 
-            final User user = dynamoDBMapper.load(User.class, emailUser.getUserId());
+            final User user = dynamoDBMapper.load(User.class, emailUser.getUsername());
             if (user == null) {
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }

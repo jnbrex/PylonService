@@ -83,12 +83,13 @@ public class ProfileController {
      *                                 "instagramUrl": "exampleInstagramUrl",
      *                                 "twitchUrl": "exampleTwitchUrl",
      *                                 "youtubeUrl": "exampleYoutubeUrl",
+     *                                 "tiktokUrl": "exampleTiktokUrl"
      *                             }
      *                             If a field is not included in the JSON object, it is not updated.
      *
      * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
+     *         HTTP 401 Unauthorized - If the User isn't authenticated.
      *         HTTP 403 Forbidden - If the User if attempting to update another User's public Profile data.
-     *         HTTP 404 Not Found - If the User or Profile doesn't exist.
      */
     @PutMapping(value = "/profile/{username}")
     public ResponseEntity<?> updateProfile(@PathVariable final String username,

@@ -27,6 +27,7 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 public class RegisterController {
     private static final String REGISTER_METRIC_NAME = "Register";
     private static final String USERNAME_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(username)";
+    private static final String EMAIL_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(email)";
 
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
@@ -121,6 +122,13 @@ public class RegisterController {
                 .createdAt(new Date())
                 .build(),
             new DynamoDBTransactionWriteExpression().withConditionExpression(USERNAME_DOES_NOT_EXIST_CONDITION)
+        );
+        transactionWriteRequest.addPut(
+            EmailUser.builder()
+                .email(email)
+                .username(username)
+                .build(),
+            new DynamoDBTransactionWriteExpression().withConditionExpression(EMAIL_DOES_NOT_EXIST_CONDITION)
         );
 
         DynamoDbUtil.executeTransactionWrite(dynamoDBMapper, transactionWriteRequest);
