@@ -28,8 +28,10 @@ public class NeptuneConfig {
         return Cluster.build()
             .addContactPoint(endpoint)
             .port(NEPTUNE_PORT)
+            .minConnectionPoolSize(2)
+            .maxConnectionPoolSize(512)
             .enableSsl(true)
-            .keyCertChainFile("SFSRootCAG2.pem")
+            .keyStore("SFSRootCAG2.pem")
             .create();
     }
 
