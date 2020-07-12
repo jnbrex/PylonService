@@ -31,7 +31,7 @@ public class NeptuneConfig {
             .minConnectionPoolSize(2)
             .maxConnectionPoolSize(512)
             .enableSsl(true)
-            .keyStore("SFSRootCAG2.pem")
+            .keyCertChainFile("SFSRootCAG2.pem")
             .create();
     }
 

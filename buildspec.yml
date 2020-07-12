@@ -17,4 +17,3 @@ artifacts:
   files:
     - ROOT.jar
     - .ebextensions/**/*
-    - SFSRootCAG2.pem
