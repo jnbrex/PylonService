@@ -7,6 +7,8 @@ import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.Tree;
+import org.apache.tinkerpop.shaded.jackson.core.JsonProcessingException;
+import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -18,10 +20,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.UncheckedIOException;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
@@ -30,6 +36,7 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 @RestController
 public class PostController {
     private static final String GET_POST_METRIC_NAME = "GetPost";
+    private static final String GET_PROFILE_POSTS_METRIC_NAME = "GetProfilePosts";
     private static final String POST_SHARD_POST_METRIC_NAME = "PostShardPost";
     private static final String POST_PROFILE_POST_METRIC_NAME = "PostProfilePost";
     private static final String POST_COMMENT_POST_METRIC_NAME = "PostCommentPost";
@@ -44,14 +51,16 @@ public class PostController {
     private JwtTokenUtil jwtTokenUtil;
     @Autowired
     private MetricsUtil metricsUtil;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     /**
      * Call to retrieve a Post and all comments on it.
      *
      * @param postId A String containing the postId of the Post to return.
      *
-     * @return HTTP 200 OK - If the User's public profile data was retrieved successfully.
-     *         HTTP 404 Not Found - If the User doesn't exist.
+     * @return HTTP 200 OK - If the Post was retrieved successfully.
+     *         HTTP 404 Not Found - If the Post doesn't exist.
      */
     @GetMapping(value = "/post/{postId}")
     public ResponseEntity<?> getPost(@PathVariable final String postId) {
@@ -60,20 +69,57 @@ public class PostController {
 
         final Tree tree;
         try {
-                tree = rG.V().has("post", "postId", postId) // post vertex of post with postId: {postId}
-                    .emit()
-                    .repeat(in("commentOn"))
-                    .tree()
-                    .by(valueMap().by(unfold()))
-                    .next();
+            tree = rG.V().has("post", "postId", postId) // post vertex of post with postId: {postId}
+                .emit()
+                .repeat(in("commentOn"))
+                .tree()
+                .by(valueMap().by(unfold()))
+                .next();
         } catch (final NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(tree);
+        final ResponseEntity<?> responseEntity;
+        try {
+            responseEntity = ResponseEntity.ok().body(objectMapper.writeValueAsString(tree));
+        } catch (final JsonProcessingException e) {
+            throw new UncheckedIOException(e);
+        }
 
         metricsUtil.addSuccessMetric(GET_POST_METRIC_NAME);
         metricsUtil.addLatencyMetric(GET_POST_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to retrieve all the post headers for a Profile.
+     *
+     * @param username A String containing the username of the User's Profile to return.
+     *
+     * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully.
+     *         HTTP 404 Not Found - If the Profile doesn't exist.
+     */
+    @GetMapping(value = "/post/profile/{username}")
+    public ResponseEntity<?> getProfilePosts(@PathVariable final String username) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_PROFILE_POSTS_METRIC_NAME);
+
+        final List<Map<Object, Object>> posts;
+        try {
+            posts = rG.V().has("user", "username", username) // Single user vertex
+                .out("has") // Single profile vertex
+                .in("in") // All posts "in" the profile
+                .order().by("createdAt", desc)
+                .valueMap().by(unfold())
+                .toList();
+        } catch (final NoSuchElementException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
+
+        metricsUtil.addSuccessMetric(GET_PROFILE_POSTS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -228,7 +274,8 @@ public class PostController {
                                                           final String username) {
         GraphTraversal graphTraversal = wG
             .addV("post").as("post")
-            .property(single, "postId", postId);
+            .property(single, "postId", postId)
+            .property(single, "createdAt", new Date());
 
         final String title = createPostRequest.getTitle();
         if (title != null) {
@@ -248,7 +295,6 @@ public class PostController {
         }
 
         graphTraversal = graphTraversal
-            .property(single, "createdAt", new Date())
             .V().has("user", "username", username).as("user")
             .addE("submitted").from("user").to("post")
             .addE("liked").from("user").to("post");

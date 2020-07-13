@@ -24,15 +24,11 @@ import java.util.UUID;
 @RestController
 public class ImageController {
     private static final String IMAGE_METRIC_NAME = "Image";
-    private static final String IMAGE_ROUTE = "/image";
 
     @Autowired
     private AmazonS3 amazonS3;
     @Autowired
     private MetricsUtil metricsUtil;
-
-    @Value("${environment.url}")
-    private String environmentUrl;
 
     private final String imageBucketName;
 
@@ -55,7 +51,7 @@ public class ImageController {
      *
      *         HTTP 422 Unprocessable Entity - If the submitted file is not an image.
      */
-    @PostMapping(value = IMAGE_ROUTE)
+    @PostMapping(value = "/image")
     public ResponseEntity<?> postImage(@RequestParam("file") final MultipartFile multipartFile) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(IMAGE_METRIC_NAME);

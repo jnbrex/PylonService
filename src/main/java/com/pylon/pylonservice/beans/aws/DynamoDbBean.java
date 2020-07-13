@@ -1,4 +1,4 @@
-package com.pylon.pylonservice.config.aws;
+package com.pylon.pylonservice.beans.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DynamoDbConfig {
+public class DynamoDbBean {
     @Bean
     public AmazonDynamoDB amazonDynamoDB() {
         // Credentials provided by the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.
