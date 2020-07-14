@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -36,7 +37,9 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 @RestController
 public class PostController {
     private static final String GET_POST_METRIC_NAME = "GetPost";
+    private static final String GET_POST_COMMENTS_METRIC_NAME = "GetPostComments";
     private static final String GET_PROFILE_POSTS_METRIC_NAME = "GetProfilePosts";
+    private static final String GET_SHARD_POSTS_METRIC_NAME = "GetShardPosts";
     private static final String POST_SHARD_POST_METRIC_NAME = "PostShardPost";
     private static final String POST_PROFILE_POST_METRIC_NAME = "PostProfilePost";
     private static final String POST_COMMENT_POST_METRIC_NAME = "PostCommentPost";
@@ -55,7 +58,7 @@ public class PostController {
     private ObjectMapper objectMapper;
 
     /**
-     * Call to retrieve a Post and all comments on it.
+     * Call to retrieve a Post.
      *
      * @param postId A String containing the postId of the Post to return.
      *
@@ -67,27 +70,59 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_METRIC_NAME);
 
-        final Tree tree;
+        final Map<Object, Object> post;
         try {
-            tree = rG.V().has("post", "postId", postId) // post vertex of post with postId: {postId}
-                .emit()
-                .repeat(in("commentOn"))
-                .tree()
-                .by(valueMap().by(unfold()))
+            post = rG.V().has("post", "postId", postId)
+                .valueMap().by(unfold())
                 .next();
         } catch (final NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(post);
+
+        metricsUtil.addSuccessMetric(GET_POST_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_POST_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to retrieve all comments on a Post.
+     *
+     * @param postId A String containing the postId of the Post for which the comments should be returned.
+     *
+     * @return HTTP 200 OK - If the Post's comments were retrieved successfully.
+     *         HTTP 404 Not Found - If the Post doesn't exist.
+     */
+    @GetMapping(value = "/post/{postId}/comments")
+    public ResponseEntity<?> getComments(@PathVariable final String postId) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_POST_COMMENTS_METRIC_NAME);
+
+        final Tree postAndComments = rG.V().has("post", "postId", postId)
+            .emit()
+            .repeat(in("commentOn"))
+            .tree()
+            .by(valueMap().by(unfold()))
+            .next();
+
+        if (postAndComments.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
         final ResponseEntity<?> responseEntity;
         try {
-            responseEntity = ResponseEntity.ok().body(objectMapper.writeValueAsString(tree));
+            responseEntity = ResponseEntity.ok().body(
+                objectMapper.writeValueAsString(
+                    postAndComments.getTreesAtDepth(2).get(0) // Tree with top-level comments at root
+                )
+            );
         } catch (final JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
 
-        metricsUtil.addSuccessMetric(GET_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsUtil.addSuccessMetric(GET_POST_COMMENTS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_POST_COMMENTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -124,10 +159,43 @@ public class PostController {
     }
 
     /**
+     * Call to retrieve all the post headers for a Profile.
+     *
+     * @param shardName A String containing the shardName of the Shard to return.
+     *
+     * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully.
+     *         HTTP 404 Not Found - If the Profile doesn't exist.
+     */
+    @GetMapping(value = "/post/shard/{shardName}")
+    public ResponseEntity<?> getShardPosts(@PathVariable final String shardName) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+
+        final List<Map<Object, Object>> posts;
+        try {
+            posts = rG.V().has("shard", "shardName", shardName)
+                .emit()
+                .repeat(out("inherits"))
+                .in("in") // All posts "in" the profile
+                .order().by("createdAt", desc)
+                .valueMap().by(unfold())
+                .toList();
+        } catch (final NoSuchElementException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
+
+        metricsUtil.addSuccessMetric(GET_SHARD_POSTS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_SHARD_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
      * Call to create a Post in a Shard.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
-     * @param name The name of a Shard
+     * @param shardName The name of a Shard
      * @param createPostRequest A JSON body containing the Post data for the post to create like
      *                             {
      *                                 "title": "exampleTitle",
@@ -141,9 +209,9 @@ public class PostController {
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      *         HTTP 404 Not Found - If the Shard with name={name} doesn't exist.
      */
-    @PostMapping(value = "/post/shard/{name}")
+    @PostMapping(value = "/post/shard/{shardName}")
     public ResponseEntity<?> shardPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
-                                       @PathVariable final String name,
+                                       @PathVariable final String shardName,
                                        @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(POST_SHARD_POST_METRIC_NAME);
@@ -155,7 +223,7 @@ public class PostController {
 
         try {
             createPostWithCommonProperties(createPostRequest, postId, username)
-                .V().has("shard", "name", name).as("shard")
+                .V().has("shard", "shardName", shardName).as("shard")
                 .addE("in").from("post").to("shard")
                 .iterate();
         } catch (final NoSuchElementException e) {
