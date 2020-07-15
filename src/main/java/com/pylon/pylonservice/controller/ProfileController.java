@@ -72,7 +72,7 @@ public class ProfileController {
     /**
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
-     * @param updateProfileRequest A JSON body containing the public Profile data to update like
+     * @param updateProfileRequest A JSON object containing the public Profile data to update like
      *                             {
      *                                 "avatarImageId": "exampleAvatarImageId",
      *                                 "bannerImageId": "exampleBannerImageId",

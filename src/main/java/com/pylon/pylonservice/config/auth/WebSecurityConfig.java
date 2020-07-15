@@ -52,7 +52,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             // Don't authenticate the following <HttpMethod, antPattern> tuples
             .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/authenticate", "/collectemail", "/refresh", "/register").permitAll()
-                .antMatchers(HttpMethod.GET, "/health", "/post/**", "/profile/**")
+                .antMatchers(HttpMethod.GET, "/health", "/post/**", "/profile/**", "/shard/**")
             .permitAll()
             // all other requests need to be authenticated
             .anyRequest().authenticated().and()

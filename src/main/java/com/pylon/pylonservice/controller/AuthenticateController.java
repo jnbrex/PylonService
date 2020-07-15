@@ -39,7 +39,7 @@ public class AuthenticateController {
     /**
      * Call to authenticate a User.
      *
-     * @param authenticateRequest A JSON body containing the username and password of the User who is attempting to
+     * @param authenticateRequest A JSON object containing the username and password of the User who is attempting to
      *                              authenticate like
      *                              {
      *                                  "usernameOrEmail": "exampleUsername",
@@ -53,7 +53,7 @@ public class AuthenticateController {
      *                                  "password": "examplePassword"
      *                              }
      *
-     * @return HTTP 200 OK - If the User was authenticated successfully with a JSON body like
+     * @return HTTP 200 OK - If the User was authenticated successfully, a JSON object like
      *                       {
      *                           "jwtToken": "exampleJwtToken",
      *                           "refreshToken": "exampleRefreshToken"

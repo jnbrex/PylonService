@@ -22,7 +22,7 @@ public class CollectEmailController {
     /**
      * Call to save an email address for future communications.
      *
-     * @param collectEmailRequest A JSON body like
+     * @param collectEmailRequest A JSON object like
      *                            {
      *                                "email": "jason@gmail.com"
      *                            }

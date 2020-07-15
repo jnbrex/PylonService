@@ -23,12 +23,12 @@ public class LogoutController {
     /**
      * Call to logout a User.
      *
-     * @param refreshRequest A JSON body optionally containing a refresh token like
+     * @param refreshRequest A JSON object optionally containing a refresh token like
      *                       {
      *                           "refreshToken": "exampleRefreshToken"
      *                       }
      *
-     *                       Empty JSON body is also valid:
+     *                       Empty JSON object is also valid:
      *                       {
      *
      *                       }

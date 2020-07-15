@@ -7,6 +7,8 @@ import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.Tree;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.shaded.jackson.core.JsonProcessingException;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +27,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
@@ -40,9 +45,9 @@ public class PostController {
     private static final String GET_POST_COMMENTS_METRIC_NAME = "GetPostComments";
     private static final String GET_PROFILE_POSTS_METRIC_NAME = "GetProfilePosts";
     private static final String GET_SHARD_POSTS_METRIC_NAME = "GetShardPosts";
-    private static final String POST_SHARD_POST_METRIC_NAME = "PostShardPost";
-    private static final String POST_PROFILE_POST_METRIC_NAME = "PostProfilePost";
-    private static final String POST_COMMENT_POST_METRIC_NAME = "PostCommentPost";
+    private static final String CREATE_SHARD_POST_METRIC_NAME = "CreateShardPost";
+    private static final String CREATE_PROFILE_POST_METRIC_NAME = "CreateProfilePost";
+    private static final String CREATE_COMMENT_POST_METRIC_NAME = "CreateCommentPost";
 
     @Qualifier("writer")
     @Autowired
@@ -139,17 +144,22 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_POSTS_METRIC_NAME);
 
-        final List<Map<Object, Object>> posts;
         try {
-            posts = rG.V().has("user", "username", username) // Single user vertex
-                .out("has") // Single profile vertex
-                .in("in") // All posts "in" the profile
-                .order().by("createdAt", desc)
-                .valueMap().by(unfold())
-                .toList();
+            rG
+                .V().has("user", "username", username) // Single user vertex
+                .out("has")
+                .next();
         } catch (final NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+        final List<Map<Object, Object>> posts = rG
+            .V().has("user", "username", username) // Single user vertex
+            .out("has") // Single profile vertex
+            .in("in") // All posts "in" the profile
+            .order().by("createdAt", desc)
+            .valueMap().by(unfold())
+            .toList();
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
@@ -171,18 +181,14 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
 
-        final List<Map<Object, Object>> posts;
-        try {
-            posts = rG.V().has("shard", "shardName", shardName)
-                .emit()
-                .repeat(out("inherits"))
-                .in("in") // All posts "in" the profile
-                .order().by("createdAt", desc)
-                .valueMap().by(unfold())
-                .toList();
-        } catch (final NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        final List<Map<Object, Object>> posts = rG
+            .V().has("shard", "shardName", shardName)
+            .emit()
+            .repeat(out("inherits"))
+            .in("in") // All posts "in" the profile
+            .order().by("createdAt", desc)
+            .valueMap().by(unfold())
+            .toList();
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
@@ -196,7 +202,7 @@ public class PostController {
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param shardName The name of a Shard
-     * @param createPostRequest A JSON body containing the Post data for the post to create like
+     * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
      *                                 "title": "exampleTitle",
      *                                 "imageId": "exampleImageId",
@@ -214,19 +220,21 @@ public class PostController {
                                        @PathVariable final String shardName,
                                        @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(POST_SHARD_POST_METRIC_NAME);
+        metricsUtil.addCountMetric(CREATE_SHARD_POST_METRIC_NAME);
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
 
         final String postId = UUID.randomUUID().toString();
 
-        try {
-            createPostWithCommonProperties(createPostRequest, postId, username)
-                .V().has("shard", "shardName", shardName).as("shard")
-                .addE("in").from("post").to("shard")
-                .iterate();
-        } catch (final NoSuchElementException e) {
+        final Optional<Edge> result = wG
+            .V().has("shard", "shardName", shardName).as("shard")
+            .flatMap(addPost(createPostRequest, postId)).as("post")
+            .addE("in").from("post").to("shard")
+            .flatMap(relateUserToPost(username))
+            .tryNext();
+
+        if (result.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
@@ -237,8 +245,8 @@ public class PostController {
             HttpStatus.CREATED
         );
 
-        metricsUtil.addSuccessMetric(POST_SHARD_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(POST_SHARD_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsUtil.addSuccessMetric(CREATE_SHARD_POST_METRIC_NAME);
+        metricsUtil.addLatencyMetric(CREATE_SHARD_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -246,7 +254,7 @@ public class PostController {
      * Call to create a Post in the authenticated User's public profile.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
-     * @param createPostRequest A JSON body containing the Post data for the post to create like
+     * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
      *                                 "title": "exampleTitle",
      *                                 "imageId": "exampleImageId",
@@ -262,17 +270,23 @@ public class PostController {
     public ResponseEntity<?> profilePost(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                          @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(POST_PROFILE_POST_METRIC_NAME);
+        metricsUtil.addCountMetric(CREATE_PROFILE_POST_METRIC_NAME);
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
 
         final String postId = UUID.randomUUID().toString();
 
-        createPostWithCommonProperties(createPostRequest, postId, username)
+        final Optional<Edge> result = wG
             .V().has("user", "username", username).out("has").as("profile")
+            .flatMap(addPost(createPostRequest, postId)).as("post")
             .addE("in").from("post").to("profile")
-            .iterate();
+            .flatMap(relateUserToPost(username))
+            .tryNext();
+
+        if (result.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(
             CreatePostResponse.builder()
@@ -281,8 +295,8 @@ public class PostController {
             HttpStatus.CREATED
         );
 
-        metricsUtil.addSuccessMetric(POST_PROFILE_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(POST_PROFILE_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsUtil.addSuccessMetric(CREATE_PROFILE_POST_METRIC_NAME);
+        metricsUtil.addLatencyMetric(CREATE_PROFILE_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -291,7 +305,7 @@ public class PostController {
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param parentPostId A postId of the parent Post
-     * @param createPostRequest A JSON body containing the Post data for the post to create like
+     * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
      *                                 "title": "exampleTitle",
      *                                 "imageId": "exampleImageId",
@@ -309,19 +323,20 @@ public class PostController {
                                          @PathVariable final String parentPostId,
                                          @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(POST_COMMENT_POST_METRIC_NAME);
+        metricsUtil.addCountMetric(CREATE_COMMENT_POST_METRIC_NAME);
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
-
         final String postId = UUID.randomUUID().toString();
 
-        try {
-            createPostWithCommonProperties(createPostRequest, postId, username)
-                .V().has("post", "postId", parentPostId).as("parentPost")
-                .addE("commentOn").from("post").to("parentPost")
-                .iterate();
-        } catch (final NoSuchElementException e) {
+        final Optional<Edge> result = wG
+            .V().has("post", "postId", parentPostId).as("parentPost")
+            .flatMap(addPost(createPostRequest, postId)).as("post")
+            .addE("commentOn").from("post").to("parentPost")
+            .flatMap(relateUserToPost(username))
+            .tryNext();
+
+        if (result.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
@@ -332,41 +347,40 @@ public class PostController {
             HttpStatus.CREATED
         );
 
-        metricsUtil.addSuccessMetric(POST_COMMENT_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(POST_COMMENT_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsUtil.addSuccessMetric(CREATE_COMMENT_POST_METRIC_NAME);
+        metricsUtil.addLatencyMetric(CREATE_COMMENT_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
-    private GraphTraversal createPostWithCommonProperties(final CreatePostRequest createPostRequest,
-                                                          final String postId,
-                                                          final String username) {
-        GraphTraversal graphTraversal = wG
-            .addV("post").as("post")
+    private GraphTraversal<Object, Vertex> addPost(final CreatePostRequest createPostRequest,
+                                                       final String postId) {
+        GraphTraversal<Object, Vertex> g = addV("post")
             .property(single, "postId", postId)
             .property(single, "createdAt", new Date());
 
         final String title = createPostRequest.getTitle();
         if (title != null) {
-            graphTraversal = graphTraversal.property(single, "title", title);
+            g = g.property(single, "title", title);
         }
         final String imageId = createPostRequest.getImageId();
         if (imageId != null) {
-            graphTraversal = graphTraversal.property(single, "imageId", imageId);
+            g = g.property(single, "imageId", imageId);
         }
         final String contentUrl = createPostRequest.getContentUrl();
         if (contentUrl != null) {
-            graphTraversal = graphTraversal.property(single, "contentUrl", contentUrl);
+            g = g.property(single, "contentUrl", contentUrl);
         }
         final String body = createPostRequest.getBody();
         if (body != null) {
-            graphTraversal = graphTraversal.property(single, "body", body);
+            g = g.property(single, "body", body);
         }
 
-        graphTraversal = graphTraversal
-            .V().has("user", "username", username).as("user")
+        return g;
+    }
+
+    private GraphTraversal<Object, Edge> relateUserToPost(final String username) {
+        return V().has("user", "username", username).as("user")
             .addE("submitted").from("user").to("post")
             .addE("liked").from("user").to("post");
-
-        return graphTraversal;
     }
 }

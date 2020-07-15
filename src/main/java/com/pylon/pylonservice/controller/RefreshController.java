@@ -31,12 +31,12 @@ public class RefreshController {
     /**
      * Call to authenticate a User.
      *
-     * @param refreshRequest A JSON body containing a refresh token like
+     * @param refreshRequest A JSON object containing a refresh token like
      *                       {
      *                           "refreshToken": "exampleRefreshToken"
      *                       }
      *
-     * @return HTTP 200 OK - If the refresh token exists with a JSON body containing a Jwt token like
+     * @return HTTP 200 OK - If the refresh token exists, a JSON object containing a Jwt token like
      *                       {
      *                           "jwtToken": "exampleJwtToken"
      *                       }
