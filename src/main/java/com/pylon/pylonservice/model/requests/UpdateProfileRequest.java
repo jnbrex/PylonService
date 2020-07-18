@@ -13,12 +13,14 @@ public class UpdateProfileRequest implements Serializable {
     String avatarImageId;
     String bannerImageId;
     String bio;
+    String location;
 
-    // Social media urls
+    // Urls
     String facebookUrl;
     String twitterUrl;
     String instagramUrl;
     String twitchUrl;
     String youtubeUrl;
     String tiktokUrl;
+    String websiteUrl;
 }

@@ -30,6 +30,24 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_BODY_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_COMMENT_ON_POST_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_CONTENT_URL_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_ID_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_IMAGE_ID_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_TITLE_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_VERTEX_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
@@ -77,7 +95,7 @@ public class PostController {
 
         final Map<Object, Object> post;
         try {
-            post = rG.V().has("post", "postId", postId)
+            post = rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
                 .valueMap().by(unfold())
                 .next();
         } catch (final NoSuchElementException e) {
@@ -104,9 +122,9 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_COMMENTS_METRIC_NAME);
 
-        final Tree postAndComments = rG.V().has("post", "postId", postId)
+        final Tree postAndComments = rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
             .emit()
-            .repeat(in("commentOn"))
+            .repeat(in(POST_COMMENT_ON_POST_EDGE_LABEL))
             .tree()
             .by(valueMap().by(unfold()))
             .next();
@@ -147,17 +165,15 @@ public class PostController {
         try {
             rG
                 .V().has("user", "username", username) // Single user vertex
-                .out("has")
                 .next();
         } catch (final NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final List<Map<Object, Object>> posts = rG
-            .V().has("user", "username", username) // Single user vertex
-            .out("has") // Single profile vertex
-            .in("in") // All posts "in" the profile
-            .order().by("createdAt", desc)
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username) // Single user vertex
+            .in(POST_POSTED_IN_USER_EDGE_LABEL) // All posts posted in the user's profile
+            .order().by(COMMON_CREATED_AT_PROPERTY, desc)
             .valueMap().by(unfold())
             .toList();
 
@@ -182,11 +198,11 @@ public class PostController {
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
 
         final List<Map<Object, Object>> posts = rG
-            .V().has("shard", "shardName", shardName)
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
             .emit()
-            .repeat(out("inherits"))
-            .in("in") // All posts "in" the profile
-            .order().by("createdAt", desc)
+            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
+            .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL) // All posts posted in the user's profile
+            .order().by(COMMON_CREATED_AT_PROPERTY, desc)
             .valueMap().by(unfold())
             .toList();
 
@@ -228,9 +244,9 @@ public class PostController {
         final String postId = UUID.randomUUID().toString();
 
         final Optional<Edge> result = wG
-            .V().has("shard", "shardName", shardName).as("shard")
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).as("shard")
             .flatMap(addPost(createPostRequest, postId)).as("post")
-            .addE("in").from("post").to("shard")
+            .addE(POST_POSTED_IN_SHARD_EDGE_LABEL).from("post").to("shard")
             .flatMap(relateUserToPost(username))
             .tryNext();
 
@@ -278,9 +294,9 @@ public class PostController {
         final String postId = UUID.randomUUID().toString();
 
         final Optional<Edge> result = wG
-            .V().has("user", "username", username).out("has").as("profile")
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).as("user")
             .flatMap(addPost(createPostRequest, postId)).as("post")
-            .addE("in").from("post").to("profile")
+            .addE(POST_POSTED_IN_USER_EDGE_LABEL).from("post").to("user")
             .flatMap(relateUserToPost(username))
             .tryNext();
 
@@ -330,9 +346,9 @@ public class PostController {
         final String postId = UUID.randomUUID().toString();
 
         final Optional<Edge> result = wG
-            .V().has("post", "postId", parentPostId).as("parentPost")
+            .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, parentPostId).as("parentPost")
             .flatMap(addPost(createPostRequest, postId)).as("post")
-            .addE("commentOn").from("post").to("parentPost")
+            .addE(POST_COMMENT_ON_POST_EDGE_LABEL).from("post").to("parentPost")
             .flatMap(relateUserToPost(username))
             .tryNext();
 
@@ -354,33 +370,34 @@ public class PostController {
 
     private GraphTraversal<Object, Vertex> addPost(final CreatePostRequest createPostRequest,
                                                        final String postId) {
-        GraphTraversal<Object, Vertex> g = addV("post")
-            .property(single, "postId", postId)
-            .property(single, "createdAt", new Date());
+        GraphTraversal<Object, Vertex> g = addV(POST_VERTEX_LABEL)
+            .property(single, POST_ID_PROPERTY, postId)
+            .property(single, COMMON_CREATED_AT_PROPERTY, new Date());
 
         final String title = createPostRequest.getTitle();
         if (title != null) {
-            g = g.property(single, "title", title);
+            g = g.property(single, POST_TITLE_PROPERTY, title);
         }
         final String imageId = createPostRequest.getImageId();
         if (imageId != null) {
-            g = g.property(single, "imageId", imageId);
+            g = g.property(single, POST_IMAGE_ID_PROPERTY, imageId);
         }
         final String contentUrl = createPostRequest.getContentUrl();
         if (contentUrl != null) {
-            g = g.property(single, "contentUrl", contentUrl);
+            g = g.property(single, POST_CONTENT_URL_PROPERTY, contentUrl);
         }
         final String body = createPostRequest.getBody();
         if (body != null) {
-            g = g.property(single, "body", body);
+            g = g.property(single, POST_BODY_PROPERTY, body);
         }
 
         return g;
     }
 
+    // Invoking traversals MUST contain a vertex with label "post"
     private GraphTraversal<Object, Edge> relateUserToPost(final String username) {
-        return V().has("user", "username", username).as("user")
-            .addE("submitted").from("user").to("post")
-            .addE("liked").from("user").to("post");
+        return V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).as("user")
+            .addE(USER_SUBMITTED_POST_EDGE_LABEL).from("user").to("post")
+            .addE(USER_UPVOTED_POST_EDGE_LABEL).from("user").to("post");
     }
 }

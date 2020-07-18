@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 
+import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
 @RestController
@@ -92,19 +94,14 @@ public class RegisterController {
 
         persistUser(username, email, passwordEncoder.encode(registerRequest.getPassword()));
 
-        final Date createdAt = new Date();
-        wG.addV("profile")
-                .property(single, "createdAt", createdAt)
-                .as("profile")
-            .addV("user")
-                .property(single, "username", username)
-                .property(single, "createdAt", createdAt)
-                .as("user")
-            .addE("has").from("user").to("profile")
+        wG
+            .addV(USER_VERTEX_LABEL)
+            .property(single, USERNAME_DOES_NOT_EXIST_CONDITION, username)
+            .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
             .iterate();
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(
-            String.format("User created with username %s and email %s", username, email), HttpStatus.CREATED
+            HttpStatus.CREATED
         );
 
         metricsUtil.addSuccessMetric(REGISTER_METRIC_NAME);

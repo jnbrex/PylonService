@@ -15,4 +15,5 @@ public class CreateShardRequest implements Serializable {
     @NonNull
     String shardName;
     Set<String> inheritedShardNames;
+    Set<String> inheritedUsers;
 }

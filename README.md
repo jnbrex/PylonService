@@ -23,3 +23,6 @@ export NEPTUNE_READER_ENDPOINT=localhost
 4. Unzip the download and navigate to the root of the package
 5. Start a local gremlin server listening on port 8182: `/bin/gremlin-server.sh start`
 6. Run the service using either IntelliJ or `./mvnw spring-boot:run`
+
+## PylonService Graph Model
+http://www.plantuml.com/plantuml/uml/ZLBBRXGn4BpxArfpJqAk752GkEo1XxJA1tZitjrMR7UmspkA4F-EFGOy0yEGqwfggwfBDNv8egDaxvHnEYLuJ1ZXcm8uIgHmXbnmq1xXxWvoeAyPWIm6eHCL8Pz0BjHSgflqLPVKn-WwDH9tuDXe8Gw56PaTwW1NZ3NIbfHwwiY6j8EFQ4b32KhTVD86Y-jf5IyJYU3w98Ka-Xor_qjfBYlgXRFa4TSoUf8_Ramu9f9PLiWFMX1CnF9Ztulw_dE_BvnakTzpmGUxlrxrgELfSTWXUNt6W-s4uI0bOpqlsvUTLiUBZdPPArNYq_--Q_DjvgeMERo1sri80zpSlEkW_VSM1WeNZ2Hf9ePTJtr2Iql5Wr8pFTp_wm1FuLVujh9kMuKfZvv4q5PYMzmxdDWvdbg5lGPT-xeI-VdAlokecTqOutwHNfyFsaDeyNkMrhqxAjunz5A6lSSWdqEhzO31Pkz-0000
