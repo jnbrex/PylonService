@@ -66,6 +66,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .cors().and()
             // Don't authenticate the following <HttpMethod, antPattern> tuples
             .authorizeRequests()
+                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/authenticate", "/collectemail", "/refresh", "/register").permitAll()
                 .antMatchers(HttpMethod.GET, "/health", "/post/**", "/profile/**", "/shard/**")
             .permitAll()
