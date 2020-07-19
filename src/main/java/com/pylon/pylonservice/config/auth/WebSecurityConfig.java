@@ -48,21 +48,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"));
+        // setAllowCredentials(true) is important, otherwise:
+        // The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'.
+        configuration.setAllowCredentials(true);
+        // setAllowedHeaders is important! Without it, OPTIONS preflight request
+        // will fail with 403 Invalid CORS request
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        final CorsConfiguration corsConfiguration = new CorsConfiguration();
-
-        corsConfiguration.addAllowedOrigin("*");
-        corsConfiguration.setAllowedMethods(
-            Arrays.asList(
-                HttpMethod.GET.name(),
-                HttpMethod.POST.name(),
-                HttpMethod.PUT.name(),
-                HttpMethod.DELETE.name()
-            )
-        );
-
-        corsConfiguration.setMaxAge(1800L);
-        source.registerCorsConfiguration("/**", corsConfiguration);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
@@ -72,7 +68,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             // We don't need CSRF because all authenticated endpoints require a JWT.
             .csrf().disable()
             // Enable CORS for all routes
-            .cors().configurationSource(corsConfigurationSource()).and()
+            .cors().and()
             // Don't authenticate the following <HttpMethod, antPattern> tuples
             .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/authenticate", "/collectemail", "/refresh", "/register").permitAll()
