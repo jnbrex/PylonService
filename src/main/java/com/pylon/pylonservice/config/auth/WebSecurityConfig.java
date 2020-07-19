@@ -48,12 +48,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization"));
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        final CorsConfiguration corsConfiguration = new CorsConfiguration();
+
+        corsConfiguration.addAllowedOrigin("*");
+        corsConfiguration.setAllowedMethods(
+            Arrays.asList(
+                HttpMethod.GET.name(),
+                HttpMethod.POST.name(),
+                HttpMethod.PUT.name(),
+                HttpMethod.DELETE.name()
+            )
+        );
+
+        corsConfiguration.setMaxAge(1800L);
+        source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
     }
 
@@ -63,10 +72,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             // We don't need CSRF because all authenticated endpoints require a JWT.
             .csrf().disable()
             // Enable CORS for all routes
-            .cors().and()
+            .cors().configurationSource(corsConfigurationSource()).and()
             // Don't authenticate the following <HttpMethod, antPattern> tuples
             .authorizeRequests()
-                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/authenticate", "/collectemail", "/refresh", "/register").permitAll()
                 .antMatchers(HttpMethod.GET, "/health", "/post/**", "/profile/**", "/shard/**")
             .permitAll()
