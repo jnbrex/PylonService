@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Date;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
@@ -96,7 +97,7 @@ public class RegisterController {
 
         wG
             .addV(USER_VERTEX_LABEL)
-            .property(single, USERNAME_DOES_NOT_EXIST_CONDITION, username)
+            .property(single, USER_USERNAME_PROPERTY, username)
             .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
             .iterate();
 
