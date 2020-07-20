@@ -51,6 +51,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
@@ -86,6 +87,46 @@ public class PostController {
      * @param postId A String containing the postId of the Post to return.
      *
      * @return HTTP 200 OK - If the Post was retrieved successfully.
+     *                       When the Post was posted to a User's profile, response contains a JSON object like
+     *                       {
+     *                           "postMetadata": {
+     *                               "id": 7,
+     *                               "label": "post",
+     *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
+     *                               "postBody": "This is a post body",
+     *                               "postTitle": "Profile Post 1",
+     *                               "postImageId": "00000000-0000-0000-0000-000000000000",
+     *                               "postContentUrl": "https://pylon.gg"
+     *                               "postId": "00000000-0000-0000-0000-000000000000"
+     *                           },
+     *                           "shardOrUserMetadata": {
+     *                               "id": 0,
+     *                               "label": "user",
+     *                               "createdAt": "2020-07-19T23:37:20.483+00:00",
+     *                               "userBio": "hi, my name is jason. aslkdjflkjawoej fjajlks jflkjawoeijf ojaewifj iwejfj akwejlkfj klawjkfjlkjlkewj klfjklawjekl fjkaewjkf jlkajwelk fjlkaewjklf jlja8987we fy79ya7g738g gh8 h2h48 hf28h48 f2o4fihu9 fg*(G&&G$&(GH *fh8 8h8 hfwjhoeifhwhjeoifhjiwejfij welkjflwjelkf jwlejfkjwefkj ewkljfkwjelkf jiwefio .",
+     *                               "username": "jason25"
+     *                           }
+     *                       }
+     *                       When the Post was posted to a Shard, response contains a JSON object like
+     *                       {
+     *                           "postMetadata": {
+     *                               "id": 7,
+     *                               "label": "post",
+     *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
+     *                               "postBody": "This is a post body",
+     *                               "postTitle": "Profile Post 1",
+     *                               "postImageId": "00000000-0000-0000-0000-000000000000",
+     *                               "postContentUrl": "https://pylon.gg"
+     *                               "postId": "00000000-0000-0000-0000-000000000000"
+     *                           },
+     *                           "shardOrUserMetadata": {
+     *                               "id": 0,
+     *                               "label": "shard",
+     *                               "createdAt": "2020-07-19T23:37:20.483+00:00",
+     *                               "shardName": "JasonShard"
+     *                           }
+     *                       }
+     *
      *         HTTP 404 Not Found - If the Post doesn't exist.
      */
     @GetMapping(value = "/post/{postId}")
@@ -93,10 +134,13 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_METRIC_NAME);
 
-        final Map<Object, Object> post;
+        final Map<String, Object> post;
         try {
-            post = rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
-                .valueMap().by(unfold())
+            post = rG
+                .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).as("postMetadata")
+                .out(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL).as("shardOrUserMetadata")
+                .select("postMetadata", "shardOrUserMetadata")
+                .by(elementMap())
                 .next();
         } catch (final NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
