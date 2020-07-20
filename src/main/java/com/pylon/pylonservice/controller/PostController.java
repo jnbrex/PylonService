@@ -162,11 +162,7 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_POSTS_METRIC_NAME);
 
-        try {
-            rG
-                .V().has("user", "username", username) // Single user vertex
-                .next();
-        } catch (final NoSuchElementException e) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
@@ -185,17 +181,21 @@ public class PostController {
     }
 
     /**
-     * Call to retrieve all the post headers for a Profile.
+     * Call to retrieve all the post headers for a Shard.
      *
      * @param shardName A String containing the shardName of the Shard to return.
      *
-     * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully.
-     *         HTTP 404 Not Found - If the Profile doesn't exist.
+     * @return HTTP 200 OK - If the Posts on the Shard were retrieved successfully.
+     *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/post/shard/{shardName}")
     public ResponseEntity<?> getShardPosts(@PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
 
         final List<Map<Object, Object>> posts = rG
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
@@ -232,7 +232,7 @@ public class PostController {
      *         HTTP 404 Not Found - If the Shard with name={name} doesn't exist.
      */
     @PostMapping(value = "/post/shard/{shardName}")
-    public ResponseEntity<?> shardPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+    public ResponseEntity<?> createShardPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                        @PathVariable final String shardName,
                                        @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
@@ -283,7 +283,7 @@ public class PostController {
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @PostMapping(value = "/post/profile")
-    public ResponseEntity<?> profilePost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+    public ResponseEntity<?> createProfilePost(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                          @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_PROFILE_POST_METRIC_NAME);
@@ -335,7 +335,7 @@ public class PostController {
      *         HTTP 404 Not Found - If the Post with postId={parentPostId} doesn't exist.
      */
     @PostMapping(value = "/post/comment/{parentPostId}")
-    public ResponseEntity<?> commentPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+    public ResponseEntity<?> createCommentPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                          @PathVariable final String parentPostId,
                                          @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();

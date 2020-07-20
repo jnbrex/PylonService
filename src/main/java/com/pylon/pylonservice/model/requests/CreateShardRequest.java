@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 import java.io.Serializable;
-import java.util.Set;
+import java.util.Collection;
 
 @Data
 @NoArgsConstructor
@@ -14,6 +14,8 @@ public class CreateShardRequest implements Serializable {
 
     @NonNull
     String shardName;
-    Set<String> inheritedShardNames;
-    Set<String> inheritedUsers;
+    @NonNull
+    Collection<String> inheritedShardNames;
+    @NonNull
+    Collection<String> inheritedUsers;
 }

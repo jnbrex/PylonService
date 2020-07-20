@@ -12,12 +12,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
@@ -34,6 +36,7 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 @RestController
 public class ShardController {
     private static final String GET_SHARD_METRIC_NAME = "GetShard";
+    private static final String GET_SHARD_INHERITANCE_METRIC_NAME = "GetShardInheritance";
     private static final String CREATE_SHARD_METRIC_NAME = "CreateShard";
 
     @Qualifier("writer")
@@ -48,7 +51,7 @@ public class ShardController {
     private MetricsUtil metricsUtil;
 
     /**
-     * Call to retrieve a Post.
+     * Call to retrieve a Shard.
      *
      * @param shardName A String containing the name of the Shard to return.
      *
@@ -78,41 +81,97 @@ public class ShardController {
     }
 
     /**
+     * Call to retrieve the Shard inheritance.
+     *
+     * @param shardName A String containing the name of the Shard whose inheritance to return.
+     *
+     * @return HTTP 200 OK - If the Shard inheritance was retrieved successfully.
+     *         HTTP 404 Not Found - If the Shard doesn't exist.
+     */
+    @GetMapping(value = "/shard/{shardName}/inheritance")
+    public ResponseEntity<?> getShardInheritance(@PathVariable final String shardName) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
+
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final Set<Map<Object, Object>> shardInheritance = rG
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
+            .out(SHARD_INHERITS_SHARD_EDGE_LABEL, SHARD_INHERITS_USER_EDGE_LABEL)
+            .valueMap().by(unfold())
+            .toSet();
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(shardInheritance);
+
+        metricsUtil.addSuccessMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_SHARD_INHERITANCE_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
      * Call to create a Shard.
      *
-     * @param createShardRequest A String containing the postId of the Post for which the comments should be returned.
+     * @param createShardRequest A JSON object containing shardName, inheritedShardNames, and inheritedUsers like
+     *                           {
+     *                               "shardName": "exampleShardName",
+     *                               "inheritedShardNames": [
+     *                                   "inheritedShardName1",
+     *                                   "inheritedShardName2"
+     *                               ],
+     *                               "inheritedUsers": [
+     *                                   "inheritedUser1",
+     *                                   "inheritedUser2"
+     *                               ]
+     *                           }
      *
-     * @return HTTP 200 OK - If the Post's comments were retrieved successfully.
-     *         HTTP 404 Not Found - If the Post doesn't exist.
+     *                           An object like below is also valid
+     *
+     *                           {
+     *                               "shardName": "exampleShardName",
+     *                               "inheritedShardNames": [],
+     *                               "inheritedUsers": []
+     *                           }
+     *
+     * @return HTTP 201 Created - If the Shard was created successfully.
+     *         HTTP 401 Unauthenticated - If the User isn't authenticated.
+     *         HTTP 409 Conflict - If a Shard with the same name already exists.
      */
     @PostMapping(value = "/shard")
     public ResponseEntity<?> createShard(@RequestHeader(value = "Authorization") final String authorizationHeader,
-                                         final CreateShardRequest createShardRequest) {
+                                         @RequestBody final CreateShardRequest createShardRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_SHARD_METRIC_NAME);
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
 
-        wG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).as("user")
-            .addV(SHARD_VERTEX_LABEL)
-                .property(single, SHARD_NAME_PROPERTY, createShardRequest.getShardName())
-                .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
-                .as("newShard")
-            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, P.within(createShardRequest.getInheritedShardNames()))
-                .as("inheritedShards")
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, P.within(createShardRequest.getInheritedUsers()))
-                .as("inheritedUsers")
-            .addE(SHARD_INHERITS_SHARD_EDGE_LABEL).from("newShard").to("inheritedShards")
-            .addE(SHARD_INHERITS_USER_EDGE_LABEL).from("newShard").to("inheritedUsers")
-            .addE(USER_OWNS_SHARD_EDGE_LABEL).from("user").to("newShard")
-            .addE(USER_FOLLOWS_SHARD_EDGE_LABEL).from("user").to("newShard")
-            .iterate();
+        if (rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, createShardRequest.getShardName()).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        } else {
+            wG
+                .addV(SHARD_VERTEX_LABEL)
+                    .property(single, SHARD_NAME_PROPERTY, createShardRequest.getShardName())
+                    .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
+                    .as("newShard")
+                .V()
+                    .hasLabel(SHARD_VERTEX_LABEL)
+                    .has(SHARD_NAME_PROPERTY, P.within(createShardRequest.getInheritedShardNames()))
+                    .addE(SHARD_INHERITS_SHARD_EDGE_LABEL).from("newShard")
+                .V()
+                    .hasLabel(USER_VERTEX_LABEL)
+                    .has(USER_USERNAME_PROPERTY, P.within(createShardRequest.getInheritedUsers()))
+                    .addE(SHARD_INHERITS_USER_EDGE_LABEL).from("newShard")
+                .V()
+                    .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+                    .as("user")
+                    .addE(USER_OWNS_SHARD_EDGE_LABEL).from("user").to("newShard")
+                    .addE(USER_FOLLOWS_SHARD_EDGE_LABEL).from("user").to("newShard")
+                .iterate();
+        }
 
-        final ResponseEntity<?> responseEntity = new ResponseEntity<>(
-           HttpStatus.CREATED
-        );
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.CREATED);
 
         metricsUtil.addSuccessMetric(CREATE_SHARD_METRIC_NAME);
         metricsUtil.addLatencyMetric(CREATE_SHARD_METRIC_NAME, System.nanoTime() - startTime);
