@@ -30,6 +30,8 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD
 import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
@@ -155,14 +157,18 @@ public class ShardController {
                     .property(single, SHARD_NAME_PROPERTY, createShardRequest.getShardName())
                     .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
                     .as("newShard")
-                .V()
-                    .hasLabel(SHARD_VERTEX_LABEL)
-                    .has(SHARD_NAME_PROPERTY, P.within(createShardRequest.getInheritedShardNames()))
-                    .addE(SHARD_INHERITS_SHARD_EDGE_LABEL).from("newShard")
-                .V()
-                    .hasLabel(USER_VERTEX_LABEL)
-                    .has(USER_USERNAME_PROPERTY, P.within(createShardRequest.getInheritedUsers()))
-                    .addE(SHARD_INHERITS_USER_EDGE_LABEL).from("newShard")
+                .sideEffect(
+                    V()
+                        .hasLabel(SHARD_VERTEX_LABEL)
+                        .has(SHARD_NAME_PROPERTY, P.within(createShardRequest.getInheritedShardNames()))
+                        .addE(SHARD_INHERITS_SHARD_EDGE_LABEL).from("newShard")
+                )
+                .sideEffect(
+                    V()
+                        .hasLabel(USER_VERTEX_LABEL)
+                        .has(USER_USERNAME_PROPERTY, P.within(createShardRequest.getInheritedUsers()))
+                        .addE(SHARD_INHERITS_USER_EDGE_LABEL).from("newShard")
+                )
                 .V()
                     .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
                     .as("user")

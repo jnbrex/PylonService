@@ -245,7 +245,8 @@ public class PostController {
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
             .emit()
             .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
-            .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL) // All posts posted in the user's profile
+            .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
+            .dedup()
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
             .valueMap().by(unfold())
             .toList();
