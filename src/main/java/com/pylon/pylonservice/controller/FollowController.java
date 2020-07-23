@@ -27,6 +27,8 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 public class FollowController {
     private static final String FOLLOW_USER_METRIC_NAME = "FollowUser";
     private static final String FOLLOW_SHARD_METRIC_NAME = "FollowShard";
+    private static final String UNFOLLOW_USER_METRIC_NAME = "UnfollowUser";
+    private static final String UNFOLLOW_SHARD_METRIC_NAME = "UnfollowShard";
 
     @Qualifier("writer")
     @Autowired
@@ -46,7 +48,8 @@ public class FollowController {
      * @param usernameToFollow A String containing the username of the User who the calling User should follow.
      *
      * @return HTTP 200 OK - If the follow relationship was added or already existed.
-     *         HTTP 404 Not Found - If the User doesn't exist.
+     *         HTTP 404 Not Found - If the User with username {usernameToFollow} doesn't exist.
+     *         HTTP 422 Unprocessable Entity - If the calling User's username is equal to {usernameToFollow}.
      */
     @PutMapping(value = "/follow/user/{usernameToFollow}")
     public ResponseEntity<?> followUser(@RequestHeader(value = "Authorization") final String authorizationHeader,
@@ -56,6 +59,10 @@ public class FollowController {
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
+
+        if (usernameToFollow.equals(followerUsername)) {
+            return new ResponseEntity<>("A user cannot follow themself.", HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToFollow).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -87,7 +94,7 @@ public class FollowController {
      * @param shardNameToFollow A String containing the shardName of the Shard who the calling User should follow.
      *
      * @return HTTP 200 OK - If the follow relationship was added or already existed.
-     *         HTTP 404 Not Found - If the Shard doesn't exist.
+     *         HTTP 404 Not Found - If the Shard with shardName {shardNameToFollow} doesn't exist.
      */
     @PutMapping(value = "/follow/shard/{shardNameToFollow}")
     public ResponseEntity<?> followShard(@RequestHeader(value = "Authorization") final String authorizationHeader,
@@ -118,6 +125,80 @@ public class FollowController {
 
         metricsUtil.addSuccessMetric(FOLLOW_SHARD_METRIC_NAME);
         metricsUtil.addLatencyMetric(FOLLOW_SHARD_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to remove a follow relationship from the calling User to the User with username {usernameToUnfollow}.
+     *
+     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param usernameToUnfollow A String containing the username of the User who the calling User should follow.
+     *
+     * @return HTTP 200 OK - If the follow relationship was removed or did not exist.
+     *         HTTP 404 Not Found - If the User with username {usernameToUnfollow} doesn't exist.
+     */
+    @PutMapping(value = "/unfollow/user/{usernameToUnfollow}")
+    public ResponseEntity<?> unfollowUser(@RequestHeader(value = "Authorization") final String authorizationHeader,
+                                          @PathVariable final String usernameToUnfollow) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(UNFOLLOW_USER_METRIC_NAME);
+
+        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+        final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
+
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToUnfollow).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        wG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, followerUsername)
+            .outE(USER_FOLLOWS_USER_EDGE_LABEL).where(
+                inV().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToUnfollow)
+            )
+            .drop()
+            .iterate();
+
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+
+        metricsUtil.addSuccessMetric(UNFOLLOW_USER_METRIC_NAME);
+        metricsUtil.addLatencyMetric(UNFOLLOW_USER_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to remove a follow relationship from the calling User to the Shard with shardName {shardNameToUnfollow}.
+     *
+     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param shardNameToUnfollow A String containing the shardName of the Shard who the calling User should follow.
+     *
+     * @return HTTP 200 OK - If the follow relationship was removed or did not exist.
+     *         HTTP 404 Not Found - If the Shard with shardName {shardNameToUnfollow} doesn't exist.
+     */
+    @PutMapping(value = "/unfollow/shard/{shardNameToUnfollow}")
+    public ResponseEntity<?> unfollowShard(@RequestHeader(value = "Authorization") final String authorizationHeader,
+                                           @PathVariable final String shardNameToUnfollow) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(UNFOLLOW_SHARD_METRIC_NAME);
+
+        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+        final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
+
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToUnfollow).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        wG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, followerUsername)
+            .outE(USER_FOLLOWS_SHARD_EDGE_LABEL).where(
+                inV().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToUnfollow)
+            )
+            .drop()
+            .iterate();
+
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+
+        metricsUtil.addSuccessMetric(UNFOLLOW_SHARD_METRIC_NAME);
+        metricsUtil.addLatencyMetric(UNFOLLOW_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }
