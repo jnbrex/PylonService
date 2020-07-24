@@ -11,16 +11,21 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
+import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 
 @RestController
@@ -28,6 +33,9 @@ public class UserController {
     private static final String GET_USER_OWNED_SHARDS_METRIC_NAME = "GetUserOwnedShards";
     private static final String GET_USER_FOLLOWED_SHARDS_METRIC_NAME = "GetUserFollowedShards";
     private static final String GET_USER_FOLLOWED_USERS_METRIC_NAME = "GetUserFollowedUsers";
+    private static final String GET_USER_INHERITORS_METRIC_NAME = "GetUserInheritors";
+    private static final String GET_USER_SUBMITTED_POSTS_METRIC_NAME = "GetUserSubmittedPosts";
+    private static final String GET_USER_UPVOTED_POSTS_METRIC_NAME = "GetUserUpvotedPosts";
 
     @Qualifier("writer")
     @Autowired
@@ -141,7 +149,7 @@ public class UserController {
     @GetMapping(value = "/user/{username}/inheritors")
     public ResponseEntity<?> getInheritors(@PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
+        metricsUtil.addCountMetric(GET_USER_INHERITORS_METRIC_NAME);
 
         if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -155,8 +163,8 @@ public class UserController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(inheritors);
 
-        metricsUtil.addSuccessMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsUtil.addSuccessMetric(GET_USER_INHERITORS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_USER_INHERITORS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -187,6 +195,68 @@ public class UserController {
 
         metricsUtil.addSuccessMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
         metricsUtil.addLatencyMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to retrieve all Posts submitted by a User.
+     *
+     * @param username A String containing the username of the User whose submitted Posts to return.
+     *
+     * @return HTTP 200 OK - If the set of Posts submitted by the User was retrieved successfully.
+     *         HTTP 404 Not Found - If the User doesn't exist.
+     */
+    @GetMapping(value = "/user/{username}/submitted")
+    public ResponseEntity<?> getSubmitted(@PathVariable final String username) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
+
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final List<Map<Object, Object>> submittedPosts = rG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .out(USER_SUBMITTED_POST_EDGE_LABEL)
+            .order().by(COMMON_CREATED_AT_PROPERTY, desc)
+            .elementMap()
+            .toList();
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(submittedPosts);
+
+        metricsUtil.addSuccessMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to retrieve all Posts upvoted by a User.
+     *
+     * @param username A String containing the username of the User whose upvoted Posts to return.
+     *
+     * @return HTTP 200 OK - If the set of Posts upvoted by the User was retrieved successfully.
+     *         HTTP 404 Not Found - If the User doesn't exist.
+     */
+    @GetMapping(value = "/user/{username}/upvoted")
+    public ResponseEntity<?> getUpvoted(@PathVariable final String username) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
+
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final List<Map<Object, Object>> upvotedPosts = rG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .out(USER_UPVOTED_POST_EDGE_LABEL)
+            .order().by(COMMON_CREATED_AT_PROPERTY, desc)
+            .elementMap()
+            .toList();
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(upvotedPosts);
+
+        metricsUtil.addSuccessMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }

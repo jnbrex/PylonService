@@ -249,7 +249,7 @@ public class ProfileController {
     }
 
     private String addHttpPrefixIfNotPresent(final String url) {
-        if (!(url.startsWith("http://") || url.startsWith("https://"))) {
+        if (url != null && !(url.startsWith("http://") || url.startsWith("https://"))) {
            return "http://" + url;
         }
 
