@@ -17,11 +17,14 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
@@ -30,7 +33,9 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD
 import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
+import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
@@ -38,6 +43,7 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 public class ShardController {
     private static final String GET_SHARD_METRIC_NAME = "GetShard";
     private static final String GET_SHARD_INHERITANCE_METRIC_NAME = "GetShardInheritance";
+    private static final String GET_SHARD_POSTS_METRIC_NAME = "GetShardPosts";
     private static final String CREATE_SHARD_METRIC_NAME = "CreateShard";
 
     @Qualifier("writer")
@@ -108,6 +114,40 @@ public class ShardController {
 
         metricsUtil.addSuccessMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
         metricsUtil.addLatencyMetric(GET_SHARD_INHERITANCE_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to retrieve all the post headers for a Shard.
+     *
+     * @param shardName A String containing the shardName of the Shard whose posts to return.
+     *
+     * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully.
+     *         HTTP 404 Not Found - If the Shard doesn't exist.
+     */
+    @GetMapping(value = "/shard/{shardName}/posts")
+    public ResponseEntity<?> getShardPosts(@PathVariable final String shardName) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final List<Map<Object, Object>> posts = rG
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
+            .emit()
+            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
+            .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
+            .dedup()
+            .order().by(COMMON_CREATED_AT_PROPERTY, desc)
+            .elementMap()
+            .toList();
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
+
+        metricsUtil.addSuccessMetric(GET_SHARD_POSTS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_SHARD_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 

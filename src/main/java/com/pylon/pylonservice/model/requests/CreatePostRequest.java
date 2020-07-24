@@ -12,8 +12,8 @@ public class CreatePostRequest implements Serializable {
     private static final long serialVersionUID = 0L;
 
     @NonNull
-    String title;
-    String imageId;
-    String contentUrl;
-    String body;
+    String postTitle;
+    String postImageId;
+    String postContentUrl;
+    String postBody;
 }

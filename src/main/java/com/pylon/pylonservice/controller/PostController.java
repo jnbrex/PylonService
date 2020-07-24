@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.UncheckedIOException;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -40,20 +39,16 @@ import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHA
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_TITLE_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_VERTEX_LABEL;
-import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
-import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
-import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -62,8 +57,6 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 public class PostController {
     private static final String GET_POST_METRIC_NAME = "GetPost";
     private static final String GET_POST_COMMENTS_METRIC_NAME = "GetPostComments";
-    private static final String GET_PROFILE_POSTS_METRIC_NAME = "GetProfilePosts";
-    private static final String GET_SHARD_POSTS_METRIC_NAME = "GetShardPosts";
     private static final String CREATE_SHARD_POST_METRIC_NAME = "CreateShardPost";
     private static final String CREATE_PROFILE_POST_METRIC_NAME = "CreateProfilePost";
     private static final String CREATE_COMMENT_POST_METRIC_NAME = "CreateCommentPost";
@@ -194,81 +187,16 @@ public class PostController {
     }
 
     /**
-     * Call to retrieve all the post headers for a Profile.
-     *
-     * @param username A String containing the username of the User's Profile to return.
-     *
-     * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully.
-     *         HTTP 404 Not Found - If the Profile doesn't exist.
-     */
-    @GetMapping(value = "/post/profile/{username}")
-    public ResponseEntity<?> getProfilePosts(@PathVariable final String username) {
-        final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_PROFILE_POSTS_METRIC_NAME);
-
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        final List<Map<Object, Object>> posts = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username) // Single user vertex
-            .in(POST_POSTED_IN_USER_EDGE_LABEL) // All posts posted in the user's profile
-            .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .valueMap().by(unfold())
-            .toList();
-
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
-
-        metricsUtil.addSuccessMetric(GET_PROFILE_POSTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);
-        return responseEntity;
-    }
-
-    /**
-     * Call to retrieve all the post headers for a Shard.
-     *
-     * @param shardName A String containing the shardName of the Shard to return.
-     *
-     * @return HTTP 200 OK - If the Posts on the Shard were retrieved successfully.
-     *         HTTP 404 Not Found - If the Shard doesn't exist.
-     */
-    @GetMapping(value = "/post/shard/{shardName}")
-    public ResponseEntity<?> getShardPosts(@PathVariable final String shardName) {
-        final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
-
-        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        final List<Map<Object, Object>> posts = rG
-            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
-            .emit()
-            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
-            .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
-            .dedup()
-            .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .valueMap().by(unfold())
-            .toList();
-
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
-
-        metricsUtil.addSuccessMetric(GET_SHARD_POSTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_SHARD_POSTS_METRIC_NAME, System.nanoTime() - startTime);
-        return responseEntity;
-    }
-
-    /**
      * Call to create a Post in a Shard.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param shardName The name of a Shard
      * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
-     *                                 "title": "exampleTitle",
-     *                                 "imageId": "exampleImageId",
-     *                                 "contentUrl": "exampleContentUrl",
-     *                                 "body": "exampleBody
+     *                                 "postTitle": "exampleTitle",
+     *                                 "postImageId": "exampleImageId",
+     *                                 "postContentUrl": "exampleContentUrl",
+     *                                 "postBody": "exampleBody"
      *                             }
      *                             If a field is not included in the JSON object, it is not included.
      *
@@ -317,10 +245,10 @@ public class PostController {
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
-     *                                 "title": "exampleTitle",
-     *                                 "imageId": "exampleImageId",
-     *                                 "contentUrl": "exampleContentUrl",
-     *                                 "body": "exampleBody
+     *                                 "postTitle": "exampleTitle",
+     *                                 "postImageId": "exampleImageId",
+     *                                 "postContentUrl": "exampleContentUrl",
+     *                                 "postBody": "exampleBody"
      *                             }
      *                             If a field is not included in the JSON object, it is not included.
      *
@@ -368,10 +296,10 @@ public class PostController {
      * @param parentPostId A postId of the parent Post
      * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
-     *                                 "title": "exampleTitle",
-     *                                 "imageId": "exampleImageId",
-     *                                 "contentUrl": "exampleContentUrl",
-     *                                 "body": "exampleBody
+     *                                 "postTitle": "exampleTitle",
+     *                                 "postImageId": "exampleImageId",
+     *                                 "postContentUrl": "exampleContentUrl",
+     *                                 "postBody": "exampleBody"
      *                             }
      *                             If a field is not included in the JSON object, it is not included.
      *
@@ -419,21 +347,21 @@ public class PostController {
             .property(single, POST_ID_PROPERTY, postId)
             .property(single, COMMON_CREATED_AT_PROPERTY, new Date());
 
-        final String title = createPostRequest.getTitle();
-        if (title != null) {
-            g = g.property(single, POST_TITLE_PROPERTY, title);
+        final String postTitle = createPostRequest.getPostTitle();
+        if (postTitle != null) {
+            g = g.property(single, POST_TITLE_PROPERTY, postTitle);
         }
-        final String imageId = createPostRequest.getImageId();
-        if (imageId != null) {
-            g = g.property(single, POST_IMAGE_ID_PROPERTY, imageId);
+        final String postImageId = createPostRequest.getPostImageId();
+        if (postImageId != null) {
+            g = g.property(single, POST_IMAGE_ID_PROPERTY, postImageId);
         }
-        final String contentUrl = createPostRequest.getContentUrl();
-        if (contentUrl != null) {
-            g = g.property(single, POST_CONTENT_URL_PROPERTY, contentUrl);
+        final String postContentUrl = createPostRequest.getPostContentUrl();
+        if (postContentUrl != null) {
+            g = g.property(single, POST_CONTENT_URL_PROPERTY, postContentUrl);
         }
-        final String body = createPostRequest.getBody();
-        if (body != null) {
-            g = g.property(single, POST_BODY_PROPERTY, body);
+        final String postBody = createPostRequest.getPostBody();
+        if (postBody != null) {
+            g = g.property(single, POST_BODY_PROPERTY, postBody);
         }
 
         return g;
