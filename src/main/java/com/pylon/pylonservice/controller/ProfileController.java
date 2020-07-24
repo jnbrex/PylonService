@@ -210,41 +210,49 @@ public class ProfileController {
             graphTraversal = graphTraversal.property(single, USER_LOCATION_PROPERTY, userLocation);
         }
 
-        final String userFacebookUrl = updateProfileRequest.getUserFacebookUrl();
+        final String userFacebookUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserFacebookUrl());
         if (userFacebookUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_FACEBOOK_URL_PROPERTY, userFacebookUrl);
         }
 
-        final String userTwitterUrl = updateProfileRequest.getUserTwitterUrl();
+        final String userTwitterUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserTwitterUrl());
         if (userTwitterUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_TWITTER_URL_PROPERTY, userTwitterUrl);
         }
 
-        final String userInstagramUrl = updateProfileRequest.getUserInstagramUrl();
+        final String userInstagramUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserInstagramUrl());
         if (userInstagramUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_INSTAGRAM_URL_PROPERTY, userInstagramUrl);
         }
 
-        final String userTwitchUrl = updateProfileRequest.getUserTwitchUrl();
+        final String userTwitchUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserTwitchUrl());
         if (userTwitchUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_TWITCH_URL_PROPERTY, userTwitchUrl);
         }
 
-        final String userYoutubeUrl = updateProfileRequest.getUserYoutubeUrl();
+        final String userYoutubeUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserYoutubeUrl());
         if (userYoutubeUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_YOUTUBE_URL_PROPERTY, userYoutubeUrl);
         }
 
-        final String userTiktokUrl = updateProfileRequest.getUserTiktokUrl();
+        final String userTiktokUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserTiktokUrl());
         if (userTiktokUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_TIKTOK_URL_PROPERTY, userTiktokUrl);
         }
 
-        final String userWebsiteUrl = updateProfileRequest.getUserWebsiteUrl();
+        final String userWebsiteUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserWebsiteUrl());
         if (userWebsiteUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_WEBSITE_URL_PROPERTY, userWebsiteUrl);
         }
 
         graphTraversal.iterate();
+    }
+
+    private String addHttpPrefixIfNotPresent(final String url) {
+        if (!(url.startsWith("http://") || url.startsWith("https://"))) {
+           return "http://" + url;
+        }
+
+        return url;
     }
 }
