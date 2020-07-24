@@ -210,49 +210,63 @@ public class ProfileController {
             graphTraversal = graphTraversal.property(single, USER_LOCATION_PROPERTY, userLocation);
         }
 
-        final String userFacebookUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserFacebookUrl());
+        final String userFacebookUrl = updateProfileRequest.getUserFacebookUrl();
         if (userFacebookUrl != null) {
-            graphTraversal = graphTraversal.property(single, USER_FACEBOOK_URL_PROPERTY, userFacebookUrl);
+            graphTraversal = graphTraversal.property(
+                single, USER_FACEBOOK_URL_PROPERTY, addHttpPrefixIfNotPresent(userFacebookUrl)
+            );
         }
 
-        final String userTwitterUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserTwitterUrl());
+        final String userTwitterUrl = updateProfileRequest.getUserTwitterUrl();
         if (userTwitterUrl != null) {
-            graphTraversal = graphTraversal.property(single, USER_TWITTER_URL_PROPERTY, userTwitterUrl);
+            graphTraversal = graphTraversal.property(
+                single, USER_TWITTER_URL_PROPERTY, addHttpPrefixIfNotPresent(userTwitterUrl)
+            );
         }
 
-        final String userInstagramUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserInstagramUrl());
+        final String userInstagramUrl = updateProfileRequest.getUserInstagramUrl();
         if (userInstagramUrl != null) {
-            graphTraversal = graphTraversal.property(single, USER_INSTAGRAM_URL_PROPERTY, userInstagramUrl);
+            graphTraversal = graphTraversal.property(
+                single, USER_INSTAGRAM_URL_PROPERTY, addHttpPrefixIfNotPresent(userInstagramUrl)
+            );
         }
 
-        final String userTwitchUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserTwitchUrl());
+        final String userTwitchUrl = updateProfileRequest.getUserTwitchUrl();
         if (userTwitchUrl != null) {
-            graphTraversal = graphTraversal.property(single, USER_TWITCH_URL_PROPERTY, userTwitchUrl);
+            graphTraversal = graphTraversal.property(
+                single, USER_TWITCH_URL_PROPERTY, addHttpPrefixIfNotPresent(userTwitchUrl)
+            );
         }
 
-        final String userYoutubeUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserYoutubeUrl());
+        final String userYoutubeUrl = updateProfileRequest.getUserYoutubeUrl();
         if (userYoutubeUrl != null) {
-            graphTraversal = graphTraversal.property(single, USER_YOUTUBE_URL_PROPERTY, userYoutubeUrl);
+            graphTraversal = graphTraversal.property(
+                single, USER_YOUTUBE_URL_PROPERTY, addHttpPrefixIfNotPresent(userYoutubeUrl)
+            );
         }
 
-        final String userTiktokUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserTiktokUrl());
+        final String userTiktokUrl = updateProfileRequest.getUserTiktokUrl();
         if (userTiktokUrl != null) {
-            graphTraversal = graphTraversal.property(single, USER_TIKTOK_URL_PROPERTY, userTiktokUrl);
+            graphTraversal = graphTraversal.property(
+                single, USER_TIKTOK_URL_PROPERTY, addHttpPrefixIfNotPresent(userTiktokUrl)
+            );
         }
 
-        final String userWebsiteUrl = addHttpPrefixIfNotPresent(updateProfileRequest.getUserWebsiteUrl());
+        final String userWebsiteUrl = updateProfileRequest.getUserWebsiteUrl();
         if (userWebsiteUrl != null) {
-            graphTraversal = graphTraversal.property(single, USER_WEBSITE_URL_PROPERTY, userWebsiteUrl);
+            graphTraversal = graphTraversal.property(
+                single, USER_WEBSITE_URL_PROPERTY, addHttpPrefixIfNotPresent(userWebsiteUrl)
+            );
         }
 
         graphTraversal.iterate();
     }
 
     private String addHttpPrefixIfNotPresent(final String url) {
-        if (url != null && !(url.startsWith("http://") || url.startsWith("https://"))) {
-           return "http://" + url;
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+           return url;
         }
 
-        return url;
+        return "http://" + url;
     }
 }
