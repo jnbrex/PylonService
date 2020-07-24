@@ -25,9 +25,18 @@ public class MetricsUtil {
     private AmazonCloudWatch amazonCloudWatch;
 
     MetricsUtil(@Value("${environment.name}") final String environmentName) {
+        final String dimensionName;
+
+        // This is ugly but saves money
+        if (environmentName.equals("local")) {
+            dimensionName = "beta";
+        } else {
+            dimensionName = environmentName;
+        }
+
         environmentDimension = new Dimension()
             .withName(ENVIRONMENT_DIMENSION_NAME)
-            .withValue(environmentName);
+            .withValue(dimensionName);
     }
 
     public void addLatencyMetric(@NonNull final String metricName, final long nanoTime) {
