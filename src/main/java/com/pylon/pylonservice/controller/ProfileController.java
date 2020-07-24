@@ -115,15 +115,16 @@ public class ProfileController {
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param updateProfileRequest A JSON object containing the public Profile data to update like
      *                             {
-     *                                 "avatarImageId": "exampleAvatarImageId",
-     *                                 "bannerImageId": "exampleBannerImageId",
-     *                                 "bio": "exampleBio",
-     *                                 "facebookUrl": "exampleFacebookUrl",
-     *                                 "twitterUrl": "exampleTwitterUrl",
-     *                                 "instagramUrl": "exampleInstagramUrl",
-     *                                 "twitchUrl": "exampleTwitchUrl",
-     *                                 "youtubeUrl": "exampleYoutubeUrl",
-     *                                 "tiktokUrl": "exampleTiktokUrl"
+     *                                 "userAvatarImageId": "exampleAvatarImageId",
+     *                                 "userBannerImageId": "exampleBannerImageId",
+     *                                 "userBio": "exampleBio",
+     *                                 "userLocation": "exampleLocation",
+     *                                 "userFacebookUrl": "exampleFacebookUrl",
+     *                                 "userTwitterUrl": "exampleTwitterUrl",
+     *                                 "userInstagramUrl": "exampleInstagramUrl",
+     *                                 "userTwitchUrl": "exampleTwitchUrl",
+     *                                 "userYoutubeUrl": "exampleYoutubeUrl",
+     *                                 "userWebsiteUrl": "exampleTiktokUrl"
      *                             }
      *                             If a field is not included in the JSON object, it is not updated.
      *
@@ -153,57 +154,57 @@ public class ProfileController {
         GraphTraversal graphTraversal =
             wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username);
 
-        final String avatarImageId = updateProfileRequest.getAvatarImageId();
+        final String avatarImageId = updateProfileRequest.getUserAvatarImageId();
         if (avatarImageId != null) {
             graphTraversal = graphTraversal.property(single, USER_AVATAR_IMAGE_ID_PROPERTY, avatarImageId);
         }
 
-        final String bannerImageId = updateProfileRequest.getBannerImageId();
+        final String bannerImageId = updateProfileRequest.getUserBannerImageId();
         if (bannerImageId != null) {
             graphTraversal = graphTraversal.property(single, USER_BANNER_IMAGE_ID_PROPERTY, bannerImageId);
         }
 
-        final String bio = updateProfileRequest.getBio();
+        final String bio = updateProfileRequest.getUserBio();
         if (bio != null) {
             graphTraversal = graphTraversal.property(single, USER_BIO_PROPERTY, bio);
         }
 
-        final String location = updateProfileRequest.getLocation();
+        final String location = updateProfileRequest.getUserLocation();
         if (location != null) {
             graphTraversal = graphTraversal.property(single, USER_LOCATION_PROPERTY, location);
         }
 
-        final String facebookUrl = updateProfileRequest.getFacebookUrl();
+        final String facebookUrl = updateProfileRequest.getUserFacebookUrl();
         if (facebookUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_FACEBOOK_URL_PROPERTY, facebookUrl);
         }
 
-        final String twitterUrl = updateProfileRequest.getTwitterUrl();
+        final String twitterUrl = updateProfileRequest.getUserTwitterUrl();
         if (twitterUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_TWITTER_URL_PROPERTY, twitterUrl);
         }
 
-        final String instagramUrl = updateProfileRequest.getInstagramUrl();
+        final String instagramUrl = updateProfileRequest.getUserInstagramUrl();
         if (instagramUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_INSTAGRAM_URL_PROPERTY, instagramUrl);
         }
 
-        final String twitchUrl = updateProfileRequest.getTwitchUrl();
+        final String twitchUrl = updateProfileRequest.getUserTwitchUrl();
         if (twitchUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_TWITCH_URL_PROPERTY, twitchUrl);
         }
 
-        final String youtubeUrl = updateProfileRequest.getYoutubeUrl();
+        final String youtubeUrl = updateProfileRequest.getUserYoutubeUrl();
         if (youtubeUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_YOUTUBE_URL_PROPERTY, youtubeUrl);
         }
 
-        final String tiktokUrl = updateProfileRequest.getTiktokUrl();
+        final String tiktokUrl = updateProfileRequest.getUserTiktokUrl();
         if (tiktokUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_TIKTOK_URL_PROPERTY, tiktokUrl);
         }
 
-        final String websiteUrl = updateProfileRequest.getWebsiteUrl();
+        final String websiteUrl = updateProfileRequest.getUserWebsiteUrl();
         if (websiteUrl != null) {
             graphTraversal = graphTraversal.property(single, USER_WEBSITE_URL_PROPERTY, websiteUrl);
         }

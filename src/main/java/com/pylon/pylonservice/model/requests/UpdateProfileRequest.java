@@ -10,17 +10,17 @@ import java.io.Serializable;
 public class UpdateProfileRequest implements Serializable {
     private static final long serialVersionUID = 0L;
 
-    String avatarImageId;
-    String bannerImageId;
-    String bio;
-    String location;
+    String userAvatarImageId;
+    String userBannerImageId;
+    String userBio;
+    String userLocation;
 
     // Urls
-    String facebookUrl;
-    String twitterUrl;
-    String instagramUrl;
-    String twitchUrl;
-    String youtubeUrl;
-    String tiktokUrl;
-    String websiteUrl;
+    String userFacebookUrl;
+    String userTwitterUrl;
+    String userInstagramUrl;
+    String userTwitchUrl;
+    String userYoutubeUrl;
+    String userTiktokUrl;
+    String userWebsiteUrl;
 }
