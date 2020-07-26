@@ -1,10 +1,12 @@
 package com.pylon.pylonservice.controller;
 
+import com.pylon.pylonservice.model.Post;
 import com.pylon.pylonservice.model.requests.CreateShardRequest;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -16,11 +18,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
@@ -31,10 +35,17 @@ import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERT
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
+import static com.pylon.pylonservice.model.Post.NUM_UPVOTES;
+import static com.pylon.pylonservice.model.Post.PROPERTIES;
+import static com.pylon.pylonservice.model.Post.SUBMITTER_USERNAME;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -118,15 +129,54 @@ public class ShardController {
     }
 
     /**
-     * Call to retrieve all the post headers for a Shard.
+     * Call to retrieve all the post headers for a Shard, ordered by newest post first.
      *
      * @param shardName A String containing the shardName of the Shard whose posts to return.
      *
      * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully.
+     *                       [
+     *                           {
+     *                               "postId": "f7cc41e2-8ae7-49ef-979c-37619b43b228",
+     *                               "postTitle": "Third Shard Post!",
+     *                               "postImageId": null,
+     *                               "postContentUrl": "exampleContentUrl",
+     *                               "postBody": "third post!",
+     *                               "createdAt": "2020-07-25T21:32:56.090+00:00",
+     *                               "postUpvotes": 1,
+     *                               "postSubmitter": "jason25",
+     *                               "postPostedInUser": null,
+     *                               "postPostedInShard": null
+     *                           },
+     *                           {
+     *                               "postId": "700d0092-5da2-423d-89db-174087b66e9e",
+     *                               "postTitle": null,
+     *                               "postImageId": null,
+     *                               "postContentUrl": null,
+     *                               "postBody": null,
+     *                               "createdAt": "2020-07-25T21:31:54.682+00:00",
+     *                               "postUpvotes": 1,
+     *                               "postSubmitter": "jason25",
+     *                               "postPostedInUser": null,
+     *                               "postPostedInShard": null
+     *                           },
+     *                           {
+     *                               "postId": "5be67901-bee1-446b-bb50-b62046311fac",
+     *                               "postTitle": "Profile Post 1",
+     *                               "postImageId": null,
+     *                               "postContentUrl": null,
+     *                               "postBody": "1",
+     *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
+     *                               "postUpvotes": 1,
+     *                               "postSubmitter": "jason25",
+     *                               "postPostedInUser": null,
+     *                               "postPostedInShard": null
+     *                           }
+     *                       ]
+     *
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
-    @GetMapping(value = "/shard/{shardName}/posts")
-    public ResponseEntity<?> getShardPosts(@PathVariable final String shardName) {
+    @GetMapping(value = "/shard/{shardName}/posts/new")
+    public ResponseEntity<?> getNewShardPosts(@PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
 
@@ -134,15 +184,101 @@ public class ShardController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final List<Map<Object, Object>> posts = rG
+        final List<Post> posts = rG
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
             .emit()
             .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
             .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
             .dedup()
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .elementMap()
-            .toList();
+            .project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME)
+                .by(elementMap())
+                .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
+                .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
+            .toList()
+            .stream()
+            .map(Post::new)
+            .collect(Collectors.toList());
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
+
+        metricsUtil.addSuccessMetric(GET_SHARD_POSTS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_SHARD_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to retrieve all the post headers for a Shard, ordered by most popular post first.
+     *
+     * @param shardName A String containing the shardName of the Shard whose posts to return.
+     *
+     * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully.
+     *                       [
+     *                           {
+     *                               "postId": "f7cc41e2-8ae7-49ef-979c-37619b43b228",
+     *                               "postTitle": "Third Shard Post!",
+     *                               "postImageId": null,
+     *                               "postContentUrl": "exampleContentUrl",
+     *                               "postBody": "third post!",
+     *                               "createdAt": "2020-07-25T21:32:56.090+00:00",
+     *                               "postUpvotes": 1,
+     *                               "postSubmitter": "jason25",
+     *                               "postPostedInUser": null,
+     *                               "postPostedInShard": null
+     *                           },
+     *                           {
+     *                               "postId": "700d0092-5da2-423d-89db-174087b66e9e",
+     *                               "postTitle": null,
+     *                               "postImageId": null,
+     *                               "postContentUrl": null,
+     *                               "postBody": null,
+     *                               "createdAt": "2020-07-25T21:31:54.682+00:00",
+     *                               "postUpvotes": 1,
+     *                               "postSubmitter": "jason25",
+     *                               "postPostedInUser": null,
+     *                               "postPostedInShard": null
+     *                           },
+     *                           {
+     *                               "postId": "5be67901-bee1-446b-bb50-b62046311fac",
+     *                               "postTitle": "Profile Post 1",
+     *                               "postImageId": null,
+     *                               "postContentUrl": null,
+     *                               "postBody": "1",
+     *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
+     *                               "postUpvotes": 1,
+     *                               "postSubmitter": "jason25",
+     *                               "postPostedInUser": null,
+     *                               "postPostedInShard": null
+     *                           }
+     *                       ]
+     *
+     *         HTTP 404 Not Found - If the Shard doesn't exist.
+     */
+    @GetMapping(value = "/shard/{shardName}/posts/popular")
+    public ResponseEntity<?> getPopularShardPosts(@PathVariable final String shardName) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final Date now = new Date();
+        final List<Post> posts = rG
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
+            .emit()
+            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
+            .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
+            .dedup()
+            .project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME)
+                .by(elementMap())
+                .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
+                .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
+            .toSet()
+            .stream()
+            .map(Post::new)
+            .sorted(Comparator.comparing((Post post) -> post.getPopularity(now)).reversed())
+            .collect(Collectors.toList());
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 

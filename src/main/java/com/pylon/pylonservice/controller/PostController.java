@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,9 +47,12 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.inV;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -57,6 +61,8 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 public class PostController {
     private static final String GET_POST_METRIC_NAME = "GetPost";
     private static final String GET_POST_COMMENTS_METRIC_NAME = "GetPostComments";
+    private static final String UPVOTE_POST_METRIC_NAME = "UpvotePost";
+    private static final String REMOVE_UPVOTE_POST_METRIC_NAME = "RemoveUpvotePost";
     private static final String CREATE_SHARD_POST_METRIC_NAME = "CreateShardPost";
     private static final String CREATE_PROFILE_POST_METRIC_NAME = "CreateProfilePost";
     private static final String CREATE_COMMENT_POST_METRIC_NAME = "CreateCommentPost";
@@ -187,6 +193,83 @@ public class PostController {
     }
 
     /**
+     * Call for the calling User to upvote a Post.
+     *
+     * @param postId A String containing the postId of the Post to upvote.
+     *
+     * @return HTTP 200 OK - If the Post was upvoted successfully or was already upvoted by the calling User.
+     *         HTTP 404 Not Found - If the Post doesn't exist.
+     */
+    @PutMapping(value = "/post/upvote/{postId}")
+    public ResponseEntity<?> upvotePost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+                                        @PathVariable final String postId) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(UPVOTE_POST_METRIC_NAME);
+
+        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+
+        if (!rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        wG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .coalesce(
+                outE(USER_UPVOTED_POST_EDGE_LABEL).filter(
+                    inV().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+                ),
+                addE(USER_UPVOTED_POST_EDGE_LABEL).to(
+                    V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+                )
+            )
+            .iterate();
+
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+
+        metricsUtil.addSuccessMetric(UPVOTE_POST_METRIC_NAME);
+        metricsUtil.addLatencyMetric(UPVOTE_POST_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call for the calling User to remove their upvote on a Post.
+     *
+     * @param postId A String containing the postId of the Post to remove their upvote on.
+     *
+     * @return HTTP 200 OK - If the upvote on the Post was removed successfully or if the Post hadn't been upvoted by
+     *                       the calling User.
+     *         HTTP 404 Not Found - If the Post doesn't exist.
+     */
+    @PutMapping(value = "/post/removeUpvote/{postId}")
+    public ResponseEntity<?> removeUpvoteOnPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+                                                @PathVariable final String postId) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(REMOVE_UPVOTE_POST_METRIC_NAME);
+
+        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+
+        if (!rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        wG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .outE(USER_UPVOTED_POST_EDGE_LABEL).where(
+                inV().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+            )
+            .drop()
+            .iterate();
+
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+
+        metricsUtil.addSuccessMetric(REMOVE_UPVOTE_POST_METRIC_NAME);
+        metricsUtil.addLatencyMetric(REMOVE_UPVOTE_POST_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
      * Call to create a Post in a Shard.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
@@ -206,8 +289,8 @@ public class PostController {
      */
     @PostMapping(value = "/post/shard/{shardName}")
     public ResponseEntity<?> createShardPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
-                                       @PathVariable final String shardName,
-                                       @RequestBody final CreatePostRequest createPostRequest) {
+                                             @PathVariable final String shardName,
+                                             @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_SHARD_POST_METRIC_NAME);
 
@@ -257,7 +340,7 @@ public class PostController {
      */
     @PostMapping(value = "/post/profile")
     public ResponseEntity<?> createProfilePost(@RequestHeader(value = "Authorization") final String authorizationHeader,
-                                         @RequestBody final CreatePostRequest createPostRequest) {
+                                               @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_PROFILE_POST_METRIC_NAME);
 
@@ -309,8 +392,8 @@ public class PostController {
      */
     @PostMapping(value = "/post/comment/{parentPostId}")
     public ResponseEntity<?> createCommentPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
-                                         @PathVariable final String parentPostId,
-                                         @RequestBody final CreatePostRequest createPostRequest) {
+                                               @PathVariable final String parentPostId,
+                                               @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_COMMENT_POST_METRIC_NAME);
 

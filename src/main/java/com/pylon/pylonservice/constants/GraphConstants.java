@@ -1,7 +1,5 @@
 package com.pylon.pylonservice.constants;
 
-import java.util.Date;
-
 public final class GraphConstants {
     /*
      * Vertex labels
