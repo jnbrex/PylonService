@@ -123,7 +123,7 @@ public class ProfileController {
      * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully.
      *         HTTP 404 Not Found - If the Profile doesn't exist.
      */
-    @GetMapping(value = "/profile/{username}/posts")
+    @GetMapping(value = "/profile/{username}/posts/new")
     public ResponseEntity<?> getProfilePosts(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_POSTS_METRIC_NAME);

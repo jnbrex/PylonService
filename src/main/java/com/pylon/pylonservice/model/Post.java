@@ -3,7 +3,9 @@ package com.pylon.pylonservice.model;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
@@ -20,6 +22,8 @@ public class Post implements Serializable {
     public static final String PROPERTIES = "properties";
     public static final String NUM_UPVOTES = "numUpvotes";
     public static final String SUBMITTER_USERNAME = "submitterUsername";
+    public static final String POSTED_IN_SHARD = "postedInShard";
+    public static final String POSTED_IN_USER = "postedInUser";
 
     private static final double TWO_HOURS = 2.0;
     private static final double DECAY_CONSTANT = 1.8;
@@ -43,6 +47,12 @@ public class Post implements Serializable {
 
         this.postUpvotes = (long) graphPostMap.get(NUM_UPVOTES);
         this.postSubmitter = (String) graphPostMap.get(SUBMITTER_USERNAME);
+
+        final Collection<String> postedInShardNames = (Collection<String>) graphPostMap.get(POSTED_IN_SHARD);
+        final Collection<String> postedInUserUsernames = (Collection<String>) graphPostMap.get(POSTED_IN_USER);
+
+        this.postPostedInShard = postedInShardNames.size() > 0 ? postedInShardNames.iterator().next() : null;
+        this.postPostedInUser = postedInUserUsernames.size() > 0 ? postedInUserUsernames.iterator().next() : null;
 
         final Map<Object, Object> postProperties = (Map<Object, Object>) graphPostMap.get(PROPERTIES);
         this.postId = (String) postProperties.get(POST_ID_PROPERTY);

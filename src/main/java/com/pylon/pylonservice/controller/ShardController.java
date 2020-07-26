@@ -6,7 +6,6 @@ import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -40,6 +39,8 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.model.Post.NUM_UPVOTES;
+import static com.pylon.pylonservice.model.Post.POSTED_IN_SHARD;
+import static com.pylon.pylonservice.model.Post.POSTED_IN_USER;
 import static com.pylon.pylonservice.model.Post.PROPERTIES;
 import static com.pylon.pylonservice.model.Post.SUBMITTER_USERNAME;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
@@ -145,7 +146,7 @@ public class ShardController {
      *                               "postUpvotes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": null,
-     *                               "postPostedInShard": null
+     *                               "postPostedInShard": "shard9"
      *                           },
      *                           {
      *                               "postId": "700d0092-5da2-423d-89db-174087b66e9e",
@@ -157,7 +158,7 @@ public class ShardController {
      *                               "postUpvotes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": null,
-     *                               "postPostedInShard": null
+     *                               "postPostedInShard": "shard9"
      *                           },
      *                           {
      *                               "postId": "5be67901-bee1-446b-bb50-b62046311fac",
@@ -168,7 +169,7 @@ public class ShardController {
      *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
      *                               "postUpvotes": 1,
      *                               "postSubmitter": "jason25",
-     *                               "postPostedInUser": null,
+     *                               "postPostedInUser": "jason25",
      *                               "postPostedInShard": null
      *                           }
      *                       ]
@@ -191,10 +192,12 @@ public class ShardController {
             .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
             .dedup()
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME)
+            .project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME, POSTED_IN_SHARD, POSTED_IN_USER)
                 .by(elementMap())
                 .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
                 .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
+                .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY))
+                .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
             .toList()
             .stream()
             .map(Post::new)
@@ -224,7 +227,7 @@ public class ShardController {
      *                               "postUpvotes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": null,
-     *                               "postPostedInShard": null
+     *                               "postPostedInShard": "shard9"
      *                           },
      *                           {
      *                               "postId": "700d0092-5da2-423d-89db-174087b66e9e",
@@ -236,7 +239,7 @@ public class ShardController {
      *                               "postUpvotes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": null,
-     *                               "postPostedInShard": null
+     *                               "postPostedInShard": "shard9"
      *                           },
      *                           {
      *                               "postId": "5be67901-bee1-446b-bb50-b62046311fac",
@@ -247,7 +250,7 @@ public class ShardController {
      *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
      *                               "postUpvotes": 1,
      *                               "postSubmitter": "jason25",
-     *                               "postPostedInUser": null,
+     *                               "postPostedInUser": "jason25",
      *                               "postPostedInShard": null
      *                           }
      *                       ]
@@ -270,10 +273,12 @@ public class ShardController {
             .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
             .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
             .dedup()
-            .project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME)
+            .project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME, POSTED_IN_SHARD, POSTED_IN_USER)
                 .by(elementMap())
                 .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
                 .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
+                .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
+                .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
             .toSet()
             .stream()
             .map(Post::new)
