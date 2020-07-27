@@ -69,11 +69,12 @@ public class ProfileController {
     public ResponseEntity<?> getProfile(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
 
         final Map<Object, Object> profile;
         try {
             profile = rG
-                .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+                .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
                 .valueMap().by(unfold())
                 .next();
         } catch (final NoSuchElementException e) {
@@ -127,13 +128,14 @@ public class ProfileController {
     public ResponseEntity<?> getProfilePosts(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_POSTS_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final List<Map<Object, Object>> posts = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username) // Single user vertex
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase) // Single user vertex
             .in(POST_POSTED_IN_USER_EDGE_LABEL) // All posts posted in the user's profile
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
             .elementMap()

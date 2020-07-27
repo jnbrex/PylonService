@@ -60,13 +60,14 @@ public class UserController {
     public ResponseEntity<?> getOwnedShards(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_OWNED_SHARDS_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Map<Object, Object>> ownedShards = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_OWNS_SHARD_EDGE_LABEL)
             .valueMap().by(unfold())
             .toSet();
@@ -90,13 +91,14 @@ public class UserController {
     public ResponseEntity<?> getFollowedShards(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_FOLLOWED_SHARDS_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Object> followedShards = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_FOLLOWS_SHARD_EDGE_LABEL)
             .values(SHARD_NAME_PROPERTY)
             .toSet();
@@ -120,13 +122,14 @@ public class UserController {
     public ResponseEntity<?> getFollowedUsers(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Object> followedUsers = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_FOLLOWS_USER_EDGE_LABEL)
             .values(USER_USERNAME_PROPERTY)
             .toSet();
@@ -150,13 +153,14 @@ public class UserController {
     public ResponseEntity<?> getInheritors(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_INHERITORS_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Object> inheritors = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .in(SHARD_INHERITS_USER_EDGE_LABEL)
             .values(SHARD_NAME_PROPERTY)
             .toSet();
@@ -180,13 +184,14 @@ public class UserController {
     public ResponseEntity<?> getFollowers(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Object> followers = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .in(USER_FOLLOWS_USER_EDGE_LABEL)
             .values(USER_USERNAME_PROPERTY)
             .toSet();
@@ -210,13 +215,14 @@ public class UserController {
     public ResponseEntity<?> getSubmitted(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final List<Map<Object, Object>> submittedPosts = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_SUBMITTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
             .elementMap()
@@ -241,13 +247,14 @@ public class UserController {
     public ResponseEntity<?> getUpvoted(@PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final List<Map<Object, Object>> upvotedPosts = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_UPVOTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
             .elementMap()

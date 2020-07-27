@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Date;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_CASE_SENSITIVE_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_CASE_SENSITIVE_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -74,14 +76,14 @@ public class RegisterController {
         metricsUtil.addCountMetric(REGISTER_METRIC_NAME);
 
         if (!registerRequest.isValid()) {
-            return ResponseEntity.unprocessableEntity().body("Invalid register request");
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String username = registerRequest.getUsername();
-        final String email = registerRequest.getEmail();
+        final String usernameLowercase = registerRequest.getUsername().toLowerCase();
+        final String emailLowercase = registerRequest.getEmail().toLowerCase();
 
-        final boolean isUsernameInUse = dynamoDBMapper.load(User.class, username) != null;
-        final boolean isEmailInUse = dynamoDBMapper.load(EmailUser.class, email) != null;
+        final boolean isUsernameInUse = dynamoDBMapper.load(User.class, usernameLowercase) != null;
+        final boolean isEmailInUse = dynamoDBMapper.load(EmailUser.class, emailLowercase) != null;
 
         if (isUsernameInUse || isEmailInUse) {
             return new ResponseEntity<>(
@@ -93,11 +95,12 @@ public class RegisterController {
             );
         }
 
-        persistUser(username, email, passwordEncoder.encode(registerRequest.getPassword()));
+        persistUser(usernameLowercase, emailLowercase, passwordEncoder.encode(registerRequest.getPassword()));
 
         wG
             .addV(USER_VERTEX_LABEL)
-            .property(single, USER_USERNAME_PROPERTY, username)
+            .property(single, USER_USERNAME_PROPERTY, usernameLowercase)
+            .property(single, USER_USERNAME_CASE_SENSITIVE_PROPERTY, registerRequest.getUsername())
             .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
             .iterate();
 

@@ -65,7 +65,7 @@ public class AuthenticateController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(AUTHENTICATE_METRIC_NAME);
 
-        String usernameOrEmail = authenticateRequest.getUsernameOrEmail();
+        String usernameOrEmail = authenticateRequest.getUsernameOrEmail().toLowerCase();
         if (usernameOrEmail.contains("@")) {
             final EmailUser emailUser = dynamoDBMapper.load(EmailUser.class, usernameOrEmail);
             if (emailUser == null) {

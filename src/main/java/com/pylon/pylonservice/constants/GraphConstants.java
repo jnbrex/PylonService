@@ -35,6 +35,7 @@ public final class GraphConstants {
 
     // User
     public static final String USER_USERNAME_PROPERTY = "username"; // Unique identifier of a User
+    public static final String USER_USERNAME_CASE_SENSITIVE_PROPERTY = "usernameCaseSensitive";
     public static final String USER_AVATAR_IMAGE_ID_PROPERTY = "userAvatarImageId";
     public static final String USER_BANNER_IMAGE_ID_PROPERTY = "userBannerImageId";
     public static final String USER_BIO_PROPERTY = "userBio";
@@ -52,6 +53,7 @@ public final class GraphConstants {
 
     // Shard
     public static final String SHARD_NAME_PROPERTY = "shardName"; // unique identifier of a Shard
+    public static final String SHARD_NAME_CASE_SENSITIVE_PROPERTY = "shardNameCaseSensitive";
 
     // Post
     public static final String POST_ID_PROPERTY = "postId"; // unique identifier of a Post

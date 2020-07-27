@@ -293,6 +293,7 @@ public class PostController {
                                              @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_SHARD_POST_METRIC_NAME);
+        final String shardNameLowercase = shardName.toLowerCase();
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
@@ -300,7 +301,7 @@ public class PostController {
         final String postId = UUID.randomUUID().toString();
 
         final Optional<Edge> result = wG
-            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).as("shard")
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).as("shard")
             .flatMap(addPost(createPostRequest, postId)).as("post")
             .addE(POST_POSTED_IN_SHARD_EDGE_LABEL).from("post").to("shard")
             .flatMap(relateUserToPost(username))

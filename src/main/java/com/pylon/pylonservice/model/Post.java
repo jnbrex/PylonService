@@ -5,7 +5,6 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;

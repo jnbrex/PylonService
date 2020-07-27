@@ -5,7 +5,9 @@ import com.pylon.pylonservice.model.requests.CreateShardRequest;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHA
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_CASE_SENSITIVE_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
@@ -48,6 +51,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.project;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
@@ -81,11 +85,12 @@ public class ShardController {
     public ResponseEntity<?> getShard(@PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_METRIC_NAME);
+        final String shardNameLowercase = shardName.toLowerCase();
 
         final Map<Object, Object> shardMetadata;
         try {
             shardMetadata = rG
-                .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
+                .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
                 .valueMap().by(unfold())
                 .next();
         } catch (final NoSuchElementException e) {
@@ -111,13 +116,14 @@ public class ShardController {
     public ResponseEntity<?> getShardInheritance(@PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
+        final String shardNameLowercase = shardName.toLowerCase();
 
-        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).hasNext()) {
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Map<Object, Object>> shardInheritance = rG
-            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
             .out(SHARD_INHERITS_SHARD_EDGE_LABEL, SHARD_INHERITS_USER_EDGE_LABEL)
             .valueMap().by(unfold())
             .toSet();
@@ -180,24 +186,15 @@ public class ShardController {
     public ResponseEntity<?> getNewShardPosts(@PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+        final String shardNameLowercase = shardName.toLowerCase();
 
-        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).hasNext()) {
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final List<Post> posts = rG
-            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
-            .emit()
-            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
-            .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
-            .dedup()
+        final List<Post> posts = getAllPostsInShard(shardNameLowercase)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME, POSTED_IN_SHARD, POSTED_IN_USER)
-                .by(elementMap())
-                .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
-                .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
-                .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY))
-                .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
+            .flatMap(projectToPost())
             .toList()
             .stream()
             .map(Post::new)
@@ -261,25 +258,16 @@ public class ShardController {
     public ResponseEntity<?> getPopularShardPosts(@PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+        final String shardNameLowercase = shardName.toLowerCase();
 
-        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName).hasNext()) {
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Date now = new Date();
-        final List<Post> posts = rG
-            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
-            .emit()
-            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
-            .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
-            .dedup()
-            .project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME, POSTED_IN_SHARD, POSTED_IN_USER)
-                .by(elementMap())
-                .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
-                .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
-                .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
-                .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
-            .toSet()
+        final List<Post> posts = getAllPostsInShard(shardNameLowercase)
+            .flatMap(projectToPost())
+            .toList()
             .stream()
             .map(Post::new)
             .sorted(Comparator.comparing((Post post) -> post.getPopularity(now)).reversed())
@@ -317,36 +305,51 @@ public class ShardController {
      *                           }
      *
      * @return HTTP 201 Created - If the Shard was created successfully.
-     *         HTTP 401 Unauthenticated - If the User isn't authenticated.
+     *         HTTP 401 Unauthorized - If the User isn't authenticated.
      *         HTTP 409 Conflict - If a Shard with the same name already exists.
+     *         HTTP 422 Unprocessable Entity - If the CreateShardRequest isn't valid.
      */
     @PostMapping(value = "/shard")
     public ResponseEntity<?> createShard(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                          @RequestBody final CreateShardRequest createShardRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_SHARD_METRIC_NAME);
+        final String shardNameLowercase = createShardRequest.getShardName().toLowerCase();
+        final Set<String> inheritedShardNamesLowercase = createShardRequest.getInheritedShardNames()
+            .stream()
+            .map(String::toLowerCase)
+            .collect(Collectors.toSet());
+        final Set<String> inheritedUsersLowercase = createShardRequest.getInheritedUsers()
+            .stream()
+            .map(String::toLowerCase)
+            .collect(Collectors.toSet());
+
+        if (!createShardRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
 
-        if (rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, createShardRequest.getShardName()).hasNext()) {
+        if (rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         } else {
             wG
                 .addV(SHARD_VERTEX_LABEL)
-                    .property(single, SHARD_NAME_PROPERTY, createShardRequest.getShardName())
+                    .property(single, SHARD_NAME_PROPERTY, shardNameLowercase)
+                    .property(single, SHARD_NAME_CASE_SENSITIVE_PROPERTY, createShardRequest.getShardName())
                     .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
                     .as("newShard")
                 .sideEffect(
                     V()
                         .hasLabel(SHARD_VERTEX_LABEL)
-                        .has(SHARD_NAME_PROPERTY, P.within(createShardRequest.getInheritedShardNames()))
+                        .has(SHARD_NAME_PROPERTY, P.within(inheritedShardNamesLowercase))
                         .addE(SHARD_INHERITS_SHARD_EDGE_LABEL).from("newShard")
                 )
                 .sideEffect(
                     V()
                         .hasLabel(USER_VERTEX_LABEL)
-                        .has(USER_USERNAME_PROPERTY, P.within(createShardRequest.getInheritedUsers()))
+                        .has(USER_USERNAME_PROPERTY, P.within(inheritedUsersLowercase))
                         .addE(SHARD_INHERITS_USER_EDGE_LABEL).from("newShard")
                 )
                 .V()
@@ -362,5 +365,23 @@ public class ShardController {
         metricsUtil.addSuccessMetric(CREATE_SHARD_METRIC_NAME);
         metricsUtil.addLatencyMetric(CREATE_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
+    }
+
+    private GraphTraversal<Vertex, Vertex> getAllPostsInShard(final String shardName) {
+        return rG
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
+            .emit()
+            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
+            .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
+            .dedup();
+    }
+
+    private GraphTraversal<Object, Map<String, Object>> projectToPost() {
+        return project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME, POSTED_IN_SHARD, POSTED_IN_USER)
+            .by(elementMap())
+            .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
+            .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
+            .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
+            .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold());
     }
 }
