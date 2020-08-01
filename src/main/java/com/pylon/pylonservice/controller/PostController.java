@@ -102,7 +102,7 @@ public class PostController {
      *                               "id": 0,
      *                               "label": "user",
      *                               "createdAt": "2020-07-19T23:37:20.483+00:00",
-     *                               "userBio": "hi, my name is jason. aslkdjflkjawoej fjajlks jflkjawoeijf ojaewifj iwejfj akwejlkfj klawjkfjlkjlkewj klfjklawjekl fjkaewjkf jlkajwelk fjlkaewjklf jlja8987we fy79ya7g738g gh8 h2h48 hf28h48 f2o4fihu9 fg*(G&&G$&(GH *fh8 8h8 hfwjhoeifhwhjeoifhjiwejfij welkjflwjelkf jwlejfkjwefkj ewkljfkwjelkf jiwefio .",
+     *                               "userBio": "hi, my name is jason.",
      *                               "username": "jason25"
      *                           }
      *                       }
@@ -195,6 +195,7 @@ public class PostController {
     /**
      * Call for the calling User to upvote a Post.
      *
+     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
      * @param postId A String containing the postId of the Post to upvote.
      *
      * @return HTTP 200 OK - If the Post was upvoted successfully or was already upvoted by the calling User.
@@ -235,6 +236,7 @@ public class PostController {
     /**
      * Call for the calling User to remove their upvote on a Post.
      *
+     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
      * @param postId A String containing the postId of the Post to remove their upvote on.
      *
      * @return HTTP 200 OK - If the upvote on the Post was removed successfully or if the Post hadn't been upvoted by
@@ -270,7 +272,8 @@ public class PostController {
     }
 
     /**
-     * Call to create a Post in a Shard.
+     * Call to create a Post in a Shard. See
+     * com.pylon.pylonservice.model.requests.CreatePostRequest.isValidTopLevelPost() for validation rules.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param shardName The name of a Shard
@@ -293,6 +296,11 @@ public class PostController {
                                              @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_SHARD_POST_METRIC_NAME);
+
+        if (!createPostRequest.isValidTopLevelPost()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+
         final String shardNameLowercase = shardName.toLowerCase();
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
@@ -324,7 +332,8 @@ public class PostController {
     }
 
     /**
-     * Call to create a Post in the authenticated User's public profile.
+     * Call to create a Post in the calling User's public profile. See
+     * com.pylon.pylonservice.model.requests.CreatePostRequest.isValidTopLevelPost() for validation rules.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param createPostRequest A JSON object containing the Post data for the post to create like
@@ -344,6 +353,10 @@ public class PostController {
                                                @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_PROFILE_POST_METRIC_NAME);
+
+        if (!createPostRequest.isValidTopLevelPost()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
@@ -374,15 +387,16 @@ public class PostController {
     }
 
     /**
-     * Call to create a Post as a comment on another Post.
+     * Call to create a Post as a comment on another Post. See
+     * com.pylon.pylonservice.model.requests.CreatePostRequest.isValidCommentPost() for validation rules.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param parentPostId A postId of the parent Post
      * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
-     *                                 "postTitle": "exampleTitle",
-     *                                 "postImageId": "exampleImageId",
-     *                                 "postContentUrl": "exampleContentUrl",
+     *                                 "postTitle": null,
+     *                                 "postImageId": null,
+     *                                 "postContentUrl": null,
      *                                 "postBody": "exampleBody"
      *                             }
      *                             If a field is not included in the JSON object, it is not included.
@@ -397,6 +411,10 @@ public class PostController {
                                                @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_COMMENT_POST_METRIC_NAME);
+
+        if (!createPostRequest.isValidCommentPost()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
@@ -426,7 +444,7 @@ public class PostController {
     }
 
     private GraphTraversal<Object, Vertex> addPost(final CreatePostRequest createPostRequest,
-                                                       final String postId) {
+                                                   final String postId) {
         GraphTraversal<Object, Vertex> g = addV(POST_VERTEX_LABEL)
             .property(single, POST_ID_PROPERTY, postId)
             .property(single, COMMON_CREATED_AT_PROPERTY, new Date());

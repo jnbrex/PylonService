@@ -283,6 +283,7 @@ public class ShardController {
     /**
      * Call to create a Shard.
      *
+     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
      * @param createShardRequest A JSON object containing shardName, inheritedShardNames, and inheritedUsers like
      *                           {
      *                               "shardName": "exampleShardName",
