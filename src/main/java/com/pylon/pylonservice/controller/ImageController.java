@@ -1,6 +1,8 @@
 package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.pylon.pylonservice.model.responses.ImageUploadResponse;
 import com.pylon.pylonservice.util.MetricsUtil;
 import lombok.extern.log4j.Log4j2;
@@ -65,7 +67,10 @@ public class ImageController {
             if (!isImage(file)) {
                 return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
             }
-            amazonS3.putObject(imageBucketName, imageId, file);
+            amazonS3.putObject(
+                new PutObjectRequest(imageBucketName, imageId, file)
+                    .withCannedAcl(CannedAccessControlList.PublicRead)
+            );
         } catch (final Exception e) {
             log.error(e);
             throw new RuntimeException(e);
