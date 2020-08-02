@@ -39,22 +39,13 @@ import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERT
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_EDGE_LABEL;
-import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
-import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
-import static com.pylon.pylonservice.model.domain.Post.NUM_UPVOTES;
-import static com.pylon.pylonservice.model.domain.Post.POSTED_IN_SHARD;
-import static com.pylon.pylonservice.model.domain.Post.POSTED_IN_USER;
-import static com.pylon.pylonservice.model.domain.Post.PROPERTIES;
-import static com.pylon.pylonservice.model.domain.Post.SUBMITTER_USERNAME;
+import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.project;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
@@ -481,14 +472,5 @@ public class ShardController {
             .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
             .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
             .dedup();
-    }
-
-    private GraphTraversal<Object, Map<String, Object>> projectToPost() {
-        return project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME, POSTED_IN_SHARD, POSTED_IN_USER)
-            .by(elementMap())
-            .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
-            .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
-            .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
-            .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold());
     }
 }

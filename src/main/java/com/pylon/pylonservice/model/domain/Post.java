@@ -1,6 +1,7 @@
 package com.pylon.pylonservice.model.domain;
 
 import lombok.Data;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -12,7 +13,17 @@ import static com.pylon.pylonservice.constants.GraphConstants.POST_BODY_PROPERTY
 import static com.pylon.pylonservice.constants.GraphConstants.POST_CONTENT_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_ID_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_IMAGE_ID_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_TITLE_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.project;
 
 @Data
 public class Post implements Serializable {
@@ -60,6 +71,15 @@ public class Post implements Serializable {
         this.postContentUrl = (String) postProperties.get(POST_CONTENT_URL_PROPERTY);
         this.postBody = (String) postProperties.get(POST_BODY_PROPERTY);
         this.createdAt = (Date) postProperties.get(COMMON_CREATED_AT_PROPERTY);
+    }
+
+    public static GraphTraversal<Object, Map<String, Object>> projectToPost() {
+        return project(PROPERTIES, NUM_UPVOTES, SUBMITTER_USERNAME, POSTED_IN_SHARD, POSTED_IN_USER)
+            .by(elementMap())
+            .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
+            .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
+            .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
+            .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold());
     }
 
     public double getPopularity(final Date now) {
