@@ -149,6 +149,10 @@ public class ProfileController {
     }
 
     /**
+     * Call to update a User's public profile data. This is an idempotent operation, so if a field is not included,
+     * it is removed from the User's profile. Essentially, each update call replaces all of the the modifiable
+     * properties of the User's public profile data with values in the request body, including ones that aren't
+     * included.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param updateProfileRequest A JSON object containing the public Profile data to update like
@@ -164,7 +168,7 @@ public class ProfileController {
      *                                 "userYoutubeUrl": "exampleYoutubeUrl",
      *                                 "userWebsiteUrl": "exampleTiktokUrl"
      *                             }
-     *                             If a field is not included in the JSON object, it is not updated.
+     *                             If a field is not included in the JSON object, it is removed.
      *
      * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.

@@ -1,4 +1,4 @@
-package com.pylon.pylonservice.model;
+package com.pylon.pylonservice.model.domain;
 
 import lombok.Data;
 

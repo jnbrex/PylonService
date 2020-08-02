@@ -23,17 +23,26 @@ public class CreatePostRequest implements Serializable {
     String postBody;
 
     public boolean isValidTopLevelPost() {
-        return isPostTitleValid()
-            && isPostImageIdValid()
-            && isPostContentUrlValid()
-            && isPostBodyValid();
+        return
+            (
+                isPostTitleValid()
+                && isPostImageIdValid()
+                && isPostContentUrlValid()
+                && isPostBodyValid()
+            )
+            &&
+            (
+                postImageId != null
+                || postContentUrl != null
+                || postBody != null
+            );
     }
 
     public boolean isValidCommentPost() {
         return postTitle == null
             && postImageId == null
             && postContentUrl == null
-            && isPostBodyValid();
+            && (postBody != null && (postBody.length() > 0 && postBody.length() < 80001));
     }
 
     private boolean isPostTitleValid() {
@@ -41,14 +50,14 @@ public class CreatePostRequest implements Serializable {
     }
 
     private boolean isPostImageIdValid() {
-        return POST_IMAGE_ID_REGEX_PATTERN.matcher(postImageId).matches();
+        return postImageId == null || POST_IMAGE_ID_REGEX_PATTERN.matcher(postImageId).matches();
     }
 
     private boolean isPostContentUrlValid() {
-        return postContentUrl != null && postContentUrl.length() < 10001;
+        return postContentUrl == null || postContentUrl.length() < 10001;
     }
 
     private boolean isPostBodyValid() {
-        return postBody != null && postBody.length() < 80001;
+        return postBody == null || postBody.length() < 80001;
     }
 }

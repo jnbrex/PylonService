@@ -1,7 +1,8 @@
 package com.pylon.pylonservice.controller;
 
-import com.pylon.pylonservice.model.Post;
+import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.requests.CreateShardRequest;
+import com.pylon.pylonservice.model.requests.UpdateShardRequest;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,16 +43,17 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POS
 import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
-import static com.pylon.pylonservice.model.Post.NUM_UPVOTES;
-import static com.pylon.pylonservice.model.Post.POSTED_IN_SHARD;
-import static com.pylon.pylonservice.model.Post.POSTED_IN_USER;
-import static com.pylon.pylonservice.model.Post.PROPERTIES;
-import static com.pylon.pylonservice.model.Post.SUBMITTER_USERNAME;
+import static com.pylon.pylonservice.model.domain.Post.NUM_UPVOTES;
+import static com.pylon.pylonservice.model.domain.Post.POSTED_IN_SHARD;
+import static com.pylon.pylonservice.model.domain.Post.POSTED_IN_USER;
+import static com.pylon.pylonservice.model.domain.Post.PROPERTIES;
+import static com.pylon.pylonservice.model.domain.Post.SUBMITTER_USERNAME;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.project;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -61,6 +64,7 @@ public class ShardController {
     private static final String GET_SHARD_INHERITANCE_METRIC_NAME = "GetShardInheritance";
     private static final String GET_SHARD_POSTS_METRIC_NAME = "GetShardPosts";
     private static final String CREATE_SHARD_METRIC_NAME = "CreateShard";
+    private static final String UPDATE_SHARD_METRIC_NAME = "UpdateShard";
 
     @Qualifier("writer")
     @Autowired
@@ -110,6 +114,15 @@ public class ShardController {
      * @param shardName A String containing the name of the Shard whose inheritance to return.
      *
      * @return HTTP 200 OK - If the Shard inheritance was retrieved successfully.
+     *                       {
+     *                           "shards": [
+     *                               "jasonshard3",
+     *                               "jasonshard2"
+     *                           ],
+     *                           "users": [
+     *                               "jason40"
+     *                           ]
+     *                       }
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/shard/{shardName}/inheritance")
@@ -122,11 +135,12 @@ public class ShardController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final Set<Map<Object, Object>> shardInheritance = rG
+        final Map<String, Object> shardInheritance = rG
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
-            .out(SHARD_INHERITS_SHARD_EDGE_LABEL, SHARD_INHERITS_USER_EDGE_LABEL)
-            .valueMap().by(unfold())
-            .toSet();
+            .project("shards", "users")
+            .by(out(SHARD_INHERITS_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
+            .by(out(SHARD_INHERITS_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
+            .next();
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(shardInheritance);
 
@@ -365,6 +379,98 @@ public class ShardController {
 
         metricsUtil.addSuccessMetric(CREATE_SHARD_METRIC_NAME);
         metricsUtil.addLatencyMetric(CREATE_SHARD_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to update a Shard. This is an idempotent operation and replaces the inherited shards and inherited users of
+     * the shard with the ones in the request.
+     *
+     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
+     * @param shardName A String containing the name of the Shard to update.
+     * @param updateShardRequest A JSON object containing inheritedShardNames and inheritedUsers like
+     *                           {
+     *                               "inheritedShardNames": [
+     *                                   "inheritedShardName1",
+     *                                   "inheritedShardName2"
+     *                               ],
+     *                               "inheritedUsers": [
+     *                                   "inheritedUser1",
+     *                                   "inheritedUser2"
+     *                               ]
+     *                           }
+     *
+     *                           An object like below is also valid
+     *                           {
+     *                               "inheritedShardNames": [],
+     *                               "inheritedUsers": []
+     *                           }
+     *
+     * @return HTTP 200 Created - If the Shard was updated successfully.
+     *         HTTP 401 Unauthorized - If the User isn't authenticated.
+     *         HTTP 403 Forbidden - If the User is attempting to update a Shard they don't own.
+     *         HTTP 422 Unprocessable Entity - If the UpdateShardRequest isn't valid.
+     */
+    @PutMapping(value = "/shard/{shardName}")
+    public ResponseEntity<?> updateShard(@RequestHeader(value = "Authorization") final String authorizationHeader,
+                                         @PathVariable final String shardName,
+                                         @RequestBody final UpdateShardRequest updateShardRequest) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(UPDATE_SHARD_METRIC_NAME);
+
+        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+
+        final String shardNameLowercase = shardName.toLowerCase();
+        final String shardOwnerUsername = (String) rG
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
+            .in(USER_OWNS_SHARD_EDGE_LABEL)
+            .values(USER_USERNAME_PROPERTY)
+            .next();
+
+        if (!shardOwnerUsername.equals(username)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        if (!updateShardRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+
+        final Set<String> inheritedShardNamesLowercase = updateShardRequest.getInheritedShardNames()
+            .stream()
+            .map(String::toLowerCase)
+            .collect(Collectors.toSet());
+        final Set<String> inheritedUsersLowercase = updateShardRequest.getInheritedUsers()
+            .stream()
+            .map(String::toLowerCase)
+            .collect(Collectors.toSet());
+
+        wG
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).as("shard")
+            .sideEffect(
+                outE(SHARD_INHERITS_SHARD_EDGE_LABEL).drop()
+            )
+            .sideEffect(
+                outE(SHARD_INHERITS_USER_EDGE_LABEL).drop()
+            )
+            .sideEffect(
+                V()
+                    .hasLabel(SHARD_VERTEX_LABEL)
+                    .has(SHARD_NAME_PROPERTY, P.within(inheritedShardNamesLowercase))
+                    .addE(SHARD_INHERITS_SHARD_EDGE_LABEL).from("shard")
+            )
+            .sideEffect(
+                V()
+                    .hasLabel(USER_VERTEX_LABEL)
+                    .has(USER_USERNAME_PROPERTY, P.within(inheritedUsersLowercase))
+                    .addE(SHARD_INHERITS_USER_EDGE_LABEL).from("shard")
+            )
+            .iterate();
+
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+
+        metricsUtil.addSuccessMetric(UPDATE_SHARD_METRIC_NAME);
+        metricsUtil.addLatencyMetric(UPDATE_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
