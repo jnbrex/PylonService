@@ -10,5 +10,5 @@ import java.io.Serializable;
 public class ImageUploadResponse implements Serializable {
     private static final long serialVersionUID = 0L;
 
-    String imageId;
+    String filename;
 }

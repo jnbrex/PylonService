@@ -15,17 +15,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import java.awt.Image;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 @Log4j2
 @RestController
 public class ImageController {
     private static final String IMAGE_METRIC_NAME = "Image";
+    private static final Map<String, String> MIME_TYPE_TO_FILE_EXTENSION_MAPPING = Map.of(
+        "image/png", "png",
+        "image/jpeg", "jpg",
+        "image/gif", "gif"
+    );
 
     @Autowired
     private AmazonS3 amazonS3;
@@ -40,17 +43,14 @@ public class ImageController {
     }
 
     /**
-     * Call to upload an image.
+     * Call to upload an image. Only supports png, jpeg/jpg, and gif.
      *
-     * @param multipartFile A multipart file.
+     * @param multipartFile A multipart file of mime type image/png, image/jpeg, or image/gif.
      *
      * @return HTTP 201 Created - If the image was uploaded successfully. Returns a response with body like
      *                            {
-     *                                "imageId": "a88fed16-330a-4b64-a704-eb9c81e33e10"
+     *                                "filename": "a88fed16-330a-4b64-a704-eb9c81e33e10.png"
      *                            }
-     *                            and a header like
-     *                            "Location": "http://localhost:8080/image/a88fed16-330a-4b64-a704-eb9c81e33e10"
-     *
      *         HTTP 422 Unprocessable Entity - If the submitted file is not an image.
      */
     @PostMapping(value = "/image")
@@ -58,17 +58,19 @@ public class ImageController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(IMAGE_METRIC_NAME);
 
-        final String imageId = UUID.randomUUID().toString();
-        final File file = new File(imageId);
+        final String fileExtension = MIME_TYPE_TO_FILE_EXTENSION_MAPPING.get(multipartFile.getContentType());
+        if (fileExtension == null) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+
+        final String filename = String.format("%s.%s", UUID.randomUUID().toString(), fileExtension);
+        final File file = new File(filename);
         try {
             final FileOutputStream fos = new FileOutputStream(file);
             fos.write(multipartFile.getBytes());
             fos.close();
-            if (!isImage(file)) {
-                return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
-            }
             amazonS3.putObject(
-                new PutObjectRequest(imageBucketName, imageId, file)
+                new PutObjectRequest(imageBucketName, filename, file)
                     .withCannedAcl(CannedAccessControlList.PublicRead)
             );
         } catch (final Exception e) {
@@ -80,7 +82,7 @@ public class ImageController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(
             ImageUploadResponse.builder()
-                .imageId(imageId)
+                .filename(filename)
                 .build(),
             HttpStatus.CREATED
         );
@@ -88,14 +90,5 @@ public class ImageController {
         metricsUtil.addSuccessMetric(IMAGE_METRIC_NAME);
         metricsUtil.addLatencyMetric(IMAGE_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
-    }
-
-    private static boolean isImage(final File file) {
-        try {
-            final Image image = ImageIO.read(file);
-            return image != null;
-        } catch(IOException ex) {
-            return false;
-        }
     }
 }
