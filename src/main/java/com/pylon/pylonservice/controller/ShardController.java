@@ -150,7 +150,7 @@ public class ShardController {
      *                           {
      *                               "postId": "f7cc41e2-8ae7-49ef-979c-37619b43b228",
      *                               "postTitle": "Third Shard Post!",
-     *                               "postImageId": null,
+     *                               "postFilename": null,
      *                               "postContentUrl": "exampleContentUrl",
      *                               "postBody": "third post!",
      *                               "createdAt": "2020-07-25T21:32:56.090+00:00",
@@ -162,7 +162,7 @@ public class ShardController {
      *                           {
      *                               "postId": "700d0092-5da2-423d-89db-174087b66e9e",
      *                               "postTitle": null,
-     *                               "postImageId": null,
+     *                               "postFilename": null,
      *                               "postContentUrl": null,
      *                               "postBody": null,
      *                               "createdAt": "2020-07-25T21:31:54.682+00:00",
@@ -174,7 +174,7 @@ public class ShardController {
      *                           {
      *                               "postId": "5be67901-bee1-446b-bb50-b62046311fac",
      *                               "postTitle": "Profile Post 1",
-     *                               "postImageId": null,
+     *                               "postFilename": null,
      *                               "postContentUrl": null,
      *                               "postBody": "1",
      *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
@@ -222,7 +222,7 @@ public class ShardController {
      *                           {
      *                               "postId": "f7cc41e2-8ae7-49ef-979c-37619b43b228",
      *                               "postTitle": "Third Shard Post!",
-     *                               "postImageId": null,
+     *                               "postFilename": null,
      *                               "postContentUrl": "exampleContentUrl",
      *                               "postBody": "third post!",
      *                               "createdAt": "2020-07-25T21:32:56.090+00:00",
@@ -234,7 +234,7 @@ public class ShardController {
      *                           {
      *                               "postId": "700d0092-5da2-423d-89db-174087b66e9e",
      *                               "postTitle": null,
-     *                               "postImageId": null,
+     *                               "postFilename": null,
      *                               "postContentUrl": null,
      *                               "postBody": null,
      *                               "createdAt": "2020-07-25T21:31:54.682+00:00",
@@ -246,7 +246,7 @@ public class ShardController {
      *                           {
      *                               "postId": "5be67901-bee1-446b-bb50-b62046311fac",
      *                               "postTitle": "Profile Post 1",
-     *                               "postImageId": null,
+     *                               "postFilename": null,
      *                               "postContentUrl": null,
      *                               "postBody": "1",
      *                               "createdAt": "2020-07-19T23:39:28.403+00:00",

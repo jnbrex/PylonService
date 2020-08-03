@@ -36,8 +36,8 @@ public final class GraphConstants {
     // User
     public static final String USER_USERNAME_PROPERTY = "username"; // Unique identifier of a User
     public static final String USER_USERNAME_CASE_SENSITIVE_PROPERTY = "usernameCaseSensitive";
-    public static final String USER_AVATAR_IMAGE_ID_PROPERTY = "userAvatarImageId";
-    public static final String USER_BANNER_IMAGE_ID_PROPERTY = "userBannerImageId";
+    public static final String USER_AVATAR_FILENAME_PROPERTY = "userAvatarFilename";
+    public static final String USER_BANNER_FILENAME_PROPERTY = "userBannerFilename";
     public static final String USER_BIO_PROPERTY = "userBio";
     public static final String USER_LOCATION_PROPERTY = "userLocation";
     public static final String USER_VERIFIED_PROPERTY = "userVerified";
@@ -58,7 +58,7 @@ public final class GraphConstants {
     // Post
     public static final String POST_ID_PROPERTY = "postId"; // unique identifier of a Post
     public static final String POST_TITLE_PROPERTY = "postTitle";
-    public static final String POST_IMAGE_ID_PROPERTY = "postImageId";
+    public static final String POST_FILENAME_PROPERTY = "postFilename";
     public static final String POST_CONTENT_URL_PROPERTY = "postContentUrl";
     public static final  String POST_BODY_PROPERTY = "postBody";
 }

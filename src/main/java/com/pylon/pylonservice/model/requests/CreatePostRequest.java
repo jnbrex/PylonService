@@ -13,12 +13,12 @@ import java.util.regex.Pattern;
 public class CreatePostRequest implements Serializable {
     private static final long serialVersionUID = 0L;
 
-    // Post image ids are UUIDs.
-    private static final Pattern POST_IMAGE_ID_REGEX_PATTERN =
-        Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
+    // Post image ids are UUIDs ending in .png, .jpg, or .gif
+    private static final Pattern POST_FILENAME_REGEX_PATTERN =
+        Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(jpg|gif|png)$");
 
     String postTitle;
-    String postImageId;
+    String postFilename;
     String postContentUrl;
     String postBody;
 
@@ -26,13 +26,13 @@ public class CreatePostRequest implements Serializable {
         return
             (
                 isPostTitleValid()
-                && isPostImageIdValid()
+                && isPostFilenameValid()
                 && isPostContentUrlValid()
                 && isPostBodyValid()
             )
             &&
             (
-                postImageId != null
+                postFilename != null
                 || postContentUrl != null
                 || postBody != null
             );
@@ -40,7 +40,7 @@ public class CreatePostRequest implements Serializable {
 
     public boolean isValidCommentPost() {
         return postTitle == null
-            && postImageId == null
+            && postFilename == null
             && postContentUrl == null
             && (postBody != null && (postBody.length() > 0 && postBody.length() < 80001));
     }
@@ -49,8 +49,8 @@ public class CreatePostRequest implements Serializable {
         return postTitle != null && postTitle.length() < 451;
     }
 
-    private boolean isPostImageIdValid() {
-        return postImageId == null || POST_IMAGE_ID_REGEX_PATTERN.matcher(postImageId).matches();
+    private boolean isPostFilenameValid() {
+        return postFilename == null || POST_FILENAME_REGEX_PATTERN.matcher(postFilename).matches();
     }
 
     private boolean isPostContentUrlValid() {

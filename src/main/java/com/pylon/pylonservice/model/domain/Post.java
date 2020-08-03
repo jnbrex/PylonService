@@ -12,7 +12,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_
 import static com.pylon.pylonservice.constants.GraphConstants.POST_BODY_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_CONTENT_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_ID_PROPERTY;
-import static com.pylon.pylonservice.constants.GraphConstants.POST_IMAGE_ID_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_TITLE_PROPERTY;
@@ -41,7 +41,7 @@ public class Post implements Serializable {
     // Properties of post vertex
     final String postId;
     final String postTitle;
-    final String postImageId;
+    final String postFilename;
     final String postContentUrl;
     final String postBody;
     final Date createdAt;
@@ -67,7 +67,7 @@ public class Post implements Serializable {
         final Map<Object, Object> postProperties = (Map<Object, Object>) graphPostMap.get(PROPERTIES);
         this.postId = (String) postProperties.get(POST_ID_PROPERTY);
         this.postTitle = (String) postProperties.get(POST_TITLE_PROPERTY);
-        this.postImageId = (String) postProperties.get(POST_IMAGE_ID_PROPERTY);
+        this.postFilename = (String) postProperties.get(POST_FILENAME_PROPERTY);
         this.postContentUrl = (String) postProperties.get(POST_CONTENT_URL_PROPERTY);
         this.postBody = (String) postProperties.get(POST_BODY_PROPERTY);
         this.createdAt = (Date) postProperties.get(COMMON_CREATED_AT_PROPERTY);

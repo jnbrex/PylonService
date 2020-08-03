@@ -10,8 +10,8 @@ import java.io.Serializable;
 public class UpdateProfileRequest implements Serializable {
     private static final long serialVersionUID = 0L;
 
-    String userAvatarImageId;
-    String userBannerImageId;
+    String userAvatarFilename;
+    String userBannerFilename;
     String userBio;
     String userLocation;
 

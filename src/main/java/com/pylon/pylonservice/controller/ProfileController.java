@@ -22,8 +22,8 @@ import java.util.NoSuchElementException;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
-import static com.pylon.pylonservice.constants.GraphConstants.USER_AVATAR_IMAGE_ID_PROPERTY;
-import static com.pylon.pylonservice.constants.GraphConstants.USER_BANNER_IMAGE_ID_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_AVATAR_FILENAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_BANNER_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_BIO_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FACEBOOK_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_INSTAGRAM_URL_PROPERTY;
@@ -157,8 +157,8 @@ public class ProfileController {
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param updateProfileRequest A JSON object containing the public Profile data to update like
      *                             {
-     *                                 "userAvatarImageId": "exampleAvatarImageId",
-     *                                 "userBannerImageId": "exampleBannerImageId",
+     *                                 "userAvatarFilename": "exampleAvatarFilename",
+     *                                 "userBannerFilename": "exampleBannerFilename",
      *                                 "userBio": "exampleBio",
      *                                 "userLocation": "exampleLocation",
      *                                 "userFacebookUrl": "exampleFacebookUrl",
@@ -196,14 +196,14 @@ public class ProfileController {
         GraphTraversal graphTraversal =
             wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username);
 
-        final String userAvatarImageId = updateProfileRequest.getUserAvatarImageId();
-        if (userAvatarImageId != null) {
-            graphTraversal = graphTraversal.property(single, USER_AVATAR_IMAGE_ID_PROPERTY, userAvatarImageId);
+        final String userAvatarFilename = updateProfileRequest.getUserAvatarFilename();
+        if (userAvatarFilename != null) {
+            graphTraversal = graphTraversal.property(single, USER_AVATAR_FILENAME_PROPERTY, userAvatarFilename);
         }
 
-        final String userBannerImageId = updateProfileRequest.getUserBannerImageId();
-        if (userBannerImageId != null) {
-            graphTraversal = graphTraversal.property(single, USER_BANNER_IMAGE_ID_PROPERTY, userBannerImageId);
+        final String userBannerFilename = updateProfileRequest.getUserBannerFilename();
+        if (userBannerFilename != null) {
+            graphTraversal = graphTraversal.property(single, USER_BANNER_FILENAME_PROPERTY, userBannerFilename);
         }
 
         final String userBio = updateProfileRequest.getUserBio();

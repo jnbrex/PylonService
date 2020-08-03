@@ -51,7 +51,7 @@ public class ImageController {
      *                            {
      *                                "filename": "a88fed16-330a-4b64-a704-eb9c81e33e10.png"
      *                            }
-     *         HTTP 422 Unprocessable Entity - If the submitted file is not an image.
+     *         HTTP 422 Unprocessable Entity - If the submitted file is not of supported type.
      */
     @PostMapping(value = "/image")
     public ResponseEntity<?> postImage(@RequestParam("file") final MultipartFile multipartFile) {

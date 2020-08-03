@@ -6,7 +6,9 @@ import org.testng.annotations.Test;
 
 public class CreatePostRequestTests {
     private static final String VALID_TOP_LEVEL_POST_TITLE = "This is a POST TITLE!";
-    private static final String VALID_TOP_LEVEL_POST_IMAGE_ID = "5237af6c-6cf7-46ee-8537-f0b1b90d870a";
+    private static final String VALID_TOP_LEVEL_POST_IMAGE_ID_PNG = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.png";
+    private static final String VALID_TOP_LEVEL_POST_IMAGE_ID_JPG = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.jpg";
+    private static final String VALID_TOP_LEVEL_POST_IMAGE_ID_GIF = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.gif";
     private static final String VALID_TOP_LEVEL_POST_CONTENT_URL = "https://pylon.gg";
     private static final String VALID_TOP_LEVEL_POST_BODY = "Hi this is an awesome post body!";
 
@@ -17,6 +19,7 @@ public class CreatePostRequestTests {
 
     private static final String INVALID_FOUR_HUNDRED_FIFTY_ONE_CHARACTER_POST_TITLE = "a".repeat(451);
     private static final String INVALID_NON_UUID_POST_IMAGE_ID = "This is not a uuid";
+    private static final String INVALID_BAD_EXTENSION_POST_IMAGE_ID = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.abc";
     private static final String INVALID_TEN_THOUSAND_ONE_CHARACTER_POST_CONTENT_URL = "a".repeat(10001);
     private static final String INVALID_EIGHTY_THOUSAND_ONE_CHARACTER_POST_BODY = "a".repeat(80001);
 
@@ -26,7 +29,23 @@ public class CreatePostRequestTests {
             {
                 new CreatePostRequest(
                     VALID_TOP_LEVEL_POST_TITLE,
-                    VALID_TOP_LEVEL_POST_IMAGE_ID,
+                    VALID_TOP_LEVEL_POST_IMAGE_ID_PNG,
+                    VALID_TOP_LEVEL_POST_CONTENT_URL,
+                    VALID_TOP_LEVEL_POST_BODY
+                )
+            },
+            {
+                new CreatePostRequest(
+                    VALID_TOP_LEVEL_POST_TITLE,
+                    VALID_TOP_LEVEL_POST_IMAGE_ID_JPG,
+                    VALID_TOP_LEVEL_POST_CONTENT_URL,
+                    VALID_TOP_LEVEL_POST_BODY
+                )
+            },
+            {
+                new CreatePostRequest(
+                    VALID_TOP_LEVEL_POST_TITLE,
+                    VALID_TOP_LEVEL_POST_IMAGE_ID_GIF,
                     VALID_TOP_LEVEL_POST_CONTENT_URL,
                     VALID_TOP_LEVEL_POST_BODY
                 )
@@ -40,7 +59,7 @@ public class CreatePostRequestTests {
             {
                 new CreatePostRequest(
                     INVALID_FOUR_HUNDRED_FIFTY_ONE_CHARACTER_POST_TITLE,
-                    VALID_TOP_LEVEL_POST_IMAGE_ID,
+                    VALID_TOP_LEVEL_POST_IMAGE_ID_PNG,
                     VALID_TOP_LEVEL_POST_CONTENT_URL,
                     VALID_TOP_LEVEL_POST_BODY
                 )
@@ -56,7 +75,15 @@ public class CreatePostRequestTests {
             {
                 new CreatePostRequest(
                     VALID_TOP_LEVEL_POST_TITLE,
-                    VALID_TOP_LEVEL_POST_IMAGE_ID,
+                    INVALID_BAD_EXTENSION_POST_IMAGE_ID,
+                    VALID_TOP_LEVEL_POST_CONTENT_URL,
+                    VALID_TOP_LEVEL_POST_BODY
+                )
+            },
+            {
+                new CreatePostRequest(
+                    VALID_TOP_LEVEL_POST_TITLE,
+                    VALID_TOP_LEVEL_POST_IMAGE_ID_PNG,
                     INVALID_TEN_THOUSAND_ONE_CHARACTER_POST_CONTENT_URL,
                     VALID_TOP_LEVEL_POST_BODY
                 )
@@ -64,7 +91,7 @@ public class CreatePostRequestTests {
             {
                 new CreatePostRequest(
                     VALID_TOP_LEVEL_POST_TITLE,
-                    VALID_TOP_LEVEL_POST_IMAGE_ID,
+                    VALID_TOP_LEVEL_POST_IMAGE_ID_PNG,
                     VALID_TOP_LEVEL_POST_CONTENT_URL,
                     INVALID_EIGHTY_THOUSAND_ONE_CHARACTER_POST_BODY
                 )

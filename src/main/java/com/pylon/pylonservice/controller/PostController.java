@@ -35,7 +35,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.POST_BODY_PROPERTY
 import static com.pylon.pylonservice.constants.GraphConstants.POST_COMMENT_ON_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_CONTENT_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_ID_PROPERTY;
-import static com.pylon.pylonservice.constants.GraphConstants.POST_IMAGE_ID_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_TITLE_PROPERTY;
@@ -94,7 +94,7 @@ public class PostController {
      *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
      *                               "postBody": "This is a post body",
      *                               "postTitle": "Profile Post 1",
-     *                               "postImageId": "00000000-0000-0000-0000-000000000000",
+     *                               "postFilename": "00000000-0000-0000-0000-000000000000.png",
      *                               "postContentUrl": "https://pylon.gg"
      *                               "postId": "00000000-0000-0000-0000-000000000000"
      *                           },
@@ -114,7 +114,7 @@ public class PostController {
      *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
      *                               "postBody": "This is a post body",
      *                               "postTitle": "Profile Post 1",
-     *                               "postImageId": "00000000-0000-0000-0000-000000000000",
+     *                               "postFilename": "00000000-0000-0000-0000-000000000000.png",
      *                               "postContentUrl": "https://pylon.gg"
      *                               "postId": "00000000-0000-0000-0000-000000000000"
      *                           },
@@ -280,7 +280,7 @@ public class PostController {
      * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
      *                                 "postTitle": "exampleTitle",
-     *                                 "postImageId": "exampleImageId",
+     *                                 "postFilename": "00000000-0000-0000-0000-000000000000.png",
      *                                 "postContentUrl": "exampleContentUrl",
      *                                 "postBody": "exampleBody"
      *                             }
@@ -339,7 +339,7 @@ public class PostController {
      * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
      *                                 "postTitle": "exampleTitle",
-     *                                 "postImageId": "exampleImageId",
+     *                                 "postFilename": "00000000-0000-0000-0000-000000000000.png",
      *                                 "postContentUrl": "exampleContentUrl",
      *                                 "postBody": "exampleBody"
      *                             }
@@ -395,7 +395,7 @@ public class PostController {
      * @param createPostRequest A JSON object containing the Post data for the post to create like
      *                             {
      *                                 "postTitle": null,
-     *                                 "postImageId": null,
+     *                                 "postFilename": null,
      *                                 "postContentUrl": null,
      *                                 "postBody": "exampleBody"
      *                             }
@@ -453,9 +453,9 @@ public class PostController {
         if (postTitle != null) {
             g = g.property(single, POST_TITLE_PROPERTY, postTitle);
         }
-        final String postImageId = createPostRequest.getPostImageId();
-        if (postImageId != null) {
-            g = g.property(single, POST_IMAGE_ID_PROPERTY, postImageId);
+        final String postFilename = createPostRequest.getPostFilename();
+        if (postFilename != null) {
+            g = g.property(single, POST_FILENAME_PROPERTY, postFilename);
         }
         final String postContentUrl = createPostRequest.getPostContentUrl();
         if (postContentUrl != null) {
