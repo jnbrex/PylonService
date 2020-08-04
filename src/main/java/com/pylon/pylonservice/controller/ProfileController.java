@@ -1,5 +1,6 @@
 package com.pylon.pylonservice.controller;
 
+import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
@@ -134,11 +135,11 @@ public class ProfileController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final List<Map<Object, Object>> posts = rG
+        final List<Map<String, Object>> posts = rG
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase) // Single user vertex
             .in(POST_POSTED_IN_USER_EDGE_LABEL) // All posts posted in the user's profile
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .elementMap()
+            .flatMap(Post.projectToPost())
             .toList();
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);

@@ -1,5 +1,6 @@
 package com.pylon.pylonservice.controller;
 
+import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.requests.CreatePostRequest;
 import com.pylon.pylonservice.model.responses.CreatePostResponse;
 import com.pylon.pylonservice.util.JwtTokenUtil;
@@ -136,10 +137,8 @@ public class PostController {
         final Map<String, Object> post;
         try {
             post = rG
-                .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).as("postMetadata")
-                .out(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL).as("shardOrUserMetadata")
-                .select("postMetadata", "shardOrUserMetadata")
-                .by(elementMap())
+                .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+                .flatMap(Post.projectToPost())
                 .next();
         } catch (final NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
