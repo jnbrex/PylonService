@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -37,6 +39,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROP
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_WEBSITE_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_YOUTUBE_URL_PROPERTY;
+import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -45,7 +48,8 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 public class ProfileController {
     private static final String GET_PROFILE_METRIC_NAME = "GetProfile";
     private static final String GET_MY_PROFILE_METRIC_NAME = "GetMyProfile";
-    private static final String GET_PROFILE_POSTS_METRIC_NAME = "GetProfilePosts";
+    private static final String GET_NEW_PROFILE_POSTS_METRIC_NAME = "GetNewProfilePosts";
+    private static final String GET_POPULAR_PROFILE_POSTS_METRIC_NAME = "GetPopularProfilePosts";
     private static final String PUT_PROFILE_METRIC_NAME = "PutProfile";
 
     @Qualifier("writer")
@@ -119,7 +123,7 @@ public class ProfileController {
     }
 
     /**
-     * Call to retrieve all the post headers for a Profile.
+     * Call to retrieve all the post headers for a Profile, newest posts first.
      *
      * @param username A String containing the username of the User's Profile to return with a body like
      *                 [
@@ -153,9 +157,9 @@ public class ProfileController {
      *         HTTP 404 Not Found - If the Profile doesn't exist.
      */
     @GetMapping(value = "/profile/{username}/posts/new")
-    public ResponseEntity<?> getProfilePosts(@PathVariable final String username) {
+    public ResponseEntity<?> getNewProfilePosts(@PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_PROFILE_POSTS_METRIC_NAME);
+        metricsUtil.addCountMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME);
         final String usernameLowercase = username.toLowerCase();
 
         if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
@@ -174,8 +178,70 @@ public class ProfileController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
-        metricsUtil.addSuccessMetric(GET_PROFILE_POSTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsUtil.addSuccessMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to retrieve all the post headers for a Profile, most popular posts first.
+     *
+     * @param username A String containing the username of the User's Profile to return with a body like
+     *                 [
+     *                     {
+     *                         "postId": "8aa85a2f-917c-47a3-8bc0-f55f247304f5",
+     *                         "postTitle": "This is a profile post on jason40's profile two!",
+     *                         "postFilename": null,
+     *                         "postContentUrl": null,
+     *                         "postBody": "Hi guys",
+     *                         "createdAt": "2020-08-05T03:03:42.189+00:00",
+     *                         "postUpvotes": 1,
+     *                         "postSubmitter": "jason40",
+     *                         "postPostedInUser": "jason40",
+     *                         "postPostedInShard": null
+     *                     },
+     *                     {
+     *                         "postId": "9e881586-ef6b-40c8-a753-79445dcbbf3c",
+     *                         "postTitle": "This is a profile post on jason41's profile",
+     *                         "postFilename": "2dc67fdd-748a-4e5d-8422-0656498e9f10.png",
+     *                         "postContentUrl": null,
+     *                         "postBody": null,
+     *                         "createdAt": "2020-08-03T03:16:09.159+00:00",
+     *                         "postUpvotes": 1,
+     *                         "postSubmitter": "jason40",
+     *                         "postPostedInUser": "jason40",
+     *                         "postPostedInShard": null
+     *                     }
+     *                 ]
+     *
+     * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully.
+     *         HTTP 404 Not Found - If the Profile doesn't exist.
+     */
+    @GetMapping(value = "/profile/{username}/posts/popular")
+    public ResponseEntity<?> getPopularProfilePosts(@PathVariable final String username) {
+        final long startTime = System.nanoTime();
+        metricsUtil.addCountMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
+        final String usernameLowercase = username.toLowerCase();
+
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final Date now = new Date();
+        final List<Post> posts = rG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase) // Single user vertex
+            .in(POST_POSTED_IN_USER_EDGE_LABEL) // All posts posted in the user's profile
+            .flatMap(projectToPost())
+            .toList()
+            .stream()
+            .map(Post::new)
+            .sorted(Comparator.comparing((Post post) -> post.getPopularity(now)).reversed())
+            .collect(Collectors.toList());
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
+
+        metricsUtil.addSuccessMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
+        metricsUtil.addLatencyMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
