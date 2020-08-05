@@ -4,7 +4,6 @@ import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -267,12 +266,17 @@ public class ProfileController {
      *
      * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
+     *         HTTP 422 Unprocessable Entity - If the UpdateProfileRequest is not valid.
      */
     @PutMapping(value = "/profile")
     public ResponseEntity<?> updateProfile(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                            @RequestBody final UpdateProfileRequest updateProfileRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(PUT_PROFILE_METRIC_NAME);
+
+        if (!updateProfileRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
