@@ -246,10 +246,8 @@ public class ProfileController {
     }
 
     /**
-     * Call to update a User's public profile data. This is an idempotent operation, so if a field is not included,
-     * it is removed from the User's profile. Essentially, each update call replaces all of the the modifiable
-     * properties of the User's public profile data with values in the request body, including ones that aren't
-     * included.
+     * Call to update a User's public profile data. This is an idempotent operation, so all fields must be included. For
+     * any fields which should not be present on the User's profile, send an empty string.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param updateProfileRequest A JSON object containing the public Profile data to update like
@@ -263,9 +261,9 @@ public class ProfileController {
      *                                 "userInstagramUrl": "exampleInstagramUrl",
      *                                 "userTwitchUrl": "exampleTwitchUrl",
      *                                 "userYoutubeUrl": "exampleYoutubeUrl",
-     *                                 "userWebsiteUrl": "exampleTiktokUrl"
+     *                                 "userTiktokUrl": "exampleTiktokUrl",
+     *                                 "userWebsiteUrl": "exampleWebsiteUrl"
      *                             }
-     *                             If a field is not included in the JSON object, it is removed.
      *
      * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
@@ -279,97 +277,38 @@ public class ProfileController {
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
 
-        updateProfileWithDataFromRequest(username, updateProfileRequest);
-
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+        wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .property(single, USER_AVATAR_FILENAME_PROPERTY, updateProfileRequest.getUserAvatarFilename())
+            .property(single, USER_BANNER_FILENAME_PROPERTY, updateProfileRequest.getUserBannerFilename())
+            .property(single, USER_BIO_PROPERTY, updateProfileRequest.getUserBio())
+            .property(single, USER_LOCATION_PROPERTY, updateProfileRequest.getUserLocation())
+            .property(single, USER_FACEBOOK_URL_PROPERTY,
+                addHttpPrefixIfNotPresent(updateProfileRequest.getUserFacebookUrl()))
+            .property(single, USER_TWITTER_URL_PROPERTY,
+                addHttpPrefixIfNotPresent(updateProfileRequest.getUserTwitterUrl()))
+            .property(single, USER_INSTAGRAM_URL_PROPERTY,
+                addHttpPrefixIfNotPresent(updateProfileRequest.getUserInstagramUrl()))
+            .property(single, USER_TWITCH_URL_PROPERTY,
+                addHttpPrefixIfNotPresent(updateProfileRequest.getUserTwitchUrl()))
+            .property(single, USER_YOUTUBE_URL_PROPERTY,
+                addHttpPrefixIfNotPresent(updateProfileRequest.getUserYoutubeUrl()))
+            .property(single, USER_TIKTOK_URL_PROPERTY,
+                addHttpPrefixIfNotPresent(updateProfileRequest.getUserTiktokUrl()))
+            .property(single, USER_WEBSITE_URL_PROPERTY,
+                addHttpPrefixIfNotPresent(updateProfileRequest.getUserWebsiteUrl()))
+            .iterate();
 
         metricsUtil.addSuccessMetric(PUT_PROFILE_METRIC_NAME);
         metricsUtil.addLatencyMetric(PUT_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
-    private void updateProfileWithDataFromRequest(final String username,
-                                                  final UpdateProfileRequest updateProfileRequest) {
-        GraphTraversal graphTraversal =
-            wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username);
-
-        final String userAvatarFilename = updateProfileRequest.getUserAvatarFilename();
-        if (userAvatarFilename != null) {
-            graphTraversal = graphTraversal.property(single, USER_AVATAR_FILENAME_PROPERTY, userAvatarFilename);
-        }
-
-        final String userBannerFilename = updateProfileRequest.getUserBannerFilename();
-        if (userBannerFilename != null) {
-            graphTraversal = graphTraversal.property(single, USER_BANNER_FILENAME_PROPERTY, userBannerFilename);
-        }
-
-        final String userBio = updateProfileRequest.getUserBio();
-        if (userBio != null) {
-            graphTraversal = graphTraversal.property(single, USER_BIO_PROPERTY, userBio);
-        }
-
-        final String userLocation = updateProfileRequest.getUserLocation();
-        if (userLocation != null) {
-            graphTraversal = graphTraversal.property(single, USER_LOCATION_PROPERTY, userLocation);
-        }
-
-        final String userFacebookUrl = updateProfileRequest.getUserFacebookUrl();
-        if (userFacebookUrl != null) {
-            graphTraversal = graphTraversal.property(
-                single, USER_FACEBOOK_URL_PROPERTY, addHttpPrefixIfNotPresent(userFacebookUrl)
-            );
-        }
-
-        final String userTwitterUrl = updateProfileRequest.getUserTwitterUrl();
-        if (userTwitterUrl != null) {
-            graphTraversal = graphTraversal.property(
-                single, USER_TWITTER_URL_PROPERTY, addHttpPrefixIfNotPresent(userTwitterUrl)
-            );
-        }
-
-        final String userInstagramUrl = updateProfileRequest.getUserInstagramUrl();
-        if (userInstagramUrl != null) {
-            graphTraversal = graphTraversal.property(
-                single, USER_INSTAGRAM_URL_PROPERTY, addHttpPrefixIfNotPresent(userInstagramUrl)
-            );
-        }
-
-        final String userTwitchUrl = updateProfileRequest.getUserTwitchUrl();
-        if (userTwitchUrl != null) {
-            graphTraversal = graphTraversal.property(
-                single, USER_TWITCH_URL_PROPERTY, addHttpPrefixIfNotPresent(userTwitchUrl)
-            );
-        }
-
-        final String userYoutubeUrl = updateProfileRequest.getUserYoutubeUrl();
-        if (userYoutubeUrl != null) {
-            graphTraversal = graphTraversal.property(
-                single, USER_YOUTUBE_URL_PROPERTY, addHttpPrefixIfNotPresent(userYoutubeUrl)
-            );
-        }
-
-        final String userTiktokUrl = updateProfileRequest.getUserTiktokUrl();
-        if (userTiktokUrl != null) {
-            graphTraversal = graphTraversal.property(
-                single, USER_TIKTOK_URL_PROPERTY, addHttpPrefixIfNotPresent(userTiktokUrl)
-            );
-        }
-
-        final String userWebsiteUrl = updateProfileRequest.getUserWebsiteUrl();
-        if (userWebsiteUrl != null) {
-            graphTraversal = graphTraversal.property(
-                single, USER_WEBSITE_URL_PROPERTY, addHttpPrefixIfNotPresent(userWebsiteUrl)
-            );
-        }
-
-        graphTraversal.iterate();
-    }
-
     private String addHttpPrefixIfNotPresent(final String url) {
-        if (url.startsWith("http://") || url.startsWith("https://")) {
-           return url;
+        if (url.isEmpty() || url.startsWith("http://") || url.startsWith("https://")) {
+            return url;
+        } else {
+            return "http://" + url;
         }
-
-        return "http://" + url;
     }
 }
