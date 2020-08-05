@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
@@ -120,7 +121,33 @@ public class ProfileController {
     /**
      * Call to retrieve all the post headers for a Profile.
      *
-     * @param username A String containing the username of the User's Profile to return.
+     * @param username A String containing the username of the User's Profile to return with a body like
+     *                 [
+     *                     {
+     *                         "postId": "8aa85a2f-917c-47a3-8bc0-f55f247304f5",
+     *                         "postTitle": "This is a profile post on jason40's profile two!",
+     *                         "postFilename": null,
+     *                         "postContentUrl": null,
+     *                         "postBody": "Hi guys",
+     *                         "createdAt": "2020-08-05T03:03:42.189+00:00",
+     *                         "postUpvotes": 1,
+     *                         "postSubmitter": "jason40",
+     *                         "postPostedInUser": "jason40",
+     *                         "postPostedInShard": null
+     *                     },
+     *                     {
+     *                         "postId": "9e881586-ef6b-40c8-a753-79445dcbbf3c",
+     *                         "postTitle": "This is a profile post on jason41's profile",
+     *                         "postFilename": "2dc67fdd-748a-4e5d-8422-0656498e9f10.png",
+     *                         "postContentUrl": null,
+     *                         "postBody": null,
+     *                         "createdAt": "2020-08-03T03:16:09.159+00:00",
+     *                         "postUpvotes": 1,
+     *                         "postSubmitter": "jason40",
+     *                         "postPostedInUser": "jason40",
+     *                         "postPostedInShard": null
+     *                     }
+     *                 ]
      *
      * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully.
      *         HTTP 404 Not Found - If the Profile doesn't exist.
@@ -135,12 +162,15 @@ public class ProfileController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final List<Map<String, Object>> posts = rG
+        final List<Post> posts = rG
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase) // Single user vertex
             .in(POST_POSTED_IN_USER_EDGE_LABEL) // All posts posted in the user's profile
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
             .flatMap(Post.projectToPost())
-            .toList();
+            .toList()
+            .stream()
+            .map(Post::new)
+            .collect(Collectors.toList());
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 

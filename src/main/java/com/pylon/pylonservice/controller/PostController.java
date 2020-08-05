@@ -26,10 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.UncheckedIOException;
 import java.util.Date;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_BODY_PROPERTY;
@@ -50,7 +51,6 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.inV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
@@ -86,45 +86,18 @@ public class PostController {
      *
      * @param postId A String containing the postId of the Post to return.
      *
-     * @return HTTP 200 OK - If the Post was retrieved successfully.
-     *                       When the Post was posted to a User's profile, response contains a JSON object like
+     * @return HTTP 200 OK - If the Post was retrieved successfully with a body like
      *                       {
-     *                           "postMetadata": {
-     *                               "id": 7,
-     *                               "label": "post",
-     *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
-     *                               "postBody": "This is a post body",
-     *                               "postTitle": "Profile Post 1",
-     *                               "postFilename": "00000000-0000-0000-0000-000000000000.png",
-     *                               "postContentUrl": "https://pylon.gg"
-     *                               "postId": "00000000-0000-0000-0000-000000000000"
-     *                           },
-     *                           "shardOrUserMetadata": {
-     *                               "id": 0,
-     *                               "label": "user",
-     *                               "createdAt": "2020-07-19T23:37:20.483+00:00",
-     *                               "userBio": "hi, my name is jason.",
-     *                               "username": "jason25"
-     *                           }
-     *                       }
-     *                       When the Post was posted to a Shard, response contains a JSON object like
-     *                       {
-     *                           "postMetadata": {
-     *                               "id": 7,
-     *                               "label": "post",
-     *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
-     *                               "postBody": "This is a post body",
-     *                               "postTitle": "Profile Post 1",
-     *                               "postFilename": "00000000-0000-0000-0000-000000000000.png",
-     *                               "postContentUrl": "https://pylon.gg"
-     *                               "postId": "00000000-0000-0000-0000-000000000000"
-     *                           },
-     *                           "shardOrUserMetadata": {
-     *                               "id": 0,
-     *                               "label": "shard",
-     *                               "createdAt": "2020-07-19T23:37:20.483+00:00",
-     *                               "shardName": "JasonShard"
-     *                           }
+     *                           "postId": "9e881586-ef6b-40c8-a753-79445dcbbf3c",
+     *                           "postTitle": "This is a profile post on jason41's profile",
+     *                           "postFilename": "2dc67fdd-748a-4e5d-8422-0656498e9f10.png",
+     *                           "postContentUrl": null,
+     *                           "postBody": null,
+     *                           "createdAt": "2020-08-03T03:16:09.159+00:00",
+     *                           "postUpvotes": 1,
+     *                           "postSubmitter": "jason40",
+     *                           "postPostedInUser": "jason40",
+     *                           "postPostedInShard": null
      *                       }
      *
      *         HTTP 404 Not Found - If the Post doesn't exist.
@@ -134,12 +107,15 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_METRIC_NAME);
 
-        final Map<String, Object> post;
+        final Post post;
         try {
             post = rG
                 .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
                 .flatMap(Post.projectToPost())
-                .next();
+                .toList()
+                .stream()
+                .map(Post::new)
+                .collect(toSingleton());
         } catch (final NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -473,5 +449,17 @@ public class PostController {
         return V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).as("user")
             .addE(USER_SUBMITTED_POST_EDGE_LABEL).from("user").to("post")
             .addE(USER_UPVOTED_POST_EDGE_LABEL).from("user").to("post");
+    }
+
+    public static <T> Collector<T, ?, T> toSingleton() {
+        return Collectors.collectingAndThen(
+            Collectors.toList(),
+            list -> {
+                if (list.size() != 1) {
+                    throw new IllegalStateException();
+                }
+                return list.get(0);
+            }
+        );
     }
 }
