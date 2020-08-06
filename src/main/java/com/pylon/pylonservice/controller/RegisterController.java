@@ -22,10 +22,21 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Date;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
-import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_CASE_SENSITIVE_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_AVATAR_FILENAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_BANNER_FILENAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_BIO_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_FACEBOOK_URL_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_INSTAGRAM_URL_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_LOCATION_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_TIKTOK_URL_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITCH_URL_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITTER_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_CASE_SENSITIVE_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_VERIFIED_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_WEBSITE_URL_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_YOUTUBE_URL_PROPERTY;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
 @RestController
@@ -33,6 +44,7 @@ public class RegisterController {
     private static final String REGISTER_METRIC_NAME = "Register";
     private static final String USERNAME_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(username)";
     private static final String EMAIL_DOES_NOT_EXIST_CONDITION = "attribute_not_exists(email)";
+    private static final String EMPTY_STRING = "";
 
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
@@ -101,7 +113,19 @@ public class RegisterController {
             .addV(USER_VERTEX_LABEL)
             .property(single, USER_USERNAME_PROPERTY, usernameLowercase)
             .property(single, USER_USERNAME_CASE_SENSITIVE_PROPERTY, registerRequest.getUsername())
+            .property(single, USER_VERIFIED_PROPERTY, false)
             .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
+            .property(single, USER_AVATAR_FILENAME_PROPERTY, EMPTY_STRING)
+            .property(single, USER_BANNER_FILENAME_PROPERTY, EMPTY_STRING)
+            .property(single, USER_BIO_PROPERTY, EMPTY_STRING)
+            .property(single, USER_LOCATION_PROPERTY, EMPTY_STRING)
+            .property(single, USER_FACEBOOK_URL_PROPERTY, EMPTY_STRING)
+            .property(single, USER_TWITTER_URL_PROPERTY, EMPTY_STRING)
+            .property(single, USER_INSTAGRAM_URL_PROPERTY, EMPTY_STRING)
+            .property(single, USER_TWITCH_URL_PROPERTY, EMPTY_STRING)
+            .property(single, USER_YOUTUBE_URL_PROPERTY, EMPTY_STRING)
+            .property(single, USER_TIKTOK_URL_PROPERTY, EMPTY_STRING)
+            .property(single, USER_WEBSITE_URL_PROPERTY, EMPTY_STRING)
             .iterate();
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(
