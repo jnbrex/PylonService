@@ -66,7 +66,28 @@ public class ProfileController {
      *
      * @param username A String containing the username of the User's profile to return
      *
-     * @return HTTP 200 OK - If the User's public profile data was retrieved successfully.
+     * @return HTTP 200 OK - If the User's public profile data was retrieved successfully with a response body like
+     *                       {
+     *                           "username": "jason50",
+     *                           "usernameCaseSensitive": "jason50",
+     *                           "userAvatarFilename": "",
+     *                           "userBannerFilename": "",
+     *                           "userBio": "",
+     *                           "userLocation": "",
+     *                           "userVerified": false,
+     *                           "userFacebookUrl": "",
+     *                           "userTwitterUrl": "",
+     *                           "userInstagramUrl": "",
+     *                           "userTwitchUrl": "",
+     *                           "userYoutubeUrl": "",
+     *                           "userTiktokUrl": "",
+     *                           "userWebsiteUrl": "",
+     *                           "createdAt": "2020-08-06T23:05:34.206+00:00",
+     *                           "numFollowers": 1,
+     *                           "numFollowed": 1,
+     *                           "numOwnedShards": 4,
+     *                           "numFollowedShards": 4
+     *                       }
      *         HTTP 404 Not Found - If the User doesn't exist.
      */
     @GetMapping(value = "/profile/{username}")
@@ -98,7 +119,28 @@ public class ProfileController {
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      *
-     * @return HTTP 200 OK - If the User's public profile data was retrieved successfully.
+     * @return HTTP 200 OK - If the User's public profile data was retrieved successfully with a response body like
+     *                       {
+     *                           "username": "jason50",
+     *                           "usernameCaseSensitive": "jason50",
+     *                           "userAvatarFilename": "",
+     *                           "userBannerFilename": "",
+     *                           "userBio": "",
+     *                           "userLocation": "",
+     *                           "userVerified": false,
+     *                           "userFacebookUrl": "",
+     *                           "userTwitterUrl": "",
+     *                           "userInstagramUrl": "",
+     *                           "userTwitchUrl": "",
+     *                           "userYoutubeUrl": "",
+     *                           "userTiktokUrl": "",
+     *                           "userWebsiteUrl": "",
+     *                           "createdAt": "2020-08-06T23:05:34.206+00:00",
+     *                           "numFollowers": 1,
+     *                           "numFollowed": 1,
+     *                           "numOwnedShards": 4,
+     *                           "numFollowedShards": 4
+     *                       }
      *              HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @GetMapping(value = "/myProfile")
