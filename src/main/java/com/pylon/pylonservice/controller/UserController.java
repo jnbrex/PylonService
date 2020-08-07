@@ -1,5 +1,6 @@
 package com.pylon.pylonservice.controller;
 
+import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
@@ -25,6 +27,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POS
 import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
+import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 
@@ -221,12 +224,15 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final List<Map<Object, Object>> submittedPosts = rG
+        final List<Post> submittedPosts = rG
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_SUBMITTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .valueMap().by(unfold())
-            .toList();
+            .flatMap(projectToPost())
+            .toList()
+            .stream()
+            .map(Post::new)
+            .collect(Collectors.toList());
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(submittedPosts);
 
@@ -253,12 +259,15 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final List<Map<Object, Object>> upvotedPosts = rG
+        final List<Post> upvotedPosts = rG
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_UPVOTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .valueMap().by(unfold())
-            .toList();
+            .flatMap(projectToPost())
+            .toList()
+            .stream()
+            .map(Post::new)
+            .collect(Collectors.toList());
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(upvotedPosts);
 
