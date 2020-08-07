@@ -86,20 +86,8 @@ public class PostController {
      *
      * @param postId A String containing the postId of the Post to return.
      *
-     * @return HTTP 200 OK - If the Post was retrieved successfully with a body like
-     *                       {
-     *                           "postId": "9e881586-ef6b-40c8-a753-79445dcbbf3c",
-     *                           "postTitle": "This is a profile post on jason41's profile",
-     *                           "postFilename": "2dc67fdd-748a-4e5d-8422-0656498e9f10.png",
-     *                           "postContentUrl": null,
-     *                           "postBody": null,
-     *                           "createdAt": "2020-08-03T03:16:09.159+00:00",
-     *                           "postUpvotes": 1,
-     *                           "postSubmitter": "jason40",
-     *                           "postPostedInUser": "jason40",
-     *                           "postPostedInShard": null
-     *                       }
-     *
+     * @return HTTP 200 OK - If the Post was retrieved successfully. Body is an array of
+     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
      *         HTTP 404 Not Found - If the Post doesn't exist.
      */
     @GetMapping(value = "/post/{postId}")
@@ -361,8 +349,8 @@ public class PostController {
     }
 
     /**
-     * Call to create a Post as a comment on another Post. See
-     * com.pylon.pylonservice.model.requests.CreatePostRequest.isValidCommentPost() for validation rules.
+     * Call to create a Post as a comment on another Post.
+     * @see CreatePostRequest#isValidTopLevelPost()
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param parentPostId A postId of the parent Post

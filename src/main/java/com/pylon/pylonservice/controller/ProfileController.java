@@ -177,7 +177,7 @@ public class ProfileController {
      *                         "postContentUrl": null,
      *                         "postBody": "Hi guys",
      *                         "createdAt": "2020-08-05T03:03:42.189+00:00",
-     *                         "postUpvotes": 1,
+     *                         "numLikes": 1,
      *                         "postSubmitter": "jason40",
      *                         "postPostedInUser": "jason40",
      *                         "postPostedInShard": null
@@ -189,7 +189,7 @@ public class ProfileController {
      *                         "postContentUrl": null,
      *                         "postBody": null,
      *                         "createdAt": "2020-08-03T03:16:09.159+00:00",
-     *                         "postUpvotes": 1,
+     *                         "numLikes": 1,
      *                         "postSubmitter": "jason40",
      *                         "postPostedInUser": "jason40",
      *                         "postPostedInShard": null
@@ -238,7 +238,7 @@ public class ProfileController {
      *                         "postContentUrl": null,
      *                         "postBody": "Hi guys",
      *                         "createdAt": "2020-08-05T03:03:42.189+00:00",
-     *                         "postUpvotes": 1,
+     *                         "numLikes": 1,
      *                         "postSubmitter": "jason40",
      *                         "postPostedInUser": "jason40",
      *                         "postPostedInShard": null
@@ -250,7 +250,7 @@ public class ProfileController {
      *                         "postContentUrl": null,
      *                         "postBody": null,
      *                         "createdAt": "2020-08-03T03:16:09.159+00:00",
-     *                         "postUpvotes": 1,
+     *                         "numLikes": 1,
      *                         "postSubmitter": "jason40",
      *                         "postPostedInUser": "jason40",
      *                         "postPostedInShard": null

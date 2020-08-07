@@ -154,7 +154,7 @@ public class ShardController {
      *                               "postContentUrl": "exampleContentUrl",
      *                               "postBody": "third post!",
      *                               "createdAt": "2020-07-25T21:32:56.090+00:00",
-     *                               "postUpvotes": 1,
+     *                               "numLikes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": null,
      *                               "postPostedInShard": "shard9"
@@ -166,7 +166,7 @@ public class ShardController {
      *                               "postContentUrl": null,
      *                               "postBody": null,
      *                               "createdAt": "2020-07-25T21:31:54.682+00:00",
-     *                               "postUpvotes": 1,
+     *                               "numLikes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": null,
      *                               "postPostedInShard": "shard9"
@@ -178,7 +178,7 @@ public class ShardController {
      *                               "postContentUrl": null,
      *                               "postBody": "1",
      *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
-     *                               "postUpvotes": 1,
+     *                               "numLikes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": "jason25",
      *                               "postPostedInShard": null
@@ -226,7 +226,7 @@ public class ShardController {
      *                               "postContentUrl": "exampleContentUrl",
      *                               "postBody": "third post!",
      *                               "createdAt": "2020-07-25T21:32:56.090+00:00",
-     *                               "postUpvotes": 1,
+     *                               "numLikes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": null,
      *                               "postPostedInShard": "shard9"
@@ -238,7 +238,7 @@ public class ShardController {
      *                               "postContentUrl": null,
      *                               "postBody": null,
      *                               "createdAt": "2020-07-25T21:31:54.682+00:00",
-     *                               "postUpvotes": 1,
+     *                               "numLikes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": null,
      *                               "postPostedInShard": "shard9"
@@ -250,7 +250,7 @@ public class ShardController {
      *                               "postContentUrl": null,
      *                               "postBody": "1",
      *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
-     *                               "postUpvotes": 1,
+     *                               "numLikes": 1,
      *                               "postSubmitter": "jason25",
      *                               "postPostedInUser": "jason25",
      *                               "postPostedInShard": null

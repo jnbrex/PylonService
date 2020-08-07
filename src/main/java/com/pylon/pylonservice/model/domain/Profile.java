@@ -40,11 +40,11 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
 public class Profile implements Serializable {
     private static final long serialVersionUID = 0L;
 
-    public static final String PROPERTIES = "properties";
-    public static final String NUM_FOLLOWERS = "numFollowers";
-    public static final String NUM_FOLLOWED = "numFollowed";
-    public static final String NUM_OWNED_SHARDS = "numOwnedShards";
-    public static final String NUM_FOLLOWED_SHARDS = "numFollowedShards";
+    private static final String PROPERTIES = "properties";
+    private static final String NUM_FOLLOWERS = "numFollowers";
+    private static final String NUM_FOLLOWED = "numFollowed";
+    private static final String NUM_OWNED_SHARDS = "numOwnedShards";
+    private static final String NUM_FOLLOWED_SHARDS = "numFollowedShards";
 
     // Properties of profile vertex
     final String username;
