@@ -48,14 +48,14 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POS
 import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
+import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.flatMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.inV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
 @RestController
@@ -132,7 +132,7 @@ public class PostController {
             .emit()
             .repeat(in(POST_COMMENT_ON_POST_EDGE_LABEL))
             .tree()
-            .by(valueMap().by(unfold()))
+            .by(flatMap(projectToPost()))
             .next();
 
         if (postAndComments.isEmpty()) {
