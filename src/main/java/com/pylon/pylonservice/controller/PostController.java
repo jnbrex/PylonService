@@ -271,12 +271,11 @@ public class PostController {
                                              @RequestBody final CreatePostRequest createPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_SHARD_POST_METRIC_NAME);
+        final String shardNameLowercase = shardName.toLowerCase();
 
         if (!createPostRequest.isValidTopLevelPost()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
-
-        final String shardNameLowercase = shardName.toLowerCase();
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);

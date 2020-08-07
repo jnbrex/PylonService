@@ -64,7 +64,7 @@ public class Post implements Serializable {
         this.postPostedInShard = postedInShardNames.size() > 0 ? postedInShardNames.iterator().next() : null;
         this.postPostedInUser = postedInUserUsernames.size() > 0 ? postedInUserUsernames.iterator().next() : null;
 
-        final Map<Object, Object> postProperties = (Map<Object, Object>) graphPostMap.get(PROPERTIES);
+        final Map<String, Object> postProperties = (Map<String, Object>) graphPostMap.get(PROPERTIES);
         this.postId = (String) postProperties.get(POST_ID_PROPERTY);
         this.postTitle = (String) postProperties.get(POST_TITLE_PROPERTY);
         this.postFilename = (String) postProperties.get(POST_FILENAME_PROPERTY);

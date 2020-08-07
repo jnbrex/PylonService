@@ -408,11 +408,11 @@ public class ShardController {
                                          @RequestBody final UpdateShardRequest updateShardRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(UPDATE_SHARD_METRIC_NAME);
+        final String shardNameLowercase = shardName.toLowerCase();
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
 
-        final String shardNameLowercase = shardName.toLowerCase();
         final String shardOwnerUsername = (String) rG
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
             .in(USER_OWNS_SHARD_EDGE_LABEL)

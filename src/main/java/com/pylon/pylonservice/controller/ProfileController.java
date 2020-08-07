@@ -1,6 +1,7 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
+import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
@@ -19,8 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
@@ -39,8 +38,8 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_WEBSITE_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_YOUTUBE_URL_PROPERTY;
 import static com.pylon.pylonservice.model.domain.Post.projectToPost;
+import static com.pylon.pylonservice.model.domain.Profile.projectToProfile;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
 @RestController
@@ -76,15 +75,16 @@ public class ProfileController {
         metricsUtil.addCountMetric(GET_PROFILE_METRIC_NAME);
         final String usernameLowercase = username.toLowerCase();
 
-        final Map<Object, Object> profile;
-        try {
-            profile = rG
-                .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
-                .valueMap().by(unfold())
-                .next();
-        } catch (final NoSuchElementException e) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+        final Profile profile = new Profile(
+            rG
+                .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
+                .flatMap(projectToProfile(usernameLowercase))
+                .next()
+        );
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(profile);
 
@@ -107,12 +107,14 @@ public class ProfileController {
         metricsUtil.addCountMetric(GET_MY_PROFILE_METRIC_NAME);
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
 
-        final Map<Object, Object> profile = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
-            .valueMap().by(unfold())
-            .next();
+        final Profile profile = new Profile(
+            rG
+                .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
+                .flatMap(projectToProfile(usernameLowercase))
+                .next()
+        );
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(profile);
 
@@ -169,7 +171,7 @@ public class ProfileController {
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase) // Single user vertex
             .in(POST_POSTED_IN_USER_EDGE_LABEL) // All posts posted in the user's profile
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .flatMap(Post.projectToPost())
+            .flatMap(projectToPost())
             .toList()
             .stream()
             .map(Post::new)

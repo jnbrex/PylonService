@@ -56,6 +56,7 @@ public class FollowController {
                                         @PathVariable final String usernameToFollow) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(FOLLOW_USER_METRIC_NAME);
+        final String usernameToFollowLowercase = usernameToFollow.toLowerCase();
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
@@ -64,7 +65,7 @@ public class FollowController {
             return new ResponseEntity<>("A user cannot follow themself.", HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToFollow).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToFollowLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
@@ -72,10 +73,10 @@ public class FollowController {
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, followerUsername)
             .coalesce(
                 outE(USER_FOLLOWS_USER_EDGE_LABEL).filter(
-                    inV().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToFollow)
+                    inV().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToFollowLowercase)
                 ),
                 addE(USER_FOLLOWS_USER_EDGE_LABEL).to(
-                    V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToFollow)
+                    V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToFollowLowercase)
                 )
             )
             .iterate();
@@ -101,11 +102,12 @@ public class FollowController {
                                          @PathVariable final String shardNameToFollow) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(FOLLOW_SHARD_METRIC_NAME);
+        final String shardNameToFollowLowercase = shardNameToFollow.toLowerCase();
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
 
-        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToFollow).hasNext()) {
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToFollowLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
@@ -113,10 +115,10 @@ public class FollowController {
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, followerUsername)
             .coalesce(
                 outE(USER_FOLLOWS_SHARD_EDGE_LABEL).filter(
-                    inV().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToFollow)
+                    inV().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToFollowLowercase)
                 ),
                 addE(USER_FOLLOWS_SHARD_EDGE_LABEL).to(
-                    V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToFollow)
+                    V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToFollowLowercase)
                 )
             )
             .iterate();
@@ -142,18 +144,19 @@ public class FollowController {
                                           @PathVariable final String usernameToUnfollow) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(UNFOLLOW_USER_METRIC_NAME);
+        final String usernameToUnfollowLowercase = usernameToUnfollow.toLowerCase();
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToUnfollow).hasNext()) {
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToUnfollowLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         wG
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, followerUsername)
             .outE(USER_FOLLOWS_USER_EDGE_LABEL).where(
-                inV().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToUnfollow)
+                inV().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToUnfollowLowercase)
             )
             .drop()
             .iterate();
@@ -179,18 +182,19 @@ public class FollowController {
                                            @PathVariable final String shardNameToUnfollow) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(UNFOLLOW_SHARD_METRIC_NAME);
+        final String shardNameToUnfollowLowercase = shardNameToUnfollow.toLowerCase();
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
 
-        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToUnfollow).hasNext()) {
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToUnfollowLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         wG
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, followerUsername)
             .outE(USER_FOLLOWS_SHARD_EDGE_LABEL).where(
-                inV().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToUnfollow)
+                inV().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToUnfollowLowercase)
             )
             .drop()
             .iterate();
