@@ -225,7 +225,7 @@ public class UserController {
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_SUBMITTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .elementMap()
+            .valueMap().by(unfold())
             .toList();
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(submittedPosts);
@@ -257,7 +257,7 @@ public class UserController {
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_UPVOTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .elementMap()
+            .valueMap().by(unfold())
             .toList();
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(upvotedPosts);

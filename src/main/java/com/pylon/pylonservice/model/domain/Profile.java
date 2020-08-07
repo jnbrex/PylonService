@@ -30,10 +30,11 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_WEBSITE_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_YOUTUBE_URL_PROPERTY;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.elementMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.project;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 
 @Data
 public class Profile implements Serializable {
@@ -94,7 +95,7 @@ public class Profile implements Serializable {
 
     public static GraphTraversal<Object, Map<String, Object>> projectToProfile(final String username) {
         return project(PROPERTIES, NUM_FOLLOWERS, NUM_FOLLOWED, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS)
-            .by(elementMap())
+            .by(valueMap().by(unfold()))
             .by(
                 V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
                     .emit()
