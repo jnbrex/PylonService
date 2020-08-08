@@ -29,6 +29,23 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.repeat
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 
+/**
+ * {
+ *     "postId": "3e65390e-f1d0-4535-832e-4241f8a1235b",
+ *     "postTitle": "This is a profile post on jason50's profile two (for real though)!",
+ *     "postFilename": null,
+ *     "postContentUrl": null,
+ *     "postBody": "Hi guys",
+ *     "createdAt": "2020-08-07T04:48:43.973+00:00",
+ *     "numLikes": 1,
+ *     "numComments": 9,
+ *     "postSubmitter": "jason50",
+ *     "postLikedByUser": true,
+ *     "postPostedInUser": "jason50",
+ *     "postPostedInShard": null,
+ *     "commentOnPost": null
+ * }
+ */
 @Data
 public class Post implements Serializable {
     private static final long serialVersionUID = 0L;
