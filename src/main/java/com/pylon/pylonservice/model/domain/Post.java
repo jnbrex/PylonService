@@ -120,7 +120,9 @@ public class Post implements Serializable {
     }
 
     public double getPopularity(final Date now) {
-        return (this.numLikes + 1.0) /
+        return
+            (this.numLikes + (this.numComments * 2) + 1.0)
+            /
             Math.pow(timeSincePostedInHours(now) + TWO_HOURS, DECAY_CONSTANT);
     }
 

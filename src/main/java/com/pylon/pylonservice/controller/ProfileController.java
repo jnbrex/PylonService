@@ -254,7 +254,6 @@ public class ProfileController {
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
 
-        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
         wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
             .property(single, USER_AVATAR_FILENAME_PROPERTY, updateProfileRequest.getUserAvatarFilename())
             .property(single, USER_BANNER_FILENAME_PROPERTY, updateProfileRequest.getUserBannerFilename())
@@ -269,6 +268,8 @@ public class ProfileController {
             .property(single, USER_DISCORD_URL_PROPERTY, updateProfileRequest.getUserDiscordUrl())
             .property(single, USER_WEBSITE_URL_PROPERTY, updateProfileRequest.getUserWebsiteUrl())
             .iterate();
+
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
         metricsUtil.addSuccessMetric(PUT_PROFILE_METRIC_NAME);
         metricsUtil.addLatencyMetric(PUT_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
