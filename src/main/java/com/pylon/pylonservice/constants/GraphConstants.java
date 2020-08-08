@@ -49,6 +49,7 @@ public final class GraphConstants {
     public static final String USER_TWITCH_URL_PROPERTY = "userTwitchUrl";
     public static final String USER_YOUTUBE_URL_PROPERTY = "userYoutubeUrl";
     public static final String USER_TIKTOK_URL_PROPERTY = "userTiktokUrl";
+    public static final String USER_DISCORD_URL_PROPERTY = "userDiscordUrl";
     public static final String USER_WEBSITE_URL_PROPERTY = "userWebsiteUrl";
 
     // Shard

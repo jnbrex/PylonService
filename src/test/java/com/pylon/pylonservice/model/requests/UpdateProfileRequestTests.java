@@ -11,15 +11,17 @@ import java.util.stream.Stream;
 public class UpdateProfileRequestTests {
     private static final String VALID_USER_AVATAR_FILENAME = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.png";
     private static final String VALID_USER_BANNER_FILENAME = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.jpg";
-    private static final String VALID_USER_BIO = "a".repeat(150);
-    private static final String VALID_USER_LOCATION = "a".repeat(100);
-    private static final String VALID_USER_FACEBOOK_URL = "a".repeat(200);
-    private static final String VALID_USER_TWITTER_URL = "a".repeat(200);
-    private static final String VALID_USER_INSTAGRAM_URL = "a".repeat(200);
-    private static final String VALID_USER_TWITCH_URL = "a".repeat(200);
-    private static final String VALID_USER_YOUTUBE_URL = "a".repeat(200);
-    private static final String VALID_USER_TIKTOK_URL = "a".repeat(200);
-    private static final String VALID_USER_WEBSITE_URL = "a".repeat(200);
+    private static final String VALID_USER_BIO = "hi my name is jason, this is my bio.";
+    private static final String VALID_USER_LOCATION = "atlanta, georgia";
+    private static final String VALID_USER_FACEBOOK_URL = "https://www.facebook.com/jason.bohrer.10";
+    private static final String VALID_USER_TWITTER_URL = "https://twitter.com/bohrer_jason";
+    private static final String VALID_USER_INSTAGRAM_URL = "www.instagram.com/jnbrex/";
+    private static final String VALID_USER_TWITCH_URL = "twitch.tv/haste";
+    private static final String VALID_USER_YOUTUBE_URL = "http://www.youtube.com/channel/UCeBMccz-PDZf6OB4aV6a3eA";
+    private static final String VALID_USER_TIKTOK_URL = "https://www.tiktok.com/@charlidamelio?lang=en";
+    private static final String VALID_USER_DISCORD_URL_GG_DOMAIN = "https://discord.gg/pJNRzPR";
+    private static final String VALID_USER_DISCORD_URL_COM_DOMAIN = "https://discord.com/pJNRzPR";
+    private static final String VALID_USER_WEBSITE_URL = "http://blog.jason.com";
 
     private static final String VALID_USER_AVATAR_FILENAME_BLANK = "";
     private static final String VALID_USER_BANNER_FILENAME_BLANK = "";
@@ -31,19 +33,32 @@ public class UpdateProfileRequestTests {
     private static final String VALID_USER_TWITCH_URL_BLANK = "";
     private static final String VALID_USER_YOUTUBE_URL_BLANK = "";
     private static final String VALID_USER_TIKTOK_URL_BLANK = "";
+    private static final String VALID_USER_DISCORD_URL_BLANK = "";
     private static final String VALID_USER_WEBSITE_URL_BLANK = "";
 
     private static final String INVALID_USER_AVATAR_FILENAME = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.svg";
     private static final String INVALID_USER_BANNER_FILENAME = "filename";
     private static final String INVALID_USER_BIO = "a".repeat(151);
     private static final String INVALID_USER_LOCATION = "a".repeat(101);
-    private static final String INVALID_USER_FACEBOOK_URL = "a".repeat(201);
-    private static final String INVALID_USER_TWITTER_URL = "a".repeat(201);
-    private static final String INVALID_USER_INSTAGRAM_URL = "a".repeat(201);
-    private static final String INVALID_USER_TWITCH_URL = "a".repeat(201);
-    private static final String INVALID_USER_YOUTUBE_URL = "a".repeat(201);
-    private static final String INVALID_USER_TIKTOK_URL = "a".repeat(201);
-    private static final String INVALID_USER_WEBSITE_URL = "a".repeat(201);
+
+    private static final String INVALID_USER_FACEBOOK_URL_WRONG_DOMAIN = "https://www.focebook.com/jason.bohrer.10";
+    private static final String INVALID_USER_TWITTER_URL_WRONG_DOMAIN = "https://twitter.facebook.com/bohrer_jason";
+    private static final String INVALID_USER_INSTAGRAM_URL_WRONG_DOMAIN = "www.instagram.co/jnbrex/";
+    private static final String INVALID_USER_TWITCH_URL_WRONG_DOMAIN = "twitch.a.tv/haste";
+    private static final String INVALID_USER_YOUTUBE_URL_WRONG_DOMAIN
+        = "http://www.youtube.gg/channel/UCeBMccz-PDZf6OB4aV6a3eA";
+    private static final String INVALID_USER_TIKTOK_URL_WRONG_DOMAIN = "https://blog.tiktok.com/@charlidamelio?lang=en";
+    private static final String INVALID_USER_DISCORD_URL_WRONG_DOMAIN = "https://discord.tv/pJNRzPR";
+
+    private static final int MAX_URL_LENGTH = 201;
+    private static final String INVALID_USER_FACEBOOK_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH);
+    private static final String INVALID_USER_TWITTER_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH);
+    private static final String INVALID_USER_INSTAGRAM_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH);
+    private static final String INVALID_USER_TWITCH_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH);
+    private static final String INVALID_USER_YOUTUBE_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH);
+    private static final String INVALID_USER_TIKTOK_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH);
+    private static final String INVALID_USER_DISCORD_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH);
+    private static final String INVALID_USER_WEBSITE_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH);
 
     @DataProvider
     private Object[][] provideValidUpdateProfileRequests() {
@@ -60,6 +75,23 @@ public class UpdateProfileRequestTests {
                     VALID_USER_TWITCH_URL,
                     VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_GG_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                )
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 )
             },
@@ -75,6 +107,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_TWITCH_URL_BLANK,
                     VALID_USER_YOUTUBE_URL_BLANK,
                     VALID_USER_TIKTOK_URL_BLANK,
+                    VALID_USER_DISCORD_URL_BLANK,
                     VALID_USER_WEBSITE_URL_BLANK
                 )
             }
@@ -96,6 +129,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_TWITCH_URL,
                     VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_GG_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 ),
             },
@@ -111,6 +145,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_TWITCH_URL,
                     VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_GG_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 ),
             },
@@ -126,6 +161,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_TWITCH_URL,
                     VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_GG_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 ),
             },
@@ -141,6 +177,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_TWITCH_URL,
                     VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_GG_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 ),
             },
@@ -150,12 +187,13 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
-                    INVALID_USER_FACEBOOK_URL,
+                    INVALID_USER_FACEBOOK_URL_WRONG_DOMAIN,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
                     VALID_USER_TWITCH_URL,
                     VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_GG_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 ),
             },
@@ -166,26 +204,12 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
                     VALID_USER_FACEBOOK_URL,
-                    INVALID_USER_TWITTER_URL,
+                    INVALID_USER_TWITTER_URL_WRONG_DOMAIN,
                     VALID_USER_INSTAGRAM_URL,
                     VALID_USER_TWITCH_URL,
                     VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
-                    VALID_USER_WEBSITE_URL
-                ),
-            },
-            {
-                new UpdateProfileRequest(
-                    VALID_USER_AVATAR_FILENAME,
-                    VALID_USER_BANNER_FILENAME,
-                    VALID_USER_BIO,
-                    VALID_USER_LOCATION,
-                    VALID_USER_FACEBOOK_URL,
-                    VALID_USER_TWITTER_URL,
-                    INVALID_USER_INSTAGRAM_URL,
-                    VALID_USER_TWITCH_URL,
-                    VALID_USER_YOUTUBE_URL,
-                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 ),
             },
@@ -197,10 +221,11 @@ public class UpdateProfileRequestTests {
                     VALID_USER_LOCATION,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
-                    VALID_USER_INSTAGRAM_URL,
-                    INVALID_USER_TWITCH_URL,
+                    INVALID_USER_INSTAGRAM_URL_WRONG_DOMAIN,
+                    VALID_USER_TWITCH_URL,
                     VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 ),
             },
@@ -213,9 +238,10 @@ public class UpdateProfileRequestTests {
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
-                    VALID_USER_TWITCH_URL,
-                    INVALID_USER_YOUTUBE_URL,
+                    INVALID_USER_TWITCH_URL_WRONG_DOMAIN,
+                    VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 ),
             },
@@ -229,8 +255,9 @@ public class UpdateProfileRequestTests {
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
                     VALID_USER_TWITCH_URL,
-                    VALID_USER_YOUTUBE_URL,
-                    INVALID_USER_TIKTOK_URL,
+                    INVALID_USER_YOUTUBE_URL_WRONG_DOMAIN,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
                     VALID_USER_WEBSITE_URL
                 ),
             },
@@ -245,20 +272,165 @@ public class UpdateProfileRequestTests {
                     VALID_USER_INSTAGRAM_URL,
                     VALID_USER_TWITCH_URL,
                     VALID_USER_YOUTUBE_URL,
+                    INVALID_USER_TIKTOK_URL_WRONG_DOMAIN,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
                     VALID_USER_TIKTOK_URL,
-                    INVALID_USER_WEBSITE_URL
+                    INVALID_USER_DISCORD_URL_WRONG_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    INVALID_USER_FACEBOOK_URL_TOO_LONG,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    VALID_USER_FACEBOOK_URL,
+                    INVALID_USER_TWITTER_URL_TOO_LONG,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    INVALID_USER_INSTAGRAM_URL_TOO_LONG,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    INVALID_USER_TWITCH_URL_TOO_LONG,
+                    VALID_USER_YOUTUBE_URL,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    INVALID_USER_YOUTUBE_URL_TOO_LONG,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
+                    INVALID_USER_TIKTOK_URL_TOO_LONG,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
+                    VALID_USER_TIKTOK_URL,
+                    INVALID_USER_DISCORD_URL_TOO_LONG,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    VALID_USER_LOCATION,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_COM_DOMAIN,
+                    INVALID_USER_WEBSITE_URL_TOO_LONG
                 ),
             }
         };
     }
 
     @Test(dataProvider = "provideValidUpdateProfileRequests")
-    public void testValidCreateTopLevelPostRequests(final UpdateProfileRequest updateProfileRequest) {
+    public void testValidUpdateProfileRequests(final UpdateProfileRequest updateProfileRequest) {
         Assertions.assertThat(updateProfileRequest.isValid()).isTrue();
     }
 
     @Test(dataProvider = "provideInvalidUpdateProfileRequests")
-    public void testInvalidCreateTopLevelPostRequests(final UpdateProfileRequest updateProfileRequest) {
+    public void testInvalidUpdateProfileRequests(final UpdateProfileRequest updateProfileRequest) {
         Assertions.assertThat(updateProfileRequest.isValid()).isFalse();
     }
 }

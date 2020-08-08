@@ -28,6 +28,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USE
 import static com.pylon.pylonservice.constants.GraphConstants.USER_AVATAR_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_BANNER_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_BIO_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_DISCORD_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FACEBOOK_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_INSTAGRAM_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_LOCATION_PROPERTY;
@@ -67,28 +68,8 @@ public class ProfileController {
      *
      * @param username A String containing the username of the User's profile to return
      *
-     * @return HTTP 200 OK - If the User's public profile data was retrieved successfully with a response body like
-     *                       {
-     *                           "username": "jason50",
-     *                           "usernameCaseSensitive": "jason50",
-     *                           "userAvatarFilename": "",
-     *                           "userBannerFilename": "",
-     *                           "userBio": "",
-     *                           "userLocation": "",
-     *                           "userVerified": false,
-     *                           "userFacebookUrl": "",
-     *                           "userTwitterUrl": "",
-     *                           "userInstagramUrl": "",
-     *                           "userTwitchUrl": "",
-     *                           "userYoutubeUrl": "",
-     *                           "userTiktokUrl": "",
-     *                           "userWebsiteUrl": "",
-     *                           "createdAt": "2020-08-06T23:05:34.206+00:00",
-     *                           "numFollowers": 1,
-     *                           "numFollowed": 1,
-     *                           "numOwnedShards": 4,
-     *                           "numFollowedShards": 4
-     *                       }
+     * @return HTTP 200 OK - If the User's public profile data was retrieved successfully. Body is a
+     *                       {@link com.pylon.pylonservice.model.domain.Profile Profile}.
      *         HTTP 404 Not Found - If the User doesn't exist.
      */
     @GetMapping(value = "/profile/{username}")
@@ -120,28 +101,8 @@ public class ProfileController {
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      *
-     * @return HTTP 200 OK - If the User's public profile data was retrieved successfully with a response body like
-     *                       {
-     *                           "username": "jason50",
-     *                           "usernameCaseSensitive": "jason50",
-     *                           "userAvatarFilename": "",
-     *                           "userBannerFilename": "",
-     *                           "userBio": "",
-     *                           "userLocation": "",
-     *                           "userVerified": false,
-     *                           "userFacebookUrl": "",
-     *                           "userTwitterUrl": "",
-     *                           "userInstagramUrl": "",
-     *                           "userTwitchUrl": "",
-     *                           "userYoutubeUrl": "",
-     *                           "userTiktokUrl": "",
-     *                           "userWebsiteUrl": "",
-     *                           "createdAt": "2020-08-06T23:05:34.206+00:00",
-     *                           "numFollowers": 1,
-     *                           "numFollowed": 1,
-     *                           "numOwnedShards": 4,
-     *                           "numFollowedShards": 4
-     *                       }
+     * @return HTTP 200 OK - If the User's public profile data was retrieved successfully. Body is a
+     *                       {@link com.pylon.pylonservice.model.domain.Profile Profile}.
      *              HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @GetMapping(value = "/myProfile")
@@ -272,6 +233,7 @@ public class ProfileController {
      *                                 "userTwitchUrl": "exampleTwitchUrl",
      *                                 "userYoutubeUrl": "exampleYoutubeUrl",
      *                                 "userTiktokUrl": "exampleTiktokUrl",
+     *                                 "userDiscordUrl": "exampleDiscordUrl",
      *                                 "userWebsiteUrl": "exampleWebsiteUrl"
      *                             }
      *
@@ -298,32 +260,18 @@ public class ProfileController {
             .property(single, USER_BANNER_FILENAME_PROPERTY, updateProfileRequest.getUserBannerFilename())
             .property(single, USER_BIO_PROPERTY, updateProfileRequest.getUserBio())
             .property(single, USER_LOCATION_PROPERTY, updateProfileRequest.getUserLocation())
-            .property(single, USER_FACEBOOK_URL_PROPERTY,
-                addHttpPrefixIfNotPresent(updateProfileRequest.getUserFacebookUrl()))
-            .property(single, USER_TWITTER_URL_PROPERTY,
-                addHttpPrefixIfNotPresent(updateProfileRequest.getUserTwitterUrl()))
-            .property(single, USER_INSTAGRAM_URL_PROPERTY,
-                addHttpPrefixIfNotPresent(updateProfileRequest.getUserInstagramUrl()))
-            .property(single, USER_TWITCH_URL_PROPERTY,
-                addHttpPrefixIfNotPresent(updateProfileRequest.getUserTwitchUrl()))
-            .property(single, USER_YOUTUBE_URL_PROPERTY,
-                addHttpPrefixIfNotPresent(updateProfileRequest.getUserYoutubeUrl()))
-            .property(single, USER_TIKTOK_URL_PROPERTY,
-                addHttpPrefixIfNotPresent(updateProfileRequest.getUserTiktokUrl()))
-            .property(single, USER_WEBSITE_URL_PROPERTY,
-                addHttpPrefixIfNotPresent(updateProfileRequest.getUserWebsiteUrl()))
+            .property(single, USER_FACEBOOK_URL_PROPERTY, updateProfileRequest.getUserFacebookUrl())
+            .property(single, USER_TWITTER_URL_PROPERTY, updateProfileRequest.getUserTwitterUrl())
+            .property(single, USER_INSTAGRAM_URL_PROPERTY, updateProfileRequest.getUserInstagramUrl())
+            .property(single, USER_TWITCH_URL_PROPERTY, updateProfileRequest.getUserTwitchUrl())
+            .property(single, USER_YOUTUBE_URL_PROPERTY, updateProfileRequest.getUserYoutubeUrl())
+            .property(single, USER_TIKTOK_URL_PROPERTY, updateProfileRequest.getUserTiktokUrl())
+            .property(single, USER_DISCORD_URL_PROPERTY, updateProfileRequest.getUserDiscordUrl())
+            .property(single, USER_WEBSITE_URL_PROPERTY, updateProfileRequest.getUserWebsiteUrl())
             .iterate();
 
         metricsUtil.addSuccessMetric(PUT_PROFILE_METRIC_NAME);
         metricsUtil.addLatencyMetric(PUT_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
-    }
-
-    private String addHttpPrefixIfNotPresent(final String url) {
-        if (url.isEmpty() || url.startsWith("http://") || url.startsWith("https://")) {
-            return url;
-        } else {
-            return "http://" + url;
-        }
     }
 }

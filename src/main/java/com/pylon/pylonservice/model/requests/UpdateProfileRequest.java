@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import static com.pylon.pylonservice.constants.RegexValidationPatterns.FILENAME_REGEX_PATTERN;
 
@@ -13,6 +15,17 @@ import static com.pylon.pylonservice.constants.RegexValidationPatterns.FILENAME_
 @NoArgsConstructor
 public class UpdateProfileRequest implements Serializable {
     private static final long serialVersionUID = 0L;
+
+    private static final int MAX_URL_LENGTH = 201;
+
+    private static final String FACEBOOK_DOMAIN = "facebook.com";
+    private static final String TWITTER_DOMAIN = "twitter.com";
+    private static final String INSTAGRAM_DOMAIN = "instagram.com";
+    private static final String TWITCH_DOMAIN = "twitch.tv";
+    private static final String YOUTUBE_DOMAIN = "youtube.com";
+    private static final String TIKTOK_DOMAIN = "tiktok.com";
+    private static final String DISCORD_GG_DOMAIN = "discord.gg";
+    private static final String DISCORD_COM_DOMAIN = "discord.com";
 
     String userAvatarFilename;
     String userBannerFilename;
@@ -24,7 +37,48 @@ public class UpdateProfileRequest implements Serializable {
     String userTwitchUrl;
     String userYoutubeUrl;
     String userTiktokUrl;
+    String userDiscordUrl;
     String userWebsiteUrl;
+
+    public String getUserFacebookUrl() {
+        return addHttpHttpsPrefixIfNotPresent(userFacebookUrl);
+    }
+
+    public String getUserTwitterUrl() {
+        return addHttpHttpsPrefixIfNotPresent(userTwitterUrl);
+    }
+
+    public String getUserInstagramUrl() {
+        return addHttpHttpsPrefixIfNotPresent(userInstagramUrl);
+    }
+
+    public String getUserTwitchUrl() {
+        return addHttpHttpsPrefixIfNotPresent(userTwitchUrl);
+    }
+
+    public String getUserYoutubeUrl() {
+        return addHttpHttpsPrefixIfNotPresent(userYoutubeUrl);
+    }
+
+    public String getUserTiktokUrl() {
+        return addHttpHttpsPrefixIfNotPresent(userTiktokUrl);
+    }
+
+    public String getUserDiscordUrl() {
+        return addHttpHttpsPrefixIfNotPresent(userDiscordUrl);
+    }
+
+    public String getUserWebsiteUrl() {
+        return addHttpHttpsPrefixIfNotPresent(userWebsiteUrl);
+    }
+
+    private String addHttpHttpsPrefixIfNotPresent(final String url) {
+        if (url.isEmpty() || url.startsWith("http://") || url.startsWith("https://")) {
+            return url;
+        } else {
+            return "http://" + url;
+        }
+    }
 
     public boolean isValid() {
         return isUserAvatarFilenameValid()
@@ -37,6 +91,7 @@ public class UpdateProfileRequest implements Serializable {
             && isUserTwitchUrlValid()
             && isUserYoutubeUrlValid()
             && isUserTiktokUrlValid()
+            && isUserDiscordUrlValid()
             && isUserWebsiteUrlValid();
     }
 
@@ -59,30 +114,51 @@ public class UpdateProfileRequest implements Serializable {
     }
 
     private boolean isUserFacebookUrlValid() {
-        return userFacebookUrl != null && userFacebookUrl.length() < 201;
+        return isSocialMediaUrlValid(getUserFacebookUrl(), FACEBOOK_DOMAIN);
     }
 
     private boolean isUserTwitterUrlValid() {
-        return userTwitterUrl != null && userTwitterUrl.length() < 201;
+        return isSocialMediaUrlValid(getUserTwitterUrl(), TWITTER_DOMAIN);
     }
 
     private boolean isUserInstagramUrlValid() {
-        return userInstagramUrl != null && userInstagramUrl.length() < 201;
+        return isSocialMediaUrlValid(getUserInstagramUrl(), INSTAGRAM_DOMAIN);
     }
 
     private boolean isUserTwitchUrlValid() {
-        return userTwitchUrl != null && userTwitchUrl.length() < 201;
+        return isSocialMediaUrlValid(getUserTwitchUrl(), TWITCH_DOMAIN);
     }
 
     private boolean isUserYoutubeUrlValid() {
-        return userYoutubeUrl != null && userYoutubeUrl.length() < 201;
+        return isSocialMediaUrlValid(getUserYoutubeUrl(), YOUTUBE_DOMAIN);
     }
 
     private boolean isUserTiktokUrlValid() {
-        return userTiktokUrl != null && userTiktokUrl.length() < 201;
+        return isSocialMediaUrlValid(getUserTiktokUrl(), TIKTOK_DOMAIN);
+    }
+
+    private boolean isUserDiscordUrlValid() {
+        return isSocialMediaUrlValid(getUserDiscordUrl(), DISCORD_COM_DOMAIN)
+            || isSocialMediaUrlValid(getUserDiscordUrl(), DISCORD_GG_DOMAIN);
     }
 
     private boolean isUserWebsiteUrlValid() {
-        return userWebsiteUrl != null && userWebsiteUrl.length() < 201;
+        return userWebsiteUrl != null && userWebsiteUrl.length() < MAX_URL_LENGTH;
+    }
+
+    private boolean isSocialMediaUrlValid(final String url, final String expectedDomain) {
+        try {
+            return url != null
+            && url.length() < MAX_URL_LENGTH
+            && (url.isEmpty() || getDomainName(url).equals(expectedDomain));
+        } catch (final URISyntaxException e) {
+            return false;
+        }
+    }
+
+    private String getDomainName(final String url) throws URISyntaxException {
+        final URI uri = new URI(url);
+        final String domain = uri.getHost();
+        return domain.startsWith("www.") ? domain.substring(4) : domain;
     }
 }

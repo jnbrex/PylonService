@@ -14,6 +14,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USE
 import static com.pylon.pylonservice.constants.GraphConstants.USER_AVATAR_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_BANNER_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_BIO_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_DISCORD_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FACEBOOK_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_USER_EDGE_LABEL;
@@ -60,6 +61,7 @@ public class Profile implements Serializable {
     final String userTwitchUrl;
     final String userYoutubeUrl;
     final String userTiktokUrl;
+    final String userDiscordUrl;
     final String userWebsiteUrl;
     final Date createdAt;
 
@@ -89,6 +91,7 @@ public class Profile implements Serializable {
         this.userTwitchUrl = (String) profileProperties.get(USER_TWITCH_URL_PROPERTY);
         this.userYoutubeUrl = (String) profileProperties.get(USER_YOUTUBE_URL_PROPERTY);
         this.userTiktokUrl = (String) profileProperties.get(USER_TIKTOK_URL_PROPERTY);
+        this.userDiscordUrl = (String) profileProperties.get(USER_DISCORD_URL_PROPERTY);
         this.userWebsiteUrl = (String) profileProperties.get(USER_WEBSITE_URL_PROPERTY);
         this.createdAt = (Date) profileProperties.get(COMMON_CREATED_AT_PROPERTY);
     }
