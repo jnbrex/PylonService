@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
@@ -211,14 +213,23 @@ public class UserController {
      *
      * @param username A String containing the username of the User whose submitted Posts to return.
      *
-     * @return HTTP 200 OK - If the set of Posts submitted by the User was retrieved successfully.
+     * @return HTTP 200 OK - If the set of Posts submitted by the User was retrieved successfully. Body is an array of
+     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
      *         HTTP 404 Not Found - If the User doesn't exist.
      */
     @GetMapping(value = "/user/{username}/submitted")
-    public ResponseEntity<?> getSubmitted(@PathVariable final String username) {
+    public ResponseEntity<?> getSubmitted(
+        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
         final String usernameLowercase = username.toLowerCase();
+
+        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
+        if (authorizationHeader != null) {
+            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        }
 
         if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -228,7 +239,7 @@ public class UserController {
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_SUBMITTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .flatMap(projectToPost())
+            .flatMap(projectToPost(callingUsernameLowercase))
             .toList()
             .stream()
             .map(Post::new)
@@ -246,14 +257,23 @@ public class UserController {
      *
      * @param username A String containing the username of the User whose upvoted Posts to return.
      *
-     * @return HTTP 200 OK - If the set of Posts upvoted by the User was retrieved successfully.
+     * @return HTTP 200 OK - If the set of Posts upvoted by the User was retrieved successfully. Body is an array of
+     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
      *         HTTP 404 Not Found - If the User doesn't exist.
      */
     @GetMapping(value = "/user/{username}/upvoted")
-    public ResponseEntity<?> getUpvoted(@PathVariable final String username) {
+    public ResponseEntity<?> getUpvoted(
+        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
         final String usernameLowercase = username.toLowerCase();
+
+        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
+        if (authorizationHeader != null) {
+            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        }
 
         if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -263,7 +283,7 @@ public class UserController {
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_UPVOTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .flatMap(projectToPost())
+            .flatMap(projectToPost(callingUsernameLowercase))
             .toList()
             .stream()
             .map(Post::new)

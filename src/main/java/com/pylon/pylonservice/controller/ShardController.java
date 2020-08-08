@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
@@ -145,53 +146,23 @@ public class ShardController {
      *
      * @param shardName A String containing the shardName of the Shard whose posts to return.
      *
-     * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully.
-     *                       [
-     *                           {
-     *                               "postId": "f7cc41e2-8ae7-49ef-979c-37619b43b228",
-     *                               "postTitle": "Third Shard Post!",
-     *                               "postFilename": null,
-     *                               "postContentUrl": "exampleContentUrl",
-     *                               "postBody": "third post!",
-     *                               "createdAt": "2020-07-25T21:32:56.090+00:00",
-     *                               "numLikes": 1,
-     *                               "postSubmitter": "jason25",
-     *                               "postPostedInUser": null,
-     *                               "postPostedInShard": "shard9"
-     *                           },
-     *                           {
-     *                               "postId": "700d0092-5da2-423d-89db-174087b66e9e",
-     *                               "postTitle": null,
-     *                               "postFilename": null,
-     *                               "postContentUrl": null,
-     *                               "postBody": null,
-     *                               "createdAt": "2020-07-25T21:31:54.682+00:00",
-     *                               "numLikes": 1,
-     *                               "postSubmitter": "jason25",
-     *                               "postPostedInUser": null,
-     *                               "postPostedInShard": "shard9"
-     *                           },
-     *                           {
-     *                               "postId": "5be67901-bee1-446b-bb50-b62046311fac",
-     *                               "postTitle": "Profile Post 1",
-     *                               "postFilename": null,
-     *                               "postContentUrl": null,
-     *                               "postBody": "1",
-     *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
-     *                               "numLikes": 1,
-     *                               "postSubmitter": "jason25",
-     *                               "postPostedInUser": "jason25",
-     *                               "postPostedInShard": null
-     *                           }
-     *                       ]
-     *
+     * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully. Body is an array of
+     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/shard/{shardName}/posts/new")
-    public ResponseEntity<?> getNewShardPosts(@PathVariable final String shardName) {
+    public ResponseEntity<?> getNewShardPosts(
+        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
         final String shardNameLowercase = shardName.toLowerCase();
+
+        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
+        if (authorizationHeader != null) {
+            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        }
 
         if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -199,7 +170,7 @@ public class ShardController {
 
         final List<Post> posts = getAllPostsInShard(shardNameLowercase)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
-            .flatMap(projectToPost())
+            .flatMap(projectToPost(callingUsernameLowercase))
             .toList()
             .stream()
             .map(Post::new)
@@ -217,53 +188,23 @@ public class ShardController {
      *
      * @param shardName A String containing the shardName of the Shard whose posts to return.
      *
-     * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully.
-     *                       [
-     *                           {
-     *                               "postId": "f7cc41e2-8ae7-49ef-979c-37619b43b228",
-     *                               "postTitle": "Third Shard Post!",
-     *                               "postFilename": null,
-     *                               "postContentUrl": "exampleContentUrl",
-     *                               "postBody": "third post!",
-     *                               "createdAt": "2020-07-25T21:32:56.090+00:00",
-     *                               "numLikes": 1,
-     *                               "postSubmitter": "jason25",
-     *                               "postPostedInUser": null,
-     *                               "postPostedInShard": "shard9"
-     *                           },
-     *                           {
-     *                               "postId": "700d0092-5da2-423d-89db-174087b66e9e",
-     *                               "postTitle": null,
-     *                               "postFilename": null,
-     *                               "postContentUrl": null,
-     *                               "postBody": null,
-     *                               "createdAt": "2020-07-25T21:31:54.682+00:00",
-     *                               "numLikes": 1,
-     *                               "postSubmitter": "jason25",
-     *                               "postPostedInUser": null,
-     *                               "postPostedInShard": "shard9"
-     *                           },
-     *                           {
-     *                               "postId": "5be67901-bee1-446b-bb50-b62046311fac",
-     *                               "postTitle": "Profile Post 1",
-     *                               "postFilename": null,
-     *                               "postContentUrl": null,
-     *                               "postBody": "1",
-     *                               "createdAt": "2020-07-19T23:39:28.403+00:00",
-     *                               "numLikes": 1,
-     *                               "postSubmitter": "jason25",
-     *                               "postPostedInUser": "jason25",
-     *                               "postPostedInShard": null
-     *                           }
-     *                       ]
-     *
+     * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully. Body is an array of
+     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/shard/{shardName}/posts/popular")
-    public ResponseEntity<?> getPopularShardPosts(@PathVariable final String shardName) {
+    public ResponseEntity<?> getPopularShardPosts(
+        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
         final String shardNameLowercase = shardName.toLowerCase();
+
+        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
+        if (authorizationHeader != null) {
+            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        }
 
         if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -271,7 +212,7 @@ public class ShardController {
 
         final Date now = new Date();
         final List<Post> posts = getAllPostsInShard(shardNameLowercase)
-            .flatMap(projectToPost())
+            .flatMap(projectToPost(callingUsernameLowercase))
             .toList()
             .stream()
             .map(Post::new)

@@ -61,4 +61,9 @@ public final class GraphConstants {
     public static final String POST_FILENAME_PROPERTY = "postFilename";
     public static final String POST_CONTENT_URL_PROPERTY = "postContentUrl";
     public static final  String POST_BODY_PROPERTY = "postBody";
+
+    /*
+     * Miscellaneous
+     */
+    public static final String INVALID_USERNAME_VALUE = "a";
 }

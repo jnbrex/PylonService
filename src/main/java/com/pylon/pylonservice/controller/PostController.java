@@ -33,6 +33,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_BODY_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_COMMENT_ON_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_CONTENT_URL_PROPERTY;
@@ -84,6 +85,7 @@ public class PostController {
     /**
      * Call to retrieve a Post.
      *
+     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
      * @param postId A String containing the postId of the Post to return.
      *
      * @return HTTP 200 OK - If the Post was retrieved successfully. Body is an array of
@@ -91,15 +93,23 @@ public class PostController {
      *         HTTP 404 Not Found - If the Post doesn't exist.
      */
     @GetMapping(value = "/post/{postId}")
-    public ResponseEntity<?> getPost(@PathVariable final String postId) {
+    public ResponseEntity<?> getPost(
+        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @PathVariable final String postId) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_METRIC_NAME);
+
+        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
+        if (authorizationHeader != null) {
+            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        }
 
         final Post post;
         try {
             post = rG
                 .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
-                .flatMap(Post.projectToPost())
+                .flatMap(Post.projectToPost(callingUsernameLowercase))
                 .toList()
                 .stream()
                 .map(Post::new)
@@ -118,21 +128,30 @@ public class PostController {
     /**
      * Call to retrieve all comments on a Post.
      *
+     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
      * @param postId A String containing the postId of the Post for which the comments should be returned.
      *
      * @return HTTP 200 OK - If the Post's comments were retrieved successfully.
      *         HTTP 404 Not Found - If the Post doesn't exist.
      */
     @GetMapping(value = "/post/{postId}/comments")
-    public ResponseEntity<?> getComments(@PathVariable final String postId) {
+    public ResponseEntity<?> getComments(
+        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @PathVariable final String postId) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_COMMENTS_METRIC_NAME);
+
+        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
+        if (authorizationHeader != null) {
+            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        }
 
         final Tree postAndComments = rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
             .emit()
             .repeat(in(POST_COMMENT_ON_POST_EDGE_LABEL))
             .tree()
-            .by(flatMap(projectToPost()))
+            .by(flatMap(projectToPost(callingUsernameLowercase)))
             .next();
 
         if (postAndComments.isEmpty()) {

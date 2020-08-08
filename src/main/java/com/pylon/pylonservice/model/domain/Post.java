@@ -21,6 +21,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERT
 import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.project;
@@ -38,6 +39,8 @@ public class Post implements Serializable {
     private static final String SUBMITTER_USERNAME = "submitterUsername";
     private static final String POSTED_IN_SHARD = "postedInShard";
     private static final String POSTED_IN_USER = "postedInUser";
+    private static final String POST_LIKED_BY_USER = "postLikedByUser";
+    private static final String COMMENT_ON_POST = "commentOnPost";
 
     private static final double TWO_HOURS = 2.0;
     private static final double DECAY_CONSTANT = 1.8;
@@ -54,19 +57,24 @@ public class Post implements Serializable {
     long numLikes;
     long numComments;
     String postSubmitter;
+    boolean postLikedByUser;
     String postPostedInUser;
     String postPostedInShard;
+    String commentOnPost;
 
     public Post(final Map<String, Object> graphPostMap) {
         this.numLikes = (long) graphPostMap.get(NUM_LIKES);
         this.numComments = (long) graphPostMap.get(NUM_COMMENTS);
         this.postSubmitter = (String) graphPostMap.get(SUBMITTER_USERNAME);
+        this.postLikedByUser = (long) graphPostMap.get(POST_LIKED_BY_USER) > 0;
 
         final Collection<String> postedInShardNames = (Collection<String>) graphPostMap.get(POSTED_IN_SHARD);
         final Collection<String> postedInUserUsernames = (Collection<String>) graphPostMap.get(POSTED_IN_USER);
+        final Collection<String> commentOnPosts = (Collection<String>) graphPostMap.get(COMMENT_ON_POST);
 
         this.postPostedInShard = postedInShardNames.size() > 0 ? postedInShardNames.iterator().next() : null;
         this.postPostedInUser = postedInUserUsernames.size() > 0 ? postedInUserUsernames.iterator().next() : null;
+        this.commentOnPost = commentOnPosts.size() > 0 ? commentOnPosts.iterator().next() : null;
 
         final Map<String, Object> postProperties = (Map<String, Object>) graphPostMap.get(PROPERTIES);
         this.postId = (String) postProperties.get(POST_ID_PROPERTY);
@@ -77,8 +85,9 @@ public class Post implements Serializable {
         this.createdAt = (Date) postProperties.get(COMMON_CREATED_AT_PROPERTY);
     }
 
-    public static GraphTraversal<Object, Map<String, Object>> projectToPost() {
-        return project(PROPERTIES, NUM_LIKES, NUM_COMMENTS, SUBMITTER_USERNAME, POSTED_IN_SHARD, POSTED_IN_USER)
+    public static GraphTraversal<Object, Map<String, Object>> projectToPost(final String username) {
+        return project(PROPERTIES, NUM_LIKES, NUM_COMMENTS, SUBMITTER_USERNAME, POST_LIKED_BY_USER, POSTED_IN_SHARD,
+            POSTED_IN_USER, COMMENT_ON_POST)
             .by(valueMap().by(unfold()))
             .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
             .by(
@@ -87,8 +96,10 @@ public class Post implements Serializable {
                 .count()
             )
             .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
+            .by(in(USER_UPVOTED_POST_EDGE_LABEL).has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).count())
             .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
-            .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold());
+            .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
+            .by(out(POST_COMMENT_ON_POST_EDGE_LABEL).values(POST_ID_PROPERTY).fold());
     }
 
     public double getPopularity(final Date now) {

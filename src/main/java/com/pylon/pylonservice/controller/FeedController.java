@@ -63,7 +63,7 @@ public class FeedController {
             .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
             .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
             .dedup()
-            .flatMap(projectToPost())
+            .flatMap(projectToPost(username))
             .toList()
             .stream()
             .map(Post::new)
