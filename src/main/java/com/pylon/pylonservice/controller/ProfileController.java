@@ -221,25 +221,11 @@ public class ProfileController {
      * any fields which should not be present on the User's profile, send an empty string.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
-     * @param updateProfileRequest A JSON object containing the public Profile data to update like
-     *                             {
-     *                                 "userAvatarFilename": "exampleAvatarFilename",
-     *                                 "userBannerFilename": "exampleBannerFilename",
-     *                                 "userBio": "exampleBio",
-     *                                 "userLocation": "exampleLocation",
-     *                                 "userFacebookUrl": "exampleFacebookUrl",
-     *                                 "userTwitterUrl": "exampleTwitterUrl",
-     *                                 "userInstagramUrl": "exampleInstagramUrl",
-     *                                 "userTwitchUrl": "exampleTwitchUrl",
-     *                                 "userYoutubeUrl": "exampleYoutubeUrl",
-     *                                 "userTiktokUrl": "exampleTiktokUrl",
-     *                                 "userDiscordUrl": "exampleDiscordUrl",
-     *                                 "userWebsiteUrl": "exampleWebsiteUrl"
-     *                             }
+     * @param updateProfileRequest A {@link UpdateProfileRequest}
      *
      * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
-     *         HTTP 422 Unprocessable Entity - If the UpdateProfileRequest is not valid.
+     *         HTTP 422 Unprocessable Entity - If {@link UpdateProfileRequest#isValid()} is false.
      */
     @PutMapping(value = "/profile")
     public ResponseEntity<?> updateProfile(@RequestHeader(value = "Authorization") final String authorizationHeader,

@@ -8,12 +8,10 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static com.pylon.pylonservice.constants.RegexValidationPatterns.FILENAME_REGEX_PATTERN;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateProfileRequest implements Serializable {
+public class UpdateProfileRequest implements Serializable, Request {
     private static final long serialVersionUID = 0L;
 
     private static final int MAX_URL_LENGTH = 201;

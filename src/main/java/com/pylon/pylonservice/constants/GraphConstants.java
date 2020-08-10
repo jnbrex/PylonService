@@ -54,7 +54,10 @@ public final class GraphConstants {
 
     // Shard
     public static final String SHARD_NAME_PROPERTY = "shardName"; // unique identifier of a Shard
-    public static final String SHARD_NAME_CASE_SENSITIVE_PROPERTY = "shardNameCaseSensitive";
+    public static final String SHARD_FRIENDLY_NAME_PROPERTY = "shardFriendlyName";
+    public static final String SHARD_AVATAR_FILENAME_PROPERTY = "shardAvatarFilename";
+    public static final String SHARD_BANNER_FILENAME_PROPERTY = "shardBannerFilename";
+    public static final String SHARD_DESCRIPTION_PROPERTY = "shardDescription";
 
     // Post
     public static final String POST_ID_PROPERTY = "postId"; // unique identifier of a Post

@@ -1,8 +1,9 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
-import com.pylon.pylonservice.model.requests.CreateShardRequest;
-import com.pylon.pylonservice.model.requests.UpdateShardRequest;
+import com.pylon.pylonservice.model.domain.Shard;
+import com.pylon.pylonservice.model.requests.shard.CreateShardRequest;
+import com.pylon.pylonservice.model.requests.shard.UpdateShardRequest;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -25,7 +26,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,9 +33,12 @@ import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_
 import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_AVATAR_FILENAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_BANNER_FILENAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_DESCRIPTION_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_FRIENDLY_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
-import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_CASE_SENSITIVE_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
@@ -43,11 +46,11 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_ED
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.model.domain.Post.projectToPost;
+import static com.pylon.pylonservice.model.domain.Shard.projectToShard;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
 @RestController
@@ -83,17 +86,18 @@ public class ShardController {
         metricsUtil.addCountMetric(GET_SHARD_METRIC_NAME);
         final String shardNameLowercase = shardName.toLowerCase();
 
-        final Map<Object, Object> shardMetadata;
-        try {
-            shardMetadata = rG
-                .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
-                .valueMap().by(unfold())
-                .next();
-        } catch (final NoSuchElementException e) {
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(shardMetadata);
+        final Shard shard = new Shard(
+            rG
+                .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
+                .flatMap(projectToShard(shardNameLowercase))
+                .next()
+        );
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(shard);
 
         metricsUtil.addSuccessMetric(GET_SHARD_METRIC_NAME);
         metricsUtil.addLatencyMetric(GET_SHARD_METRIC_NAME, System.nanoTime() - startTime);
@@ -101,17 +105,17 @@ public class ShardController {
     }
 
     /**
-     * Call to retrieve the Shard inheritance.
+     * Call to retrieve all of the Shards and Users that a Shard directly inherits.
      *
      * @param shardName A String containing the name of the Shard whose inheritance to return.
      *
      * @return HTTP 200 OK - If the Shard inheritance was retrieved successfully.
      *                       {
-     *                           "shards": [
+     *                           "shardNames": [
      *                               "jasonshard3",
      *                               "jasonshard2"
      *                           ],
-     *                           "users": [
+     *                           "usernames": [
      *                               "jason40"
      *                           ]
      *                       }
@@ -129,7 +133,7 @@ public class ShardController {
 
         final Map<String, Object> shardInheritance = rG
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
-            .project("shards", "users")
+            .project("shardNames", "usernames")
             .by(out(SHARD_INHERITS_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
             .by(out(SHARD_INHERITS_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
             .next();
@@ -284,7 +288,10 @@ public class ShardController {
             wG
                 .addV(SHARD_VERTEX_LABEL)
                     .property(single, SHARD_NAME_PROPERTY, shardNameLowercase)
-                    .property(single, SHARD_NAME_CASE_SENSITIVE_PROPERTY, createShardRequest.getShardName())
+                    .property(single, SHARD_FRIENDLY_NAME_PROPERTY, createShardRequest.getShardFriendlyName())
+                    .property(single, SHARD_AVATAR_FILENAME_PROPERTY, createShardRequest.getShardAvatarFilename())
+                    .property(single, SHARD_BANNER_FILENAME_PROPERTY, createShardRequest.getShardBannerFilename())
+                    .property(single, SHARD_DESCRIPTION_PROPERTY, createShardRequest.getShardDescription())
                     .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
                     .as("newShard")
                 .sideEffect(
@@ -319,40 +326,31 @@ public class ShardController {
      * the shard with the ones in the request.
      *
      * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
-     * @param shardName A String containing the name of the Shard to update.
-     * @param updateShardRequest A JSON object containing inheritedShardNames and inheritedUsers like
-     *                           {
-     *                               "inheritedShardNames": [
-     *                                   "inheritedShardName1",
-     *                                   "inheritedShardName2"
-     *                               ],
-     *                               "inheritedUsers": [
-     *                                   "inheritedUser1",
-     *                                   "inheritedUser2"
-     *                               ]
-     *                           }
-     *
-     *                           An object like below is also valid
-     *                           {
-     *                               "inheritedShardNames": [],
-     *                               "inheritedUsers": []
-     *                           }
+     * @param updateShardRequest An {@link UpdateShardRequest}
      *
      * @return HTTP 200 Created - If the Shard was updated successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      *         HTTP 403 Forbidden - If the User is attempting to update a Shard they don't own.
+     *         HTTP 404 Not Found - If the Shard to be updated doesn't exist.
      *         HTTP 422 Unprocessable Entity - If the UpdateShardRequest isn't valid.
      */
-    @PutMapping(value = "/shard/{shardName}")
+    @PutMapping(value = "/shard")
     public ResponseEntity<?> updateShard(@RequestHeader(value = "Authorization") final String authorizationHeader,
-                                         @PathVariable final String shardName,
                                          @RequestBody final UpdateShardRequest updateShardRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(UPDATE_SHARD_METRIC_NAME);
-        final String shardNameLowercase = shardName.toLowerCase();
 
         final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String shardNameLowercase = updateShardRequest.getShardName().toLowerCase();
+
+        if (!updateShardRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
 
         final String shardOwnerUsername = (String) rG
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
@@ -362,10 +360,6 @@ public class ShardController {
 
         if (!shardOwnerUsername.equals(username)) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        }
-
-        if (!updateShardRequest.isValid()) {
-            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
         final Set<String> inheritedShardNamesLowercase = updateShardRequest.getInheritedShardNames()
@@ -397,6 +391,10 @@ public class ShardController {
                     .has(USER_USERNAME_PROPERTY, P.within(inheritedUsersLowercase))
                     .addE(SHARD_INHERITS_USER_EDGE_LABEL).from("shard")
             )
+            .property(single, SHARD_FRIENDLY_NAME_PROPERTY, updateShardRequest.getShardFriendlyName())
+            .property(single, SHARD_AVATAR_FILENAME_PROPERTY, updateShardRequest.getShardAvatarFilename())
+            .property(single, SHARD_BANNER_FILENAME_PROPERTY, updateShardRequest.getShardBannerFilename())
+            .property(single, SHARD_DESCRIPTION_PROPERTY, updateShardRequest.getShardDescription())
             .iterate();
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);

@@ -1,7 +1,8 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
-import com.pylon.pylonservice.model.requests.CreatePostRequest;
+import com.pylon.pylonservice.model.requests.post.CreateCommentPostRequest;
+import com.pylon.pylonservice.model.requests.post.CreateTopLevelPostRequest;
 import com.pylon.pylonservice.model.responses.CreatePostResponse;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
@@ -254,33 +255,26 @@ public class PostController {
     }
 
     /**
-     * Call to create a Post in a Shard. See
-     * com.pylon.pylonservice.model.requests.CreatePostRequest.isValidTopLevelPost() for validation rules.
+     * Call to create a Post in a Shard.
+     * @see CreateTopLevelPostRequest#isValid() for validation rules.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param shardName The name of a Shard
-     * @param createPostRequest A JSON object containing the Post data for the post to create like
-     *                             {
-     *                                 "postTitle": "exampleTitle",
-     *                                 "postFilename": "00000000-0000-0000-0000-000000000000.png",
-     *                                 "postContentUrl": "exampleContentUrl",
-     *                                 "postBody": "exampleBody"
-     *                             }
-     *                             If a field is not included in the JSON object, it is not included.
+     * @param createTopLevelPostRequest A {@link CreateTopLevelPostRequest}
      *
      * @return HTTP 201 Created - If the Post was created successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
-     *         HTTP 404 Not Found - If the Shard with name={name} doesn't exist.
+     *         HTTP 404 Not Found - If the Shard with shardName={shardName} doesn't exist.
      */
     @PostMapping(value = "/post/shard/{shardName}")
     public ResponseEntity<?> createShardPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                              @PathVariable final String shardName,
-                                             @RequestBody final CreatePostRequest createPostRequest) {
+                                             @RequestBody final CreateTopLevelPostRequest createTopLevelPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_SHARD_POST_METRIC_NAME);
         final String shardNameLowercase = shardName.toLowerCase();
 
-        if (!createPostRequest.isValidTopLevelPost()) {
+        if (!createTopLevelPostRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
@@ -291,7 +285,7 @@ public class PostController {
 
         final Optional<Edge> result = wG
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).as("shard")
-            .flatMap(addPost(createPostRequest, postId)).as("post")
+            .flatMap(addTopLevelPost(createTopLevelPostRequest, postId)).as("post")
             .addE(POST_POSTED_IN_SHARD_EDGE_LABEL).from("post").to("shard")
             .flatMap(relateUserToPost(username))
             .tryNext();
@@ -313,29 +307,22 @@ public class PostController {
     }
 
     /**
-     * Call to create a Post in the calling User's public profile. See
-     * com.pylon.pylonservice.model.requests.CreatePostRequest.isValidTopLevelPost() for validation rules.
+     * Call to create a Post in the calling User's public profile.
+     * @see CreateTopLevelPostRequest#isValid() for validation rules.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
-     * @param createPostRequest A JSON object containing the Post data for the post to create like
-     *                             {
-     *                                 "postTitle": "exampleTitle",
-     *                                 "postFilename": "00000000-0000-0000-0000-000000000000.png",
-     *                                 "postContentUrl": "exampleContentUrl",
-     *                                 "postBody": "exampleBody"
-     *                             }
-     *                             If a field is not included in the JSON object, it is not included.
+     * @param createTopLevelPostRequest A {@link CreateTopLevelPostRequest}
      *
      * @return HTTP 201 Created - If the Post was created successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @PostMapping(value = "/post/profile")
     public ResponseEntity<?> createProfilePost(@RequestHeader(value = "Authorization") final String authorizationHeader,
-                                               @RequestBody final CreatePostRequest createPostRequest) {
+                                               @RequestBody final CreateTopLevelPostRequest createTopLevelPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_PROFILE_POST_METRIC_NAME);
 
-        if (!createPostRequest.isValidTopLevelPost()) {
+        if (!createTopLevelPostRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
@@ -346,7 +333,7 @@ public class PostController {
 
         final Optional<Edge> result = wG
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).as("user")
-            .flatMap(addPost(createPostRequest, postId)).as("post")
+            .flatMap(addTopLevelPost(createTopLevelPostRequest, postId)).as("post")
             .addE(POST_POSTED_IN_USER_EDGE_LABEL).from("post").to("user")
             .flatMap(relateUserToPost(username))
             .tryNext();
@@ -369,18 +356,11 @@ public class PostController {
 
     /**
      * Call to create a Post as a comment on another Post.
-     * @see CreatePostRequest#isValidTopLevelPost()
+     * @see CreateCommentPostRequest#isValid() for validation rules.
      *
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
-     * @param parentPostId A postId of the parent Post
-     * @param createPostRequest A JSON object containing the Post data for the post to create like
-     *                             {
-     *                                 "postTitle": null,
-     *                                 "postFilename": null,
-     *                                 "postContentUrl": null,
-     *                                 "postBody": "exampleBody"
-     *                             }
-     *                             If a field is not included in the JSON object, it is not included.
+     * @param parentPostId The postId of the parent Post.
+     * @param createCommentPostRequest A {@link CreateCommentPostRequest}
      *
      * @return HTTP 201 Created - If the Post was created successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
@@ -389,11 +369,11 @@ public class PostController {
     @PostMapping(value = "/post/comment/{parentPostId}")
     public ResponseEntity<?> createCommentPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
                                                @PathVariable final String parentPostId,
-                                               @RequestBody final CreatePostRequest createPostRequest) {
+                                               @RequestBody final CreateCommentPostRequest createCommentPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_COMMENT_POST_METRIC_NAME);
 
-        if (!createPostRequest.isValidCommentPost()) {
+        if (!createCommentPostRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
@@ -403,7 +383,7 @@ public class PostController {
 
         final Optional<Edge> result = wG
             .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, parentPostId).as("parentPost")
-            .flatMap(addPost(createPostRequest, postId)).as("post")
+            .flatMap(addCommentPost(createCommentPostRequest, postId)).as("post")
             .addE(POST_COMMENT_ON_POST_EDGE_LABEL).from("post").to("parentPost")
             .flatMap(relateUserToPost(username))
             .tryNext();
@@ -424,30 +404,23 @@ public class PostController {
         return responseEntity;
     }
 
-    private GraphTraversal<Object, Vertex> addPost(final CreatePostRequest createPostRequest,
-                                                   final String postId) {
-        GraphTraversal<Object, Vertex> g = addV(POST_VERTEX_LABEL)
+    private GraphTraversal<Object, Vertex> addTopLevelPost(final CreateTopLevelPostRequest createTopLevelPostRequest,
+                                                           final String postId) {
+        return addV(POST_VERTEX_LABEL)
             .property(single, POST_ID_PROPERTY, postId)
+            .property(single, POST_TITLE_PROPERTY, createTopLevelPostRequest.getPostTitle())
+            .property(single, POST_FILENAME_PROPERTY, createTopLevelPostRequest.getPostFilename())
+            .property(single, POST_CONTENT_URL_PROPERTY, createTopLevelPostRequest.getPostContentUrl())
+            .property(single, POST_BODY_PROPERTY, createTopLevelPostRequest.getPostBody())
             .property(single, COMMON_CREATED_AT_PROPERTY, new Date());
+    }
 
-        final String postTitle = createPostRequest.getPostTitle();
-        if (postTitle != null) {
-            g = g.property(single, POST_TITLE_PROPERTY, postTitle);
-        }
-        final String postFilename = createPostRequest.getPostFilename();
-        if (postFilename != null) {
-            g = g.property(single, POST_FILENAME_PROPERTY, postFilename);
-        }
-        final String postContentUrl = createPostRequest.getPostContentUrl();
-        if (postContentUrl != null) {
-            g = g.property(single, POST_CONTENT_URL_PROPERTY, postContentUrl);
-        }
-        final String postBody = createPostRequest.getPostBody();
-        if (postBody != null) {
-            g = g.property(single, POST_BODY_PROPERTY, postBody);
-        }
-
-        return g;
+    private GraphTraversal<Object, Vertex> addCommentPost(final CreateCommentPostRequest createCommentPostRequest,
+                                                           final String postId) {
+        return addV(POST_VERTEX_LABEL)
+            .property(single, POST_ID_PROPERTY, postId)
+            .property(single, POST_BODY_PROPERTY, createCommentPostRequest.getPostBody())
+            .property(single, COMMON_CREATED_AT_PROPERTY, new Date());
     }
 
     // Invoking traversals MUST contain a vertex with label "post"
@@ -457,7 +430,7 @@ public class PostController {
             .addE(USER_UPVOTED_POST_EDGE_LABEL).from("user").to("post");
     }
 
-    public static <T> Collector<T, ?, T> toSingleton() {
+    private static <T> Collector<T, ?, T> toSingleton() {
         return Collectors.collectingAndThen(
             Collectors.toList(),
             list -> {
