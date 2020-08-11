@@ -31,7 +31,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_LOCATION_PROP
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TIKTOK_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITCH_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITTER_URL_PROPERTY;
-import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_CASE_SENSITIVE_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_FRIENDLY_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERIFIED_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
@@ -112,7 +112,7 @@ public class RegisterController {
         wG
             .addV(USER_VERTEX_LABEL)
             .property(single, USER_USERNAME_PROPERTY, usernameLowercase)
-            .property(single, USER_USERNAME_CASE_SENSITIVE_PROPERTY, registerRequest.getUsername())
+            .property(single, USER_FRIENDLY_NAME_PROPERTY, EMPTY_STRING)
             .property(single, USER_VERIFIED_PROPERTY, false)
             .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
             .property(single, USER_AVATAR_FILENAME_PROPERTY, EMPTY_STRING)

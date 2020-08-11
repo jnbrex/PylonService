@@ -24,7 +24,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_ED
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TIKTOK_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITCH_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITTER_URL_PROPERTY;
-import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_CASE_SENSITIVE_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_FRIENDLY_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERIFIED_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
@@ -37,6 +37,30 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.projec
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 
+/**
+ * {
+ *     "username": "jason",
+ *     "userFriendlyName": "Jason Bohrer",
+ *     "userAvatarFilename": "5237af6c-6cf7-46ee-8537-f0b1b90d870a.png",
+ *     "userBannerFilename": "5237af6c-6cf7-46ee-8537-f0b1b90d870a.jpg",
+ *     "userBio": "My name is Jason and I'm one of the newest in a long line of Bohrers.",
+ *     "userLocation": "Seattle, Washington",
+ *     "userVerified": true,
+ *     "userFacebookUrl": "https://facebook.com/jason.bohrer.10",
+ *     "userTwitterUrl": "https://twitter.com/bohrer_jason",
+ *     "userInstagramUrl": "https://instagram.com/jnbrex",
+ *     "userTwitchUrl": "https://twitch.tv/haste",
+ *     "userYoutubeUrl": "https://youtube.com/pewdiepie",
+ *     "userTiktokUrl": "https://www.tiktok.com/@charlidamelio",
+ *     "userDiscordUrl": "https://discord.gg/pJNRzPR",
+ *     "userWebsiteUrl": "https://jnbrex.wordpress.com/",
+ *     "createdAt": "2020-08-06T23:05:34.206+00:00",
+ *     "numFollowers": "328",
+ *     "numFollowed": "316",
+ *     "numOwnedShards": "14",
+ *     "numFollowedShards": "121",
+ * }
+ */
 @Data
 public class Profile implements Serializable {
     private static final long serialVersionUID = 0L;
@@ -49,7 +73,7 @@ public class Profile implements Serializable {
 
     // Properties of profile vertex
     final String username;
-    final String usernameCaseSensitive;
+    final String userFriendlyName;
     final String userAvatarFilename;
     final String userBannerFilename;
     final String userBio;
@@ -79,7 +103,7 @@ public class Profile implements Serializable {
 
         final Map<String, Object> profileProperties = (Map<String, Object>) graphProfileMap.get(PROPERTIES);
         this.username = (String) profileProperties.get(USER_USERNAME_PROPERTY);
-        this.usernameCaseSensitive = (String) profileProperties.get(USER_USERNAME_CASE_SENSITIVE_PROPERTY);
+        this.userFriendlyName = (String) profileProperties.get(USER_FRIENDLY_NAME_PROPERTY);
         this.userAvatarFilename = (String) profileProperties.get(USER_AVATAR_FILENAME_PROPERTY);
         this.userBannerFilename = (String) profileProperties.get(USER_BANNER_FILENAME_PROPERTY);
         this.userBio = (String) profileProperties.get(USER_BIO_PROPERTY);

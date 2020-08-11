@@ -35,7 +35,7 @@ public final class GraphConstants {
 
     // User
     public static final String USER_USERNAME_PROPERTY = "username"; // Unique identifier of a User
-    public static final String USER_USERNAME_CASE_SENSITIVE_PROPERTY = "usernameCaseSensitive";
+    public static final String USER_FRIENDLY_NAME_PROPERTY = "userFriendlyName";
     public static final String USER_AVATAR_FILENAME_PROPERTY = "userAvatarFilename";
     public static final String USER_BANNER_FILENAME_PROPERTY = "userBannerFilename";
     public static final String USER_BIO_PROPERTY = "userBio";

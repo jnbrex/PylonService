@@ -7,12 +7,17 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.regex.Pattern;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateProfileRequest implements Serializable, Request {
     private static final long serialVersionUID = 0L;
+
+    // shardFriendlyNames are composed of alphanumeric characters and spaces and are between 1 and 64 characters in
+    // length
+    private static final Pattern USER_FRIENDLY_NAME_REGEX_PATTERN = Pattern.compile("^[a-zA-Z0-9 ]{1,64}$");
 
     private static final int MAX_URL_LENGTH = 201;
 
@@ -25,6 +30,7 @@ public class UpdateProfileRequest implements Serializable, Request {
     private static final String DISCORD_GG_DOMAIN = "discord.gg";
     private static final String DISCORD_COM_DOMAIN = "discord.com";
 
+    String userFriendlyName;
     String userAvatarFilename;
     String userBannerFilename;
     String userBio;
@@ -79,7 +85,8 @@ public class UpdateProfileRequest implements Serializable, Request {
     }
 
     public boolean isValid() {
-        return isUserAvatarFilenameValid()
+        return isUserFriendlyNameValid()
+            && isUserAvatarFilenameValid()
             && isUserBannerFilenameValid()
             && isUserBioValid()
             && isUserLocationValid()
@@ -91,6 +98,11 @@ public class UpdateProfileRequest implements Serializable, Request {
             && isUserTiktokUrlValid()
             && isUserDiscordUrlValid()
             && isUserWebsiteUrlValid();
+    }
+
+    private boolean isUserFriendlyNameValid() {
+        return userFriendlyName != null
+            && (userFriendlyName.isEmpty() || USER_FRIENDLY_NAME_REGEX_PATTERN.matcher(userFriendlyName).matches());
     }
 
     private boolean isUserAvatarFilenameValid() {

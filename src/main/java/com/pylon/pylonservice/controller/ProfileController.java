@@ -30,6 +30,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_BANNER_FILENA
 import static com.pylon.pylonservice.constants.GraphConstants.USER_BIO_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_DISCORD_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FACEBOOK_URL_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_FRIENDLY_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_INSTAGRAM_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_LOCATION_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TIKTOK_URL_PROPERTY;
@@ -241,6 +242,7 @@ public class ProfileController {
         final String username = jwtTokenUtil.getUsernameFromToken(jwt);
 
         wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .property(single, USER_FRIENDLY_NAME_PROPERTY, updateProfileRequest.getUserFriendlyName())
             .property(single, USER_AVATAR_FILENAME_PROPERTY, updateProfileRequest.getUserAvatarFilename())
             .property(single, USER_BANNER_FILENAME_PROPERTY, updateProfileRequest.getUserBannerFilename())
             .property(single, USER_BIO_PROPERTY, updateProfileRequest.getUserBio())
