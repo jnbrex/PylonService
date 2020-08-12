@@ -112,7 +112,7 @@ public class RegisterController {
         wG
             .addV(USER_VERTEX_LABEL)
             .property(single, USER_USERNAME_PROPERTY, usernameLowercase)
-            .property(single, USER_FRIENDLY_NAME_PROPERTY, EMPTY_STRING)
+            .property(single, USER_FRIENDLY_NAME_PROPERTY, usernameLowercase)
             .property(single, USER_VERIFIED_PROPERTY, false)
             .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
             .property(single, USER_AVATAR_FILENAME_PROPERTY, EMPTY_STRING)
