@@ -59,6 +59,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "numFollowed": "316",
  *     "numOwnedShards": "14",
  *     "numFollowedShards": "121",
+ *     "userIsFollowed": true
  * }
  */
 @Data
@@ -70,7 +71,7 @@ public class Profile implements Serializable {
     private static final String NUM_FOLLOWED = "numFollowed";
     private static final String NUM_OWNED_SHARDS = "numOwnedShards";
     private static final String NUM_FOLLOWED_SHARDS = "numFollowedShards";
-    private static final String CALLING_USER_FOLLOWS_USER = "callingUserFollowsUser";
+    private static final String USER_IS_FOLLOWED = "userIsFollowed";
 
     // Properties of profile vertex
     final String username;
@@ -95,14 +96,14 @@ public class Profile implements Serializable {
     long numFollowed;
     long numOwnedShards;
     long numFollowedShards;
-    boolean callingUserFollowsUser;
+    boolean userIsFollowed;
 
     public Profile(final Map<String, Object> graphProfileMap) {
         this.numFollowers = (long) graphProfileMap.get(NUM_FOLLOWERS);
         this.numFollowed = (long) graphProfileMap.get(NUM_FOLLOWED);
         this.numOwnedShards = (long) graphProfileMap.get(NUM_OWNED_SHARDS);
         this.numFollowedShards = (long) graphProfileMap.get(NUM_FOLLOWED_SHARDS);
-        this.callingUserFollowsUser = (long) graphProfileMap.get(CALLING_USER_FOLLOWS_USER) > 0;
+        this.userIsFollowed = (long) graphProfileMap.get(USER_IS_FOLLOWED) > 0;
 
         final Map<String, Object> profileProperties = (Map<String, Object>) graphProfileMap.get(PROPERTIES);
         this.username = (String) profileProperties.get(USER_USERNAME_PROPERTY);
@@ -125,8 +126,7 @@ public class Profile implements Serializable {
 
     public static GraphTraversal<Object, Map<String, Object>> projectToProfile(final String profileUsername,
                                                                                final String callingUsername) {
-        return project(PROPERTIES, NUM_FOLLOWERS, NUM_FOLLOWED, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS,
-            CALLING_USER_FOLLOWS_USER)
+        return project(PROPERTIES, NUM_FOLLOWERS, NUM_FOLLOWED, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS, USER_IS_FOLLOWED)
             .by(valueMap().by(unfold()))
             .by(
                 V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, profileUsername)
