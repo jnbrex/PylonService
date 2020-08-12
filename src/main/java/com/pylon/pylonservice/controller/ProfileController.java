@@ -74,7 +74,9 @@ public class ProfileController {
      *         HTTP 404 Not Found - If the User doesn't exist.
      */
     @GetMapping(value = "/profile/{username}")
-    public ResponseEntity<?> getProfile(@PathVariable final String username) {
+    public ResponseEntity<?> getProfile(
+        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_METRIC_NAME);
         final String usernameLowercase = username.toLowerCase();
@@ -83,10 +85,16 @@ public class ProfileController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
+        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
+        if (authorizationHeader != null) {
+            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        }
+
         final Profile profile = new Profile(
             rG
                 .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
-                .flatMap(projectToProfile(usernameLowercase))
+                .flatMap(projectToProfile(usernameLowercase, callingUsernameLowercase))
                 .next()
         );
 
@@ -117,7 +125,7 @@ public class ProfileController {
         final Profile profile = new Profile(
             rG
                 .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
-                .flatMap(projectToProfile(usernameLowercase))
+                .flatMap(projectToProfile(usernameLowercase, usernameLowercase))
                 .next()
         );
 
