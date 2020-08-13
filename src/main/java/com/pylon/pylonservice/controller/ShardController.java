@@ -49,6 +49,7 @@ import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static com.pylon.pylonservice.model.domain.Shard.projectToShard;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -75,13 +76,16 @@ public class ShardController {
     /**
      * Call to retrieve a Shard.
      *
+     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param shardName A String containing the name of the Shard to return.
      *
      * @return HTTP 200 OK - If the Shard was retrieved successfully.
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/shard/{shardName}")
-    public ResponseEntity<?> getShard(@PathVariable final String shardName) {
+    public ResponseEntity<?> getShard(
+        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_METRIC_NAME);
         final String shardNameLowercase = shardName.toLowerCase();
@@ -90,10 +94,27 @@ public class ShardController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
+        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
+        if (authorizationHeader != null) {
+            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        }
+
         final Shard shard = new Shard(
             rG
                 .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
-                .flatMap(projectToShard(shardNameLowercase))
+                .flatMap(projectToShard(callingUsernameLowercase))
+                .next()
+        );
+
+        shard.setNumFollowers(
+            rG
+                .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
+                .emit()
+                .repeat(in(SHARD_INHERITS_SHARD_EDGE_LABEL))
+                .in(USER_FOLLOWS_SHARD_EDGE_LABEL)
+                .dedup()
+                .count()
                 .next()
         );
 

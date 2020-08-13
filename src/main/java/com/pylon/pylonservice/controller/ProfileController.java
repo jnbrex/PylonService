@@ -67,6 +67,7 @@ public class ProfileController {
     /**
      * Call to retrieve a User's public profile data.
      *
+     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param username A String containing the username of the User's profile to return
      *
      * @return HTTP 200 OK - If the User's public profile data was retrieved successfully. Body is a
