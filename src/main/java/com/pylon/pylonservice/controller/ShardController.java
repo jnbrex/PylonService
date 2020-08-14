@@ -119,6 +119,7 @@ public class ShardController {
     /**
      * Call to retrieve all of the Shards and Users that a Shard directly inherits.
      *
+     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param shardName A String containing the name of the Shard whose inheritance to return.
      *
      * @return HTTP 200 OK - If the Shard inheritance was retrieved successfully, a Map with two keys: "shards" which
@@ -177,6 +178,7 @@ public class ShardController {
     /**
      * Call to retrieve all the post headers for a Shard, ordered by newest post first.
      *
+     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param shardName A String containing the shardName of the Shard whose posts to return.
      *
      * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully. Body is an array of
@@ -219,6 +221,7 @@ public class ShardController {
     /**
      * Call to retrieve all the post headers for a Shard, ordered by most popular post first.
      *
+     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param shardName A String containing the shardName of the Shard whose posts to return.
      *
      * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully. Body is an array of
