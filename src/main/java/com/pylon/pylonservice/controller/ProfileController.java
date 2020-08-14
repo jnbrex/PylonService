@@ -41,7 +41,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_WEBSITE_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_YOUTUBE_URL_PROPERTY;
 import static com.pylon.pylonservice.model.domain.Post.projectToPost;
-import static com.pylon.pylonservice.model.domain.Profile.projectToProfile;
+import static com.pylon.pylonservice.model.domain.Profile.projectToSingleProfile;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
@@ -95,7 +95,7 @@ public class ProfileController {
         final Profile profile = new Profile(
             rG
                 .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
-                .flatMap(projectToProfile(usernameLowercase, callingUsernameLowercase))
+                .flatMap(projectToSingleProfile(usernameLowercase, callingUsernameLowercase))
                 .next()
         );
 
@@ -126,7 +126,7 @@ public class ProfileController {
         final Profile profile = new Profile(
             rG
                 .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
-                .flatMap(projectToProfile(usernameLowercase, usernameLowercase))
+                .flatMap(projectToSingleProfile(usernameLowercase, usernameLowercase))
                 .next()
         );
 

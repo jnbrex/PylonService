@@ -1,6 +1,7 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
+import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.domain.Shard;
 import com.pylon.pylonservice.model.requests.shard.CreateShardRequest;
 import com.pylon.pylonservice.model.requests.shard.UpdateShardRequest;
@@ -46,10 +47,11 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_ED
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.model.domain.Post.projectToPost;
+import static com.pylon.pylonservice.model.domain.Profile.projectToProfile;
 import static com.pylon.pylonservice.model.domain.Shard.projectToShard;
+import static com.pylon.pylonservice.model.domain.Shard.projectToSingleShard;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -79,7 +81,7 @@ public class ShardController {
      * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
      * @param shardName A String containing the name of the Shard to return.
      *
-     * @return HTTP 200 OK - If the Shard was retrieved successfully.
+     * @return HTTP 200 OK - If the Shard was retrieved successfully returns a {@link Shard}.
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/shard/{shardName}")
@@ -103,18 +105,7 @@ public class ShardController {
         final Shard shard = new Shard(
             rG
                 .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
-                .flatMap(projectToShard(callingUsernameLowercase))
-                .next()
-        );
-
-        shard.setNumFollowers(
-            rG
-                .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
-                .emit()
-                .repeat(in(SHARD_INHERITS_SHARD_EDGE_LABEL))
-                .in(USER_FOLLOWS_SHARD_EDGE_LABEL)
-                .dedup()
-                .count()
+                .flatMap(projectToSingleShard(shardName, callingUsernameLowercase))
                 .next()
         );
 
@@ -130,20 +121,15 @@ public class ShardController {
      *
      * @param shardName A String containing the name of the Shard whose inheritance to return.
      *
-     * @return HTTP 200 OK - If the Shard inheritance was retrieved successfully.
-     *                       {
-     *                           "shardNames": [
-     *                               "jasonshard3",
-     *                               "jasonshard2"
-     *                           ],
-     *                           "usernames": [
-     *                               "jason40"
-     *                           ]
-     *                       }
+     * @return HTTP 200 OK - If the Shard inheritance was retrieved successfully, a Map with two keys: "shards" which
+     *                       keys a collection of {@link Shard} and "profiles" which keys a collection of
+     *                       {@link Profile}.
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/shard/{shardName}/inheritance")
-    public ResponseEntity<?> getShardInheritance(@PathVariable final String shardName) {
+    public ResponseEntity<?> getShardInheritance(
+        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
         final String shardNameLowercase = shardName.toLowerCase();
@@ -152,12 +138,34 @@ public class ShardController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final Map<String, Object> shardInheritance = rG
+        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
+        if (authorizationHeader != null) {
+            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        }
+
+        final Set<Shard> shards = rG
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
-            .project("shardNames", "usernames")
-            .by(out(SHARD_INHERITS_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
-            .by(out(SHARD_INHERITS_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
-            .next();
+            .out(SHARD_INHERITS_SHARD_EDGE_LABEL)
+            .flatMap(projectToShard(callingUsernameLowercase))
+            .toSet()
+            .stream()
+            .map(Shard::new)
+            .collect(Collectors.toSet());
+
+        final Set<Profile> profiles = rG
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
+            .out(SHARD_INHERITS_USER_EDGE_LABEL)
+            .flatMap(projectToProfile(callingUsernameLowercase))
+            .toSet()
+            .stream()
+            .map(Profile::new)
+            .collect(Collectors.toSet());
+
+        final Map<String, Object> shardInheritance = Map.of(
+            "shards", shards,
+            "profiles", profiles
+        );
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(shardInheritance);
 
@@ -172,7 +180,7 @@ public class ShardController {
      * @param shardName A String containing the shardName of the Shard whose posts to return.
      *
      * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully. Body is an array of
-     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
+     *                       {@link Post}.
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/shard/{shardName}/posts/new")
@@ -214,7 +222,7 @@ public class ShardController {
      * @param shardName A String containing the shardName of the Shard whose posts to return.
      *
      * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully. Body is an array of
-     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
+     *                       {@link Post}.
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/shard/{shardName}/posts/popular")
@@ -255,26 +263,7 @@ public class ShardController {
      * Call to create a Shard.
      *
      * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
-     * @param createShardRequest A JSON object containing shardName, inheritedShardNames, and inheritedUsers like
-     *                           {
-     *                               "shardName": "exampleShardName",
-     *                               "inheritedShardNames": [
-     *                                   "inheritedShardName1",
-     *                                   "inheritedShardName2"
-     *                               ],
-     *                               "inheritedUsers": [
-     *                                   "inheritedUser1",
-     *                                   "inheritedUser2"
-     *                               ]
-     *                           }
-     *
-     *                           An object like below is also valid
-     *
-     *                           {
-     *                               "shardName": "exampleShardName",
-     *                               "inheritedShardNames": [],
-     *                               "inheritedUsers": []
-     *                           }
+     * @param createShardRequest A {@link CreateShardRequest}.
      *
      * @return HTTP 201 Created - If the Shard was created successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
@@ -347,7 +336,7 @@ public class ShardController {
      * the shard with the ones in the request.
      *
      * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
-     * @param updateShardRequest An {@link UpdateShardRequest}
+     * @param updateShardRequest An {@link UpdateShardRequest}.
      *
      * @return HTTP 200 Created - If the Shard was updated successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.

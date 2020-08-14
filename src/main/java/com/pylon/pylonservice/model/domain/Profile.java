@@ -55,11 +55,11 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "userDiscordUrl": "https://discord.gg/pJNRzPR",
  *     "userWebsiteUrl": "https://jnbrex.wordpress.com/",
  *     "createdAt": "2020-08-06T23:05:34.206+00:00",
- *     "numFollowers": "328",
- *     "numFollowed": "316",
  *     "numOwnedShards": "14",
  *     "numFollowedShards": "121",
- *     "userIsFollowed": true
+ *     "userIsFollowed": true,
+ *     "numFollowers": "328",
+ *     "numFollowed": "316"
  * }
  */
 @Data
@@ -92,18 +92,18 @@ public class Profile implements Serializable {
     final Date createdAt;
 
     // Derived from edges
-    long numFollowers;
-    long numFollowed;
     long numOwnedShards;
     long numFollowedShards;
     boolean userIsFollowed;
+    Long numFollowers;
+    Long numFollowed;
 
     public Profile(final Map<String, Object> graphProfileMap) {
-        this.numFollowers = (long) graphProfileMap.get(NUM_FOLLOWERS);
-        this.numFollowed = (long) graphProfileMap.get(NUM_FOLLOWED);
         this.numOwnedShards = (long) graphProfileMap.get(NUM_OWNED_SHARDS);
         this.numFollowedShards = (long) graphProfileMap.get(NUM_FOLLOWED_SHARDS);
         this.userIsFollowed = (long) graphProfileMap.get(USER_IS_FOLLOWED) > 0;
+        this.numFollowers = (Long) graphProfileMap.get(NUM_FOLLOWERS);
+        this.numFollowed = (Long) graphProfileMap.get(NUM_FOLLOWED);
 
         final Map<String, Object> profileProperties = (Map<String, Object>) graphProfileMap.get(PROPERTIES);
         this.username = (String) profileProperties.get(USER_USERNAME_PROPERTY);
@@ -124,10 +124,17 @@ public class Profile implements Serializable {
         this.createdAt = (Date) profileProperties.get(COMMON_CREATED_AT_PROPERTY);
     }
 
-    public static GraphTraversal<Object, Map<String, Object>> projectToProfile(final String profileUsername,
-                                                                               final String callingUsername) {
-        return project(PROPERTIES, NUM_FOLLOWERS, NUM_FOLLOWED, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS, USER_IS_FOLLOWED)
+    public static GraphTraversal<Object, Map<String, Object>> projectToSingleProfile(final String profileUsername,
+                                                                                     final String callingUsername) {
+        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS, USER_IS_FOLLOWED, NUM_FOLLOWERS, NUM_FOLLOWED)
             .by(valueMap().by(unfold()))
+            .by(out(USER_OWNS_SHARD_EDGE_LABEL).count())
+            .by(out(USER_FOLLOWS_SHARD_EDGE_LABEL).count())
+            .by(
+                in(USER_FOLLOWS_USER_EDGE_LABEL)
+                .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
+                .count()
+            )
             .by(
                 V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, profileUsername)
                     .emit()
@@ -145,13 +152,18 @@ public class Profile implements Serializable {
                     .dedup()
                     .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, P.without(profileUsername))
                     .count()
-            )
+            );
+    }
+
+    public static GraphTraversal<Object, Map<String, Object>> projectToProfile(final String callingUsername) {
+        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS, USER_IS_FOLLOWED)
+            .by(valueMap().by(unfold()))
             .by(out(USER_OWNS_SHARD_EDGE_LABEL).count())
             .by(out(USER_FOLLOWS_SHARD_EDGE_LABEL).count())
             .by(
                 in(USER_FOLLOWS_USER_EDGE_LABEL)
-                .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
-                .count()
+                    .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
+                    .count()
             );
     }
 }
