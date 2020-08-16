@@ -428,8 +428,7 @@ public class PostController {
     // Invoking traversals MUST contain a vertex with label "post"
     private GraphTraversal<Object, Edge> relateUserToPost(final String username) {
         return V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).as("user")
-            .addE(USER_SUBMITTED_POST_EDGE_LABEL).from("user").to("post")
-            .addE(USER_UPVOTED_POST_EDGE_LABEL).from("user").to("post");
+            .addE(USER_SUBMITTED_POST_EDGE_LABEL).from("user").to("post");
     }
 
     private static <T> Collector<T, ?, T> toSingleton() {
