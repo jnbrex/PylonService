@@ -7,6 +7,7 @@ import com.pylon.pylonservice.model.requests.shard.CreateShardRequest;
 import com.pylon.pylonservice.model.requests.shard.UpdateShardRequest;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -82,6 +83,7 @@ public class ShardController {
      * @param shardName A String containing the name of the Shard to return.
      *
      * @return HTTP 200 OK - If the Shard was retrieved successfully returns a {@link Shard}.
+     *         HTTP 401 Unauthorized - If a JWT was sent with the request but was expired.
      *         HTTP 404 Not Found - If the Shard doesn't exist.
      */
     @GetMapping(value = "/shard/{shardName}")
@@ -90,16 +92,19 @@ public class ShardController {
         @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_METRIC_NAME);
-        final String shardNameLowercase = shardName.toLowerCase();
 
-        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String shardNameLowercase = shardName.toLowerCase();
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Shard shard = new Shard(
@@ -133,16 +138,19 @@ public class ShardController {
         @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
-        final String shardNameLowercase = shardName.toLowerCase();
 
-        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String shardNameLowercase = shardName.toLowerCase();
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Shard> shards = rG
@@ -191,14 +199,17 @@ public class ShardController {
         @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
-        final String shardNameLowercase = shardName.toLowerCase();
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
+        final String shardNameLowercase = shardName.toLowerCase();
         if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -234,14 +245,17 @@ public class ShardController {
         @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
-        final String shardNameLowercase = shardName.toLowerCase();
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
+        final String shardNameLowercase = shardName.toLowerCase();
         if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -292,8 +306,7 @@ public class ShardController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         if (rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -353,14 +366,13 @@ public class ShardController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(UPDATE_SHARD_METRIC_NAME);
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
-        final String shardNameLowercase = updateShardRequest.getShardName().toLowerCase();
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         if (!updateShardRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
+        final String shardNameLowercase = updateShardRequest.getShardName().toLowerCase();
         if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

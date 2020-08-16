@@ -27,9 +27,9 @@ public class HelloControllerTests {
     @Test
     void testHello() {
         final String username = "Jason";
-        when(jwtTokenUtil.getUsernameFromToken(anyString())).thenReturn(username);
+        when(jwtTokenUtil.getUsernameFromAuthorizationHeader(anyString())).thenReturn(username);
         Assertions.assertThat(helloController.hello("Bearer jwt").getBody())
             .isEqualTo(String.format("Hello %s!", username));
-        verify(jwtTokenUtil).getUsernameFromToken("jwt");
+        verify(jwtTokenUtil).getUsernameFromAuthorizationHeader("jwt");
     }
 }

@@ -32,34 +32,30 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                                     final FilterChain chain) throws ServletException, IOException {
         final String requestTokenHeader = request.getHeader("Authorization");
 
-        String jwt = null;
         if (requestTokenHeader != null) {
-            jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(requestTokenHeader);
-        }
-
-        String username = null;
-        if (jwt != null) {
+            String username = null;
             try {
-                username = jwtTokenUtil.getUsernameFromToken(jwt);
+                username = jwtTokenUtil.getUsernameFromAuthorizationHeader(requestTokenHeader);
             } catch (IllegalArgumentException e) {
                 logger.warn("Unable to get JWT Token");
             } catch (ExpiredJwtException e) {
                 logger.warn("JWT Token has expired");
             }
-        }
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            final UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(username);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                final UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(username);
 
-            // If JWT is valid set Spring Security authentication
-            if (jwtTokenUtil.isTokenValid(jwt, userDetails)) {
-                final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                usernamePasswordAuthenticationToken
-                    .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                // If JWT is valid set Spring Security authentication
+                if (jwtTokenUtil.isAuthorizationHeaderValid(requestTokenHeader, userDetails)) {
+                    final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    usernamePasswordAuthenticationToken
+                        .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                }
             }
         }
+
         chain.doFilter(request, response);
     }
 }

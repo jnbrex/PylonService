@@ -28,8 +28,9 @@ public class HelloController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(HELLO_METRIC_NAME);
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String response = String.format("Hello %s!", jwtTokenUtil.getUsernameFromToken(jwt));
+        final String response = String.format(
+            "Hello %s!", jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader)
+        );
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok(response);
 

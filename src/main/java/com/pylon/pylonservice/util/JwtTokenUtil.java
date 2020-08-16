@@ -26,27 +26,16 @@ public class JwtTokenUtil {
         this.secretKey = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
     }
 
-    public static String removeBearerFromAuthorizationHeader(final String header) {
-        if (!header.startsWith(BEARER_HEADER)) {
-            final String message =
-                String.format(
-                    "Authorization header value does not begin with '%s': %s",
-                    BEARER_HEADER,
-                    header
-                );
-            log.error(message);
-            throw new IllegalArgumentException(message);
-        }
-
-        return header.substring(7);
+    public boolean isAuthorizationHeaderValid(final String header, final UserDetails userDetails) {
+        return getUsernameFromAuthorizationHeader(header).equals(userDetails.getUsername()) && !isHeaderExpired(header);
     }
 
-    public boolean isTokenValid(final String token, final UserDetails userDetails) {
-        return getUsernameFromToken(token).equals(userDetails.getUsername()) && !isTokenExpired(token);
+    public String getUsernameFromAuthorizationHeader(@NonNull final String token) {
+        return getClaimFromHeader(token, Claims::getSubject);
     }
 
-    public String getUsernameFromToken(@NonNull final String token) {
-        return getClaimFromToken(token, Claims::getSubject);
+    public String getUsernameFromAuthorizationHeaderOrDefaultIfNull(final String header, final String defaultUsername) {
+        return header == null ? defaultUsername : getClaimFromHeader(header, Claims::getSubject);
     }
 
     public String generateJwtForUser(final UserDetails userDetails) {
@@ -58,7 +47,8 @@ public class JwtTokenUtil {
             .compact();
     }
 
-    private <T> T getClaimFromToken(final String token, final Function<Claims, T> claimsResolver) {
+    private <T> T getClaimFromHeader(final String header, final Function<Claims, T> claimsResolver) {
+        final String token = removeBearerFromAuthorizationHeader(header);
         final Claims claims = getAllClaimsFromToken(token);
         return claimsResolver.apply(claims);
     }
@@ -71,8 +61,23 @@ public class JwtTokenUtil {
             .getBody();
     }
 
-    private boolean isTokenExpired(final String token) {
-        final Date expiration = getClaimFromToken(token, Claims::getExpiration);
+    private boolean isHeaderExpired(final String header) {
+        final Date expiration = getClaimFromHeader(header, Claims::getExpiration);
         return expiration.before(new Date());
+    }
+
+    private static String removeBearerFromAuthorizationHeader(final String header) {
+        if (!header.startsWith(BEARER_HEADER)) {
+            final String message =
+                String.format(
+                    "Authorization header value does not begin with '%s': %s",
+                    BEARER_HEADER,
+                    header
+                );
+            log.error(message);
+            throw new IllegalArgumentException(message);
+        }
+
+        return header.substring(7);
     }
 }

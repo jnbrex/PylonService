@@ -5,6 +5,7 @@ import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -80,16 +81,19 @@ public class ProfileController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = username.toLowerCase();
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Profile profile = new Profile(
@@ -120,8 +124,7 @@ public class ProfileController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_MY_PROFILE_METRIC_NAME);
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String usernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         final Profile profile = new Profile(
             rG
@@ -152,14 +155,17 @@ public class ProfileController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
+        final String usernameLowercase = username.toLowerCase();
         if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -196,14 +202,17 @@ public class ProfileController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
+        final String usernameLowercase = username.toLowerCase();
         if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -247,8 +256,7 @@ public class ProfileController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
             .property(single, USER_FRIENDLY_NAME_PROPERTY, updateProfileRequest.getUserFriendlyName())

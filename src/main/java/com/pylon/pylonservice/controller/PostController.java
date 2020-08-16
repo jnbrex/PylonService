@@ -6,6 +6,7 @@ import com.pylon.pylonservice.model.requests.post.CreateTopLevelPostRequest;
 import com.pylon.pylonservice.model.responses.CreatePostResponse;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.Tree;
@@ -100,10 +101,13 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_METRIC_NAME);
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         final Post post;
@@ -142,10 +146,13 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_COMMENTS_METRIC_NAME);
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         final Tree postAndComments = rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
@@ -190,8 +197,7 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(UPVOTE_POST_METRIC_NAME);
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         if (!rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -232,8 +238,7 @@ public class PostController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(REMOVE_UPVOTE_POST_METRIC_NAME);
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         if (!rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -278,8 +283,7 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         final String postId = UUID.randomUUID().toString();
 
@@ -326,8 +330,7 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         final String postId = UUID.randomUUID().toString();
 
@@ -377,10 +380,9 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
-        final String postId = UUID.randomUUID().toString();
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
+        final String postId = UUID.randomUUID().toString();
         final Optional<Edge> result = wG
             .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, parentPostId).as("parentPost")
             .flatMap(addCommentPost(createCommentPostRequest, postId)).as("post")

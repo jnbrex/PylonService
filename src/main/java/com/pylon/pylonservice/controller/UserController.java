@@ -5,6 +5,7 @@ import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.domain.Shard;
 import com.pylon.pylonservice.util.JwtTokenUtil;
 import com.pylon.pylonservice.util.MetricsUtil;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -70,16 +71,19 @@ public class UserController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_OWNED_SHARDS_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = username.toLowerCase();
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Shard> ownedShards = rG
@@ -114,16 +118,19 @@ public class UserController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_FOLLOWED_SHARDS_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = username.toLowerCase();
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Shard> followedShards = rG
@@ -158,16 +165,19 @@ public class UserController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = username.toLowerCase();
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Profile> followedUsers = rG
@@ -202,16 +212,19 @@ public class UserController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_INHERITORS_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = username.toLowerCase();
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Shard> inheritors = rG
@@ -246,16 +259,19 @@ public class UserController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = username.toLowerCase();
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final Set<Profile> followers = rG
@@ -290,16 +306,19 @@ public class UserController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = username.toLowerCase();
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final List<Post> submittedPosts = rG
@@ -335,16 +354,19 @@ public class UserController {
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
-        final String usernameLowercase = username.toLowerCase();
 
-        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
+                authorizationHeader, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String callingUsernameLowercase = INVALID_USERNAME_VALUE;
-        if (authorizationHeader != null) {
-            final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String usernameLowercase = username.toLowerCase();
+        if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         final List<Post> upvotedPosts = rG

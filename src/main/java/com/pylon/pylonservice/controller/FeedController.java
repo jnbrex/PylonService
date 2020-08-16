@@ -52,8 +52,7 @@ public class FeedController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_MY_FEED_METRIC_NAME);
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String username = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         final Date now = new Date();
         final List<Post> posts = rG

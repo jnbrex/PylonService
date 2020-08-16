@@ -58,8 +58,7 @@ public class FollowController {
         metricsUtil.addCountMetric(FOLLOW_USER_METRIC_NAME);
         final String usernameToFollowLowercase = usernameToFollow.toLowerCase();
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String followerUsername = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         if (usernameToFollow.equals(followerUsername)) {
             return new ResponseEntity<>("A user cannot follow themself.", HttpStatus.UNPROCESSABLE_ENTITY);
@@ -104,8 +103,7 @@ public class FollowController {
         metricsUtil.addCountMetric(FOLLOW_SHARD_METRIC_NAME);
         final String shardNameToFollowLowercase = shardNameToFollow.toLowerCase();
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String followerUsername = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToFollowLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -146,8 +144,7 @@ public class FollowController {
         metricsUtil.addCountMetric(UNFOLLOW_USER_METRIC_NAME);
         final String usernameToUnfollowLowercase = usernameToUnfollow.toLowerCase();
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String followerUsername = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         if (!rG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameToUnfollowLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -184,8 +181,7 @@ public class FollowController {
         metricsUtil.addCountMetric(UNFOLLOW_SHARD_METRIC_NAME);
         final String shardNameToUnfollowLowercase = shardNameToUnfollow.toLowerCase();
 
-        final String jwt = JwtTokenUtil.removeBearerFromAuthorizationHeader(authorizationHeader);
-        final String followerUsername = jwtTokenUtil.getUsernameFromToken(jwt);
+        final String followerUsername = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameToUnfollowLowercase).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
