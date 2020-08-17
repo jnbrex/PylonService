@@ -18,6 +18,9 @@ public class UpdateProfileRequest implements Serializable, Request {
     // shardFriendlyNames are composed of alphanumeric characters and spaces and are between 1 and 64 characters in
     // length
     private static final Pattern USER_FRIENDLY_NAME_REGEX_PATTERN = Pattern.compile("^[a-zA-Z0-9 ]{1,64}$");
+    // UUID ending in .png or .jpg
+    private static final Pattern FILENAME_REGEX_PATTERN_NO_GIFS =
+        Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(jpg|png)$");
 
     private static final int MAX_URL_LENGTH = 201;
 
@@ -35,6 +38,7 @@ public class UpdateProfileRequest implements Serializable, Request {
     String userBannerFilename;
     String userBio;
     String userLocation;
+    Boolean userVerified;
     String userFacebookUrl;
     String userTwitterUrl;
     String userInstagramUrl;
@@ -106,13 +110,20 @@ public class UpdateProfileRequest implements Serializable, Request {
     }
 
     private boolean isUserAvatarFilenameValid() {
-        return userAvatarFilename != null
-            && (userAvatarFilename.isEmpty() || FILENAME_REGEX_PATTERN.matcher(userAvatarFilename).matches());
+        return isUserImageFilenameValid(userAvatarFilename);
     }
 
     private boolean isUserBannerFilenameValid() {
-        return userBannerFilename != null
-            && (userBannerFilename.isEmpty() || FILENAME_REGEX_PATTERN.matcher(userBannerFilename).matches());
+        return isUserImageFilenameValid(userBannerFilename);
+    }
+
+    private boolean isUserImageFilenameValid(String filename) {
+        Pattern filenamePattern = FILENAME_REGEX_PATTERN_NO_GIFS;
+        if (userVerified) {
+            filenamePattern = FILENAME_REGEX_PATTERN;
+        }
+
+        return filename != null && (filename.isEmpty() || filenamePattern.matcher(filename).matches());
     }
 
     private boolean isUserBioValid() {

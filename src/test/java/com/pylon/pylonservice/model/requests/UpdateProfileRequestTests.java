@@ -7,9 +7,12 @@ import org.testng.annotations.Test;
 public class UpdateProfileRequestTests {
     private static final String VALID_USER_FRIENDLY_NAME = "Jason 1 Bohrer 1";
     private static final String VALID_USER_AVATAR_FILENAME = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.png";
+    private static final String VALID_USER_AVATAR_FILENAME_GIF = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.gif";
     private static final String VALID_USER_BANNER_FILENAME = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.jpg";
+    private static final String VALID_USER_BANNER_FILENAME_GIF = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.gif";
     private static final String VALID_USER_BIO = "hi my name is jason, this is my bio.";
     private static final String VALID_USER_LOCATION = "atlanta, georgia";
+    private static final Boolean VALID_USER_VERIFIED_TRUE = true;
     private static final String VALID_USER_FACEBOOK_URL = "https://www.facebook.com/jason.bohrer.10";
     private static final String VALID_USER_TWITTER_URL = "https://twitter.com/bohrer_jason";
     private static final String VALID_USER_INSTAGRAM_URL = "www.instagram.com/jnbrex/";
@@ -25,6 +28,7 @@ public class UpdateProfileRequestTests {
     private static final String VALID_USER_BANNER_FILENAME_BLANK = "";
     private static final String VALID_USER_BIO_BLANK = "";
     private static final String VALID_USER_LOCATION_BLANK = "";
+    private static final Boolean VALID_USER_VERIFIED_FALSE = false;
     private static final String VALID_USER_FACEBOOK_URL_BLANK = "";
     private static final String VALID_USER_TWITTER_URL_BLANK = "";
     private static final String VALID_USER_INSTAGRAM_URL_BLANK = "";
@@ -70,6 +74,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -87,6 +92,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -104,6 +110,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME_BLANK,
                     VALID_USER_BIO_BLANK,
                     VALID_USER_LOCATION_BLANK,
+                    VALID_USER_VERIFIED_FALSE,
                     VALID_USER_FACEBOOK_URL_BLANK,
                     VALID_USER_TWITTER_URL_BLANK,
                     VALID_USER_INSTAGRAM_URL_BLANK,
@@ -127,6 +134,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -144,6 +152,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -161,6 +170,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -178,6 +188,7 @@ public class UpdateProfileRequestTests {
                     INVALID_USER_BANNER_FILENAME_NON_UUID_PLUS_EXTENSION,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -195,6 +206,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     INVALID_USER_BIO_TOO_LONG,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -212,6 +224,43 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     INVALID_USER_LOCATION_TOO_LONG,
+                    VALID_USER_VERIFIED_TRUE,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_GG_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_FRIENDLY_NAME,
+                    VALID_USER_AVATAR_FILENAME_GIF,
+                    VALID_USER_BANNER_FILENAME,
+                    VALID_USER_BIO,
+                    INVALID_USER_LOCATION_TOO_LONG,
+                    VALID_USER_VERIFIED_FALSE,
+                    VALID_USER_FACEBOOK_URL,
+                    VALID_USER_TWITTER_URL,
+                    VALID_USER_INSTAGRAM_URL,
+                    VALID_USER_TWITCH_URL,
+                    VALID_USER_YOUTUBE_URL,
+                    VALID_USER_TIKTOK_URL,
+                    VALID_USER_DISCORD_URL_GG_DOMAIN,
+                    VALID_USER_WEBSITE_URL
+                ),
+            },
+            {
+                new UpdateProfileRequest(
+                    VALID_USER_FRIENDLY_NAME,
+                    VALID_USER_AVATAR_FILENAME,
+                    VALID_USER_BANNER_FILENAME_GIF,
+                    VALID_USER_BIO,
+                    INVALID_USER_LOCATION_TOO_LONG,
+                    VALID_USER_VERIFIED_FALSE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -229,6 +278,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     INVALID_USER_FACEBOOK_URL_WRONG_DOMAIN,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -246,6 +296,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     INVALID_USER_TWITTER_URL_WRONG_DOMAIN,
                     VALID_USER_INSTAGRAM_URL,
@@ -263,6 +314,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     INVALID_USER_INSTAGRAM_URL_WRONG_DOMAIN,
@@ -280,6 +332,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -297,6 +350,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -314,6 +368,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -331,6 +386,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -348,6 +404,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     INVALID_USER_FACEBOOK_URL_TOO_LONG,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -365,6 +422,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     INVALID_USER_TWITTER_URL_TOO_LONG,
                     VALID_USER_INSTAGRAM_URL,
@@ -382,6 +440,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     INVALID_USER_INSTAGRAM_URL_TOO_LONG,
@@ -399,6 +458,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -416,6 +476,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -433,6 +494,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -450,6 +512,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,
@@ -467,6 +530,7 @@ public class UpdateProfileRequestTests {
                     VALID_USER_BANNER_FILENAME,
                     VALID_USER_BIO,
                     VALID_USER_LOCATION,
+                    VALID_USER_VERIFIED_TRUE,
                     VALID_USER_FACEBOOK_URL,
                     VALID_USER_TWITTER_URL,
                     VALID_USER_INSTAGRAM_URL,

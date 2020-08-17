@@ -38,6 +38,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_TIKTOK_URL_PR
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITCH_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITTER_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_VERIFIED_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_WEBSITE_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_YOUTUBE_URL_PROPERTY;
@@ -252,11 +253,18 @@ public class ProfileController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(PUT_PROFILE_METRIC_NAME);
 
+        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
+
+        // Do not trust userVerified value that user sends with request
+        final boolean userVerified = (boolean) rG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .values(USER_VERIFIED_PROPERTY)
+            .next();
+        updateProfileRequest.setUserVerified(userVerified);
+
         if (!updateProfileRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
-
-        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
 
         wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
             .property(single, USER_FRIENDLY_NAME_PROPERTY, updateProfileRequest.getUserFriendlyName())
