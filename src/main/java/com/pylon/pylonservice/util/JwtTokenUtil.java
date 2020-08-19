@@ -30,8 +30,8 @@ public class JwtTokenUtil {
         return getUsernameFromAuthorizationHeader(header).equals(userDetails.getUsername()) && !isHeaderExpired(header);
     }
 
-    public String getUsernameFromAuthorizationHeader(@NonNull final String token) {
-        return getClaimFromHeader(token, Claims::getSubject);
+    public String getUsernameFromAuthorizationHeader(@NonNull final String header) {
+        return getClaimFromHeader(header, Claims::getSubject);
     }
 
     public String getUsernameFromAuthorizationHeaderOrDefaultIfNull(final String header, final String defaultUsername) {

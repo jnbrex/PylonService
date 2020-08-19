@@ -4,9 +4,13 @@ import lombok.Data;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_BODY_PROPERTY;
@@ -79,6 +83,8 @@ public class Post implements Serializable {
     String postPostedInShard;
     String commentOnPost;
 
+    List<Post> comments;
+
     public Post(final Map<String, Object> graphPostMap) {
         this.numLikes = (long) graphPostMap.get(NUM_LIKES);
         this.numComments = (long) graphPostMap.get(NUM_COMMENTS);
@@ -100,6 +106,8 @@ public class Post implements Serializable {
         this.postContentUrl = (String) postProperties.get(POST_CONTENT_URL_PROPERTY);
         this.postBody = (String) postProperties.get(POST_BODY_PROPERTY);
         this.createdAt = (Date) postProperties.get(COMMON_CREATED_AT_PROPERTY);
+
+        this.comments = new ArrayList<>();
     }
 
     public static GraphTraversal<Object, Map<String, Object>> projectToPost(final String username) {
@@ -117,6 +125,10 @@ public class Post implements Serializable {
             .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
             .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
             .by(out(POST_COMMENT_ON_POST_EDGE_LABEL).values(POST_ID_PROPERTY).fold());
+    }
+
+    public void addComment(final Post post) {
+        this.comments.add(post);
     }
 
     public double getPopularity(final Date now) {

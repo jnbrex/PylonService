@@ -27,9 +27,14 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -155,7 +160,7 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        final Tree postAndComments = rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+        final Tree<Map<String, Object>> postAndComments = rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
             .emit()
             .repeat(in(POST_COMMENT_ON_POST_EDGE_LABEL))
             .tree()
@@ -166,16 +171,9 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final ResponseEntity<?> responseEntity;
-        try {
-            responseEntity = ResponseEntity.ok().body(
-                objectMapper.writeValueAsString(
-                    postAndComments.getTreesAtDepth(2).get(0) // Tree with top-level comments at root
-                )
-            );
-        } catch (final JsonProcessingException e) {
-            throw new UncheckedIOException(e);
-        }
+        final Post root = convertTreeToPostWithNestedComments(postAndComments);
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(root.getComments());
 
         metricsUtil.addSuccessMetric(GET_POST_COMMENTS_METRIC_NAME);
         metricsUtil.addLatencyMetric(GET_POST_COMMENTS_METRIC_NAME, System.nanoTime() - startTime);
@@ -441,5 +439,12 @@ public class PostController {
                 return list.get(0);
             }
         );
+    }
+
+    private static Post convertTreeToPostWithNestedComments(final Tree<Map<String, Object>> t) {
+        final Post post = new Post(t.keySet().iterator().next());
+        final List<Tree<Map<String, Object>>> comments = t.values().iterator().next().splitParents();
+        comments.forEach(comment -> post.addComment(convertTreeToPostWithNestedComments(comment)));
+        return post;
     }
 }
