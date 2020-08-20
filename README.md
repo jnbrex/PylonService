@@ -17,6 +17,7 @@ export SERVICE_REGION=us-east-1
 export ENVIRONMENT_NAME=local
 export NEPTUNE_WRITER_ENDPOINT=localhost
 export NEPTUNE_READER_ENDPOINT=localhost
+export EMAIL_FROM_ADDRESS=local-noreply@pylon.gg
 ```
 
 3. Download **Gremlin Server** from https://tinkerpop.apache.org.
