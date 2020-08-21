@@ -29,6 +29,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_VERIFIED_PROP
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.project;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.repeat;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
@@ -51,7 +52,8 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "postLikedByUser": true,
  *     "postPostedInUser": "jason50",
  *     "postPostedInShard": null,
- *     "commentOnPost": null
+ *     "commentOnPost": null,
+ *     "topLevelPostId": "3e65390e-f1d0-4535-832e-4241f8a1235b"
  * }
  */
 @Data
@@ -69,6 +71,7 @@ public class Post implements Serializable {
     private static final String POSTED_IN_USER = "postedInUser";
     private static final String POST_LIKED_BY_USER = "postLikedByUser";
     private static final String COMMENT_ON_POST = "commentOnPost";
+    private static final String TOP_LEVEL_POST_ID = "topLevelPostId";
 
     private static final double TWO_HOURS = 2.0;
     private static final double DECAY_CONSTANT = 1.8;
@@ -92,6 +95,7 @@ public class Post implements Serializable {
     String postPostedInUser;
     String postPostedInShard;
     String commentOnPost;
+    String topLevelPostId;
 
     List<Post> comments;
 
@@ -107,10 +111,12 @@ public class Post implements Serializable {
         final Collection<String> postedInShardNames = (Collection<String>) graphPostMap.get(POSTED_IN_SHARD);
         final Collection<String> postedInUserUsernames = (Collection<String>) graphPostMap.get(POSTED_IN_USER);
         final Collection<String> commentOnPosts = (Collection<String>) graphPostMap.get(COMMENT_ON_POST);
+        final Collection<String> topLevelPostIds = (Collection<String>) graphPostMap.get(TOP_LEVEL_POST_ID);
 
         this.postPostedInShard = postedInShardNames.size() > 0 ? postedInShardNames.iterator().next() : null;
         this.postPostedInUser = postedInUserUsernames.size() > 0 ? postedInUserUsernames.iterator().next() : null;
         this.commentOnPost = commentOnPosts.size() > 0 ? commentOnPosts.iterator().next() : null;
+        this.topLevelPostId = topLevelPostIds.size() > 0 ? topLevelPostIds.iterator().next() : null;
 
         final Map<String, Object> postProperties = (Map<String, Object>) graphPostMap.get(PROPERTIES);
         this.postId = (String) postProperties.get(POST_ID_PROPERTY);
@@ -126,7 +132,7 @@ public class Post implements Serializable {
     public static GraphTraversal<Object, Map<String, Object>> projectToPost(final String username) {
         return project(PROPERTIES, NUM_LIKES, NUM_COMMENTS, SUBMITTER_USERNAME, SUBMITTER_FRIENDLY_NAME,
             SUBMITTER_AVATAR_FILENAME, SUBMITTER_VERIFIED, POST_LIKED_BY_USER, POSTED_IN_SHARD, POSTED_IN_USER,
-            COMMENT_ON_POST)
+            COMMENT_ON_POST, TOP_LEVEL_POST_ID)
             .by(valueMap().by(unfold()))
             .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
             .by(
@@ -141,7 +147,12 @@ public class Post implements Serializable {
             .by(in(USER_UPVOTED_POST_EDGE_LABEL).has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).count())
             .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
             .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
-            .by(out(POST_COMMENT_ON_POST_EDGE_LABEL).values(POST_ID_PROPERTY).fold());
+            .by(out(POST_COMMENT_ON_POST_EDGE_LABEL).values(POST_ID_PROPERTY).fold())
+            .by(
+                repeat(out(POST_COMMENT_ON_POST_EDGE_LABEL))
+                    .until(outE(POST_COMMENT_ON_POST_EDGE_LABEL).count().is(0))
+                    .values(POST_ID_PROPERTY).fold()
+            );
     }
 
     public void addComment(final Post post) {
