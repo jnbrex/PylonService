@@ -2,7 +2,6 @@ package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.pylon.pylonservice.model.requests.AuthenticateRequest;
-import com.pylon.pylonservice.model.responses.JwtResponse;
 import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.Refresh;
 import com.pylon.pylonservice.model.tables.User;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.UUID;
 
 @RestController
@@ -61,7 +61,8 @@ public class AuthenticateController {
      *         HTTP 401 Unauthorized - If the User was not authenticated successfully.
      */
     @PostMapping(value = "/authenticate")
-    public ResponseEntity<?> authenticate(@RequestBody final AuthenticateRequest authenticateRequest) {
+    public ResponseEntity<?> authenticate(@RequestBody final AuthenticateRequest authenticateRequest,
+                                          final HttpServletResponse response) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(AUTHENTICATE_METRIC_NAME);
 
@@ -90,22 +91,18 @@ public class AuthenticateController {
         final UserDetails userDetails = userDetailsService.loadUserByUsername(usernameOrEmail);
         final String jwtToken = jwtTokenUtil.generateJwtForUser(userDetails);
 
+        final String refreshToken = UUID.randomUUID().toString();
         final Refresh refresh = Refresh.builder()
-            .refreshToken(UUID.randomUUID().toString())
+            .refreshToken(refreshToken)
             .username(userDetails.getUsername())
             .build();
-
         dynamoDBMapper.save(refresh);
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok(
-            JwtResponse.builder()
-                .jwtToken(jwtToken)
-                .refreshToken(refresh.getRefreshToken())
-                .build()
-        );
+        response.addCookie(jwtTokenUtil.createCookie("jwtToken", jwtToken));
+        response.addCookie(jwtTokenUtil.createCookie("refreshToken", refreshToken));
 
         metricsUtil.addSuccessMetric(AUTHENTICATE_METRIC_NAME);
         metricsUtil.addLatencyMetric(AUTHENTICATE_METRIC_NAME, System.nanoTime() - startTime);
-        return responseEntity;
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

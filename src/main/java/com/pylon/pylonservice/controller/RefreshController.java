@@ -1,7 +1,6 @@
 package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.pylon.pylonservice.model.responses.JwtResponse;
 import com.pylon.pylonservice.model.requests.RefreshRequest;
 import com.pylon.pylonservice.model.tables.Refresh;
 import com.pylon.pylonservice.services.JwtUserDetailsService;
@@ -14,6 +13,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletResponse;
 
 @RestController
 public class RefreshController {
@@ -43,7 +44,8 @@ public class RefreshController {
      *         HTTP 404 Not Found - If the refresh token does not exist.
      */
     @PostMapping(value = "/refresh")
-    public ResponseEntity<?> refresh(@RequestBody final RefreshRequest refreshRequest) {
+    public ResponseEntity<?> refresh(@RequestBody final RefreshRequest refreshRequest,
+                                     final HttpServletResponse response) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(REFRESH_METRIC_NAME);
 
@@ -56,14 +58,10 @@ public class RefreshController {
         final UserDetails userDetails = userDetailsService.loadUserByUsername(refresh.getUsername());
         final String jwtToken = jwtTokenUtil.generateJwtForUser(userDetails);
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok(
-            JwtResponse.builder()
-                .jwtToken(jwtToken)
-                .build()
-        );
+        response.addCookie(jwtTokenUtil.createCookie("jwtToken", jwtToken));
 
         metricsUtil.addSuccessMetric(REFRESH_METRIC_NAME);
         metricsUtil.addLatencyMetric(REFRESH_METRIC_NAME, System.nanoTime() - startTime);
-        return responseEntity;
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

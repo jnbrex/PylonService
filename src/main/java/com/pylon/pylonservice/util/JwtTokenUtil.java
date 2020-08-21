@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.Cookie;
+
 @Log4j2
 @Component
 public class JwtTokenUtil {
@@ -24,6 +26,16 @@ public class JwtTokenUtil {
 
     JwtTokenUtil(@Value("${jwt.secret}") final String secretString) {
         this.secretKey = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public Cookie createCookie(final String name, final String value) {
+        final Cookie cookie = new Cookie(name, value);
+
+        cookie.setDomain("pylon.gg");
+        cookie.setSecure(true);
+        cookie.setHttpOnly(true);
+
+        return cookie;
     }
 
     public boolean isAuthorizationHeaderValid(final String header, final UserDetails userDetails) {
