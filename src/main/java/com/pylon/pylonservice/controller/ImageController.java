@@ -6,6 +6,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.pylon.pylonservice.model.responses.ImageUploadResponse;
 import com.pylon.pylonservice.util.MetricsUtil;
 import lombok.extern.log4j.Log4j2;
+import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -34,6 +36,8 @@ public class ImageController {
     private AmazonS3 amazonS3;
     @Autowired
     private MetricsUtil metricsUtil;
+    @Autowired
+    private Tika tika;
 
     private final String imageBucketName;
 
@@ -58,8 +62,23 @@ public class ImageController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(IMAGE_METRIC_NAME);
 
+        if (multipartFile.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+
         final String fileExtension = MIME_TYPE_TO_FILE_EXTENSION_MAPPING.get(multipartFile.getContentType());
         if (fileExtension == null) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+
+        final String tikaDetectedFileExtension;
+        try {
+            tikaDetectedFileExtension = MIME_TYPE_TO_FILE_EXTENSION_MAPPING.get(tika.detect(multipartFile.getBytes()));
+        } catch (final IOException e) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+
+        if (!fileExtension.equals(tikaDetectedFileExtension)) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
