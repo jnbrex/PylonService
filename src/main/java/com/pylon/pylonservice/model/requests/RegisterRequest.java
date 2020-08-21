@@ -30,7 +30,7 @@ public class RegisterRequest implements Serializable {
     }
 
     private boolean isUsernameValid() {
-        return USERNAME_REGEX_PATTERN.matcher(username).matches();
+        return !username.contains("nigger") && USERNAME_REGEX_PATTERN.matcher(username).matches();
     }
 
     private boolean isPasswordValid() {

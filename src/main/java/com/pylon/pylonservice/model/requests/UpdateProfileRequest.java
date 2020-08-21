@@ -105,8 +105,14 @@ public class UpdateProfileRequest implements Serializable, Request {
     }
 
     private boolean isUserFriendlyNameValid() {
-        return userFriendlyName != null
-            && (userFriendlyName.isEmpty() || USER_FRIENDLY_NAME_REGEX_PATTERN.matcher(userFriendlyName).matches());
+        return userFriendlyName != null &&
+            (
+                userFriendlyName.isEmpty() ||
+                    (
+                        !userFriendlyName.toLowerCase().contains("nigger")
+                            && USER_FRIENDLY_NAME_REGEX_PATTERN.matcher(userFriendlyName).matches()
+                    )
+            );
     }
 
     private boolean isUserAvatarFilenameValid() {
