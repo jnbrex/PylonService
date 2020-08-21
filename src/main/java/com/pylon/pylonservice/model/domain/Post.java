@@ -7,10 +7,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_BODY_PROPERTY;
@@ -22,9 +20,12 @@ import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHA
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_TITLE_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_AVATAR_FILENAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_FRIENDLY_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_VERIFIED_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
@@ -43,7 +44,10 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "createdAt": "2020-08-07T04:48:43.973+00:00",
  *     "numLikes": 1,
  *     "numComments": 9,
- *     "postSubmitter": "jason50",
+ *     "submitterUsername": "jason50",
+ *     "submitterFriendlyName": "Jason Bohrer",
+ *     "submitterAvatarFilename": "3e65390e-f1d0-4535-832e-4241f8a1235b.png",
+ *     "submitterVerified": false,
  *     "postLikedByUser": true,
  *     "postPostedInUser": "jason50",
  *     "postPostedInShard": null,
@@ -58,6 +62,9 @@ public class Post implements Serializable {
     private static final String NUM_LIKES = "numLikes";
     private static final String NUM_COMMENTS = "numComments";
     private static final String SUBMITTER_USERNAME = "submitterUsername";
+    private static final String SUBMITTER_FRIENDLY_NAME = "submitterFriendlyName";
+    private static final String SUBMITTER_AVATAR_FILENAME = "submitterAvatarFilename";
+    private static final String SUBMITTER_VERIFIED = "submitterVerified";
     private static final String POSTED_IN_SHARD = "postedInShard";
     private static final String POSTED_IN_USER = "postedInUser";
     private static final String POST_LIKED_BY_USER = "postLikedByUser";
@@ -77,7 +84,10 @@ public class Post implements Serializable {
     // Derived from edges
     long numLikes;
     long numComments;
-    String postSubmitter;
+    String submitterUsername;
+    String submitterFriendlyName;
+    String submitterAvatarFilename;
+    boolean submitterVerified;
     boolean postLikedByUser;
     String postPostedInUser;
     String postPostedInShard;
@@ -88,7 +98,10 @@ public class Post implements Serializable {
     public Post(final Map<String, Object> graphPostMap) {
         this.numLikes = (long) graphPostMap.get(NUM_LIKES);
         this.numComments = (long) graphPostMap.get(NUM_COMMENTS);
-        this.postSubmitter = (String) graphPostMap.get(SUBMITTER_USERNAME);
+        this.submitterUsername = (String) graphPostMap.get(SUBMITTER_USERNAME);
+        this.submitterFriendlyName = (String) graphPostMap.get(SUBMITTER_FRIENDLY_NAME);
+        this.submitterAvatarFilename = (String) graphPostMap.get(SUBMITTER_AVATAR_FILENAME);
+        this.submitterVerified = (boolean) graphPostMap.get(SUBMITTER_VERIFIED);
         this.postLikedByUser = (long) graphPostMap.get(POST_LIKED_BY_USER) > 0;
 
         final Collection<String> postedInShardNames = (Collection<String>) graphPostMap.get(POSTED_IN_SHARD);
@@ -111,8 +124,9 @@ public class Post implements Serializable {
     }
 
     public static GraphTraversal<Object, Map<String, Object>> projectToPost(final String username) {
-        return project(PROPERTIES, NUM_LIKES, NUM_COMMENTS, SUBMITTER_USERNAME, POST_LIKED_BY_USER, POSTED_IN_SHARD,
-            POSTED_IN_USER, COMMENT_ON_POST)
+        return project(PROPERTIES, NUM_LIKES, NUM_COMMENTS, SUBMITTER_USERNAME, SUBMITTER_FRIENDLY_NAME,
+            SUBMITTER_AVATAR_FILENAME, SUBMITTER_VERIFIED, POST_LIKED_BY_USER, POSTED_IN_SHARD, POSTED_IN_USER,
+            COMMENT_ON_POST)
             .by(valueMap().by(unfold()))
             .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
             .by(
@@ -121,6 +135,9 @@ public class Post implements Serializable {
                 .count()
             )
             .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_USERNAME_PROPERTY))
+            .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_FRIENDLY_NAME_PROPERTY))
+            .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_AVATAR_FILENAME_PROPERTY))
+            .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_VERIFIED_PROPERTY))
             .by(in(USER_UPVOTED_POST_EDGE_LABEL).has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).count())
             .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
             .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
