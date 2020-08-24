@@ -1,14 +1,14 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
-import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Comparator;
@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
@@ -35,24 +36,24 @@ public class FeedController {
     @Autowired
     private GraphTraversalSource rG;
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private AccessTokenService accessTokenService;
     @Autowired
     private MetricsUtil metricsUtil;
 
     /**
      * Call to retrieve a User's personalized feed.
      *
-     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
+     * @param accessToken A cookie with name "accessToken"
      *
      * @return HTTP 200 OK - If the Shard was retrieved successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @GetMapping(value = "/myFeed")
-    public ResponseEntity<?> getShard(@RequestHeader(value = "Authorization") final String authorizationHeader) {
+    public ResponseEntity<?> getMyFeed(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_MY_FEED_METRIC_NAME);
 
-        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
+        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         final Date now = new Date();
         final List<Post> posts = rG

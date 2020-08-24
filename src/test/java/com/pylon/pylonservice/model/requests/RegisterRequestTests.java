@@ -1,5 +1,6 @@
 package com.pylon.pylonservice.model.requests;
 
+import com.pylon.pylonservice.model.requests.auth.RegisterRequest;
 import org.assertj.core.api.Assertions;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

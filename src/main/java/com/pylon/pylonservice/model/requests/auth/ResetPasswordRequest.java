@@ -1,4 +1,4 @@
-package com.pylon.pylonservice.model.requests;
+package com.pylon.pylonservice.model.requests.auth;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

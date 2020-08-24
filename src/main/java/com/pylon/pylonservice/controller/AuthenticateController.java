@@ -1,12 +1,12 @@
 package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.pylon.pylonservice.model.requests.AuthenticateRequest;
+import com.pylon.pylonservice.model.requests.auth.AuthenticateRequest;
 import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.Refresh;
 import com.pylon.pylonservice.model.tables.User;
-import com.pylon.pylonservice.services.JwtUserDetailsService;
-import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.services.AccessTokenUserDetailsService;
+import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.util.MetricsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletResponse;
 import java.util.UUID;
 
+import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
+import static com.pylon.pylonservice.constants.AuthenticationConstants.REFRESH_TOKEN_COOKIE_NAME;
+
 @RestController
 public class AuthenticateController {
     private static final String AUTHENTICATE_METRIC_NAME = "Authenticate";
@@ -28,9 +31,9 @@ public class AuthenticateController {
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private AccessTokenService accessTokenUtil;
     @Autowired
-    private JwtUserDetailsService userDetailsService;
+    private AccessTokenUserDetailsService userDetailsService;
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
     @Autowired
@@ -66,7 +69,8 @@ public class AuthenticateController {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(AUTHENTICATE_METRIC_NAME);
 
-        String usernameOrEmail = authenticateRequest.getUsernameOrEmail().toLowerCase();
+        final String usernameOrEmail = authenticateRequest.getUsernameOrEmail().toLowerCase();
+        String username = usernameOrEmail;
         if (usernameOrEmail.contains("@")) {
             final EmailUser emailUser = dynamoDBMapper.load(EmailUser.class, usernameOrEmail);
             if (emailUser == null) {
@@ -78,18 +82,17 @@ public class AuthenticateController {
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
 
-            usernameOrEmail = user.getUsername();
+            username = user.getUsername();
         }
 
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
-                usernameOrEmail,
+                username,
                 authenticateRequest.getPassword()
             )
         );
 
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(usernameOrEmail);
-        final String jwtToken = jwtTokenUtil.generateJwtForUser(userDetails);
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
         final String refreshToken = UUID.randomUUID().toString();
         final Refresh refresh = Refresh.builder()
@@ -98,8 +101,14 @@ public class AuthenticateController {
             .build();
         dynamoDBMapper.save(refresh);
 
-        response.addCookie(jwtTokenUtil.createCookie("jwtToken", jwtToken));
-        response.addCookie(jwtTokenUtil.createCookie("refreshToken", refreshToken));
+        response.addCookie(
+            accessTokenUtil.createCookie(
+                ACCESS_TOKEN_COOKIE_NAME,
+                accessTokenUtil.generateAccessTokenForUser(userDetails)
+            )
+        );
+
+        response.addCookie(accessTokenUtil.createCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken));
 
         metricsUtil.addSuccessMetric(AUTHENTICATE_METRIC_NAME);
         metricsUtil.addLatencyMetric(AUTHENTICATE_METRIC_NAME, System.nanoTime() - startTime);

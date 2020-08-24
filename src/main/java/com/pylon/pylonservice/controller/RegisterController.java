@@ -3,7 +3,7 @@ package com.pylon.pylonservice.controller;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.TransactionWriteRequest;
-import com.pylon.pylonservice.model.requests.RegisterRequest;
+import com.pylon.pylonservice.model.requests.auth.RegisterRequest;
 import com.pylon.pylonservice.model.responses.RegisterResponse;
 import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.User;

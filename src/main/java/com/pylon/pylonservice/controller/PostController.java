@@ -4,7 +4,7 @@ import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.requests.post.CreateCommentPostRequest;
 import com.pylon.pylonservice.model.requests.post.CreateTopLevelPostRequest;
 import com.pylon.pylonservice.model.responses.CreatePostResponse;
-import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.util.MetricsUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -12,33 +12,29 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.Tree;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.shaded.jackson.core.JsonProcessingException;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.UncheckedIOException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_BODY_PROPERTY;
@@ -83,7 +79,7 @@ public class PostController {
     @Autowired
     private GraphTraversalSource rG;
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private AccessTokenService accessTokenService;
     @Autowired
     private MetricsUtil metricsUtil;
     @Autowired
@@ -92,7 +88,7 @@ public class PostController {
     /**
      * Call to retrieve a Post.
      *
-     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
+     * @param accessToken A cookie with name "accessToken"
      * @param postId A String containing the postId of the Post to return.
      *
      * @return HTTP 200 OK - If the Post was retrieved successfully. Body is an array of
@@ -101,15 +97,15 @@ public class PostController {
      */
     @GetMapping(value = "/post/{postId}")
     public ResponseEntity<?> getPost(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String postId) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -138,7 +134,7 @@ public class PostController {
     /**
      * Call to retrieve all comments on a Post.
      *
-     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
+     * @param accessToken A cookie with name "accessToken"
      * @param postId A String containing the postId of the Post for which the comments should be returned.
      *
      * @return HTTP 200 OK - If the Post's comments were retrieved successfully.
@@ -146,15 +142,15 @@ public class PostController {
      */
     @GetMapping(value = "/post/{postId}/comments")
     public ResponseEntity<?> getComments(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String postId) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POST_COMMENTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -183,19 +179,19 @@ public class PostController {
     /**
      * Call for the calling User to upvote a Post.
      *
-     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
+     * @param accessToken A cookie with name "accessToken"
      * @param postId A String containing the postId of the Post to upvote.
      *
      * @return HTTP 200 OK - If the Post was upvoted successfully or was already upvoted by the calling User.
      *         HTTP 404 Not Found - If the Post doesn't exist.
      */
     @PutMapping(value = "/post/upvote/{postId}")
-    public ResponseEntity<?> upvotePost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+    public ResponseEntity<?> upvotePost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                         @PathVariable final String postId) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(UPVOTE_POST_METRIC_NAME);
 
-        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
+        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         if (!rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -223,7 +219,7 @@ public class PostController {
     /**
      * Call for the calling User to remove their upvote on a Post.
      *
-     * @param authorizationHeader A key-value header with key "Authorization" and value like "Bearer exampleJwtToken".
+     * @param accessToken A cookie with name "accessToken"
      * @param postId A String containing the postId of the Post to remove their upvote on.
      *
      * @return HTTP 200 OK - If the upvote on the Post was removed successfully or if the Post hadn't been upvoted by
@@ -231,12 +227,12 @@ public class PostController {
      *         HTTP 404 Not Found - If the Post doesn't exist.
      */
     @PutMapping(value = "/post/removeUpvote/{postId}")
-    public ResponseEntity<?> removeUpvoteOnPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+    public ResponseEntity<?> removeUpvoteOnPost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                                 @PathVariable final String postId) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(REMOVE_UPVOTE_POST_METRIC_NAME);
 
-        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
+        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         if (!rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).hasNext()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -261,7 +257,7 @@ public class PostController {
      * Call to create a Post in a Shard.
      * @see CreateTopLevelPostRequest#isValid() for validation rules.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param shardName The name of a Shard
      * @param createTopLevelPostRequest A {@link CreateTopLevelPostRequest}
      *
@@ -270,7 +266,7 @@ public class PostController {
      *         HTTP 404 Not Found - If the Shard with shardName={shardName} doesn't exist.
      */
     @PostMapping(value = "/post/shard/{shardName}")
-    public ResponseEntity<?> createShardPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+    public ResponseEntity<?> createShardPost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                              @PathVariable final String shardName,
                                              @RequestBody final CreateTopLevelPostRequest createTopLevelPostRequest) {
         final long startTime = System.nanoTime();
@@ -281,7 +277,7 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
+        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         final String postId = UUID.randomUUID().toString();
 
@@ -312,14 +308,14 @@ public class PostController {
      * Call to create a Post in the calling User's public profile.
      * @see CreateTopLevelPostRequest#isValid() for validation rules.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param createTopLevelPostRequest A {@link CreateTopLevelPostRequest}
      *
      * @return HTTP 201 Created - If the Post was created successfully.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @PostMapping(value = "/post/profile")
-    public ResponseEntity<?> createProfilePost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+    public ResponseEntity<?> createProfilePost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                                @RequestBody final CreateTopLevelPostRequest createTopLevelPostRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(CREATE_PROFILE_POST_METRIC_NAME);
@@ -328,7 +324,7 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
+        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         final String postId = UUID.randomUUID().toString();
 
@@ -359,7 +355,7 @@ public class PostController {
      * Call to create a Post as a comment on another Post.
      * @see CreateCommentPostRequest#isValid() for validation rules.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param parentPostId The postId of the parent Post.
      * @param createCommentPostRequest A {@link CreateCommentPostRequest}
      *
@@ -368,7 +364,7 @@ public class PostController {
      *         HTTP 404 Not Found - If the Post with postId={parentPostId} doesn't exist.
      */
     @PostMapping(value = "/post/comment/{parentPostId}")
-    public ResponseEntity<?> createCommentPost(@RequestHeader(value = "Authorization") final String authorizationHeader,
+    public ResponseEntity<?> createCommentPost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                                @PathVariable final String parentPostId,
                                                @RequestBody final CreateCommentPostRequest createCommentPostRequest) {
         final long startTime = System.nanoTime();
@@ -378,7 +374,7 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
+        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         final String postId = UUID.randomUUID().toString();
         final Optional<Edge> result = wG

@@ -4,11 +4,12 @@ import java.io.IOException;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.pylon.pylonservice.services.JwtUserDetailsService;
-import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.services.AccessTokenUserDetailsService;
+import com.pylon.pylonservice.services.AccessTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,23 +20,26 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import io.jsonwebtoken.ExpiredJwtException;
 
+import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
+
 @Component
-public class JwtRequestFilter extends OncePerRequestFilter {
+public class AccessTokenRequestFilter extends OncePerRequestFilter {
+
     @Autowired
-    private JwtUserDetailsService jwtUserDetailsService;
+    private AccessTokenUserDetailsService accessTokenUserDetailsService;
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private AccessTokenService accessTokenService;
 
     @Override
     protected void doFilterInternal(final HttpServletRequest request,
                                     final HttpServletResponse response,
                                     final FilterChain chain) throws ServletException, IOException {
-        final String requestTokenHeader = request.getHeader("Authorization");
+        final String accessToken = getAccessTokenFromAccessTokenCookie(request);
 
-        if (requestTokenHeader != null) {
+        if (accessToken != null) {
             String username = null;
             try {
-                username = jwtTokenUtil.getUsernameFromAuthorizationHeader(requestTokenHeader);
+                username = accessTokenService.getUsernameFromAccessToken(accessToken);
             } catch (IllegalArgumentException e) {
                 logger.warn("Unable to get JWT Token");
             } catch (ExpiredJwtException e) {
@@ -43,10 +47,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                final UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(username);
+                final UserDetails userDetails = accessTokenUserDetailsService.loadUserByUsername(username);
 
-                // If JWT is valid set Spring Security authentication
-                if (jwtTokenUtil.isAuthorizationHeaderValid(requestTokenHeader, userDetails)) {
+                // If access token is valid set Spring Security authentication
+                if (accessTokenService.isAccessTokenValid(accessToken, userDetails)) {
                     final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     usernamePasswordAuthenticationToken
@@ -57,5 +61,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String getAccessTokenFromAccessTokenCookie(final HttpServletRequest request) {
+        for (final Cookie cookie : request.getCookies()) {
+            if (ACCESS_TOKEN_COOKIE_NAME.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

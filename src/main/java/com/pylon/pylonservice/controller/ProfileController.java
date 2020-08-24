@@ -3,7 +3,7 @@ package com.pylon.pylonservice.controller;
 import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
-import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.util.MetricsUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -11,11 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Comparator;
@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
@@ -62,14 +63,14 @@ public class ProfileController {
     @Autowired
     private GraphTraversalSource rG;
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private AccessTokenService accessTokenService;
     @Autowired
     private MetricsUtil metricsUtil;
 
     /**
      * Call to retrieve a User's public profile data.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing the username of the User's profile to return
      *
      * @return HTTP 200 OK - If the User's public profile data was retrieved successfully. Body is a
@@ -78,15 +79,15 @@ public class ProfileController {
      */
     @GetMapping(value = "/profile/{username}")
     public ResponseEntity<?> getProfile(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_PROFILE_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -114,18 +115,18 @@ public class ProfileController {
     /**
      * Call to retrieve a User's public profile data.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      *
      * @return HTTP 200 OK - If the User's public profile data was retrieved successfully. Body is a
      *                       {@link com.pylon.pylonservice.model.domain.Profile Profile}.
      *              HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @GetMapping(value = "/myProfile")
-    public ResponseEntity<?> getMyProfile(@RequestHeader(value = "Authorization") final String authorizationHeader) {
+    public ResponseEntity<?> getMyProfile(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_MY_PROFILE_METRIC_NAME);
 
-        final String usernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
+        final String usernameLowercase = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         final Profile profile = new Profile(
             rG
@@ -144,6 +145,7 @@ public class ProfileController {
     /**
      * Call to retrieve all the post headers for a Profile, newest posts first.
      *
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing the username of the User's Profile to return.
      *
      * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully. Body is an array of
@@ -152,15 +154,15 @@ public class ProfileController {
      */
     @GetMapping(value = "/profile/{username}/posts/new")
     public ResponseEntity<?> getNewProfilePosts(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -191,6 +193,7 @@ public class ProfileController {
     /**
      * Call to retrieve all the post headers for a Profile, most popular posts first.
      *
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing the username of the User's Profile to return.
      *
      * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully. Body is an array of
@@ -199,15 +202,15 @@ public class ProfileController {
      */
     @GetMapping(value = "/profile/{username}/posts/popular")
     public ResponseEntity<?> getPopularProfilePosts(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -240,7 +243,7 @@ public class ProfileController {
      * Call to update a User's public profile data. This is an idempotent operation, so all fields must be included. For
      * any fields which should not be present on the User's profile, send an empty string.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param updateProfileRequest A {@link UpdateProfileRequest}
      *
      * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
@@ -248,16 +251,16 @@ public class ProfileController {
      *         HTTP 422 Unprocessable Entity - If {@link UpdateProfileRequest#isValid()} is false.
      */
     @PutMapping(value = "/profile")
-    public ResponseEntity<?> updateProfile(@RequestHeader(value = "Authorization") final String authorizationHeader,
+    public ResponseEntity<?> updateProfile(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                            @RequestBody final UpdateProfileRequest updateProfileRequest) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(PUT_PROFILE_METRIC_NAME);
 
-        final String username = jwtTokenUtil.getUsernameFromAuthorizationHeader(authorizationHeader);
+        final String usernameLowercase = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         // Do not trust userVerified value that user sends with request
         final boolean userVerified = (boolean) rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .values(USER_VERIFIED_PROPERTY)
             .next();
         updateProfileRequest.setUserVerified(userVerified);
@@ -266,7 +269,7 @@ public class ProfileController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+        wG.V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .property(single, USER_FRIENDLY_NAME_PROPERTY, updateProfileRequest.getUserFriendlyName())
             .property(single, USER_AVATAR_FILENAME_PROPERTY, updateProfileRequest.getUserAvatarFilename())
             .property(single, USER_BANNER_FILENAME_PROPERTY, updateProfileRequest.getUserBannerFilename())

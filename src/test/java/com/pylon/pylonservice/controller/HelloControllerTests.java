@@ -1,6 +1,6 @@
 package com.pylon.pylonservice.controller;
 
-import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.services.AccessTokenService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class HelloControllerTests {
     @Mock
-    private JwtTokenUtil jwtTokenUtil;
+    private AccessTokenService accessTokenService;
 
     @InjectMocks
     final private HelloController helloController;
@@ -27,9 +27,9 @@ public class HelloControllerTests {
     @Test
     void testHello() {
         final String username = "Jason";
-        when(jwtTokenUtil.getUsernameFromAuthorizationHeader(anyString())).thenReturn(username);
+        when(accessTokenService.getUsernameFromAccessToken(anyString())).thenReturn(username);
         Assertions.assertThat(helloController.hello("Bearer jwt").getBody())
             .isEqualTo(String.format("Hello %s!", username));
-        verify(jwtTokenUtil).getUsernameFromAuthorizationHeader("jwt");
+        verify(accessTokenService).getUsernameFromAccessToken("jwt");
     }
 }

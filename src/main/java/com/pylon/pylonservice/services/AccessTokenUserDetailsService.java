@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 @Log4j2
 @Service
-public class JwtUserDetailsService implements UserDetailsService {
+public class AccessTokenUserDetailsService implements UserDetailsService {
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
 

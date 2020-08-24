@@ -3,7 +3,7 @@ package com.pylon.pylonservice.controller;
 import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.domain.Shard;
-import com.pylon.pylonservice.util.JwtTokenUtil;
+import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.util.MetricsUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -11,15 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
@@ -51,14 +52,14 @@ public class UserController {
     @Autowired
     private GraphTraversalSource rG;
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private AccessTokenService accessTokenService;
     @Autowired
     private MetricsUtil metricsUtil;
 
     /**
      * Call to retrieve the Shards owned by a User.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing the username of the User whose owned Shards to return.
      *
      * @return HTTP 200 OK - If the set of owned Shards was retrieved successfully. Body contains a collection of
@@ -67,15 +68,15 @@ public class UserController {
      */
     @GetMapping(value = "/user/{username}/ownedShards")
     public ResponseEntity<?> getOwnedShards(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_OWNED_SHARDS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -105,7 +106,7 @@ public class UserController {
     /**
      * Call to retrieve the Shards followed by a User.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing the username of the User whose followed Shards to return.
      *
      * @return HTTP 200 OK - If the set of followed Shards was retrieved successfully. Body contains a collection of
@@ -114,15 +115,15 @@ public class UserController {
      */
     @GetMapping(value = "/user/{username}/followed/shards")
     public ResponseEntity<?> getFollowedShards(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_FOLLOWED_SHARDS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -152,7 +153,7 @@ public class UserController {
     /**
      * Call to retrieve the Users followed by a User.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing the username of the User whose followed Users to return.
      *
      * @return HTTP 200 OK - If the set of followed Users was retrieved successfully. Body contains a collection of
@@ -161,15 +162,15 @@ public class UserController {
      */
     @GetMapping(value = "/user/{username}/followed/users")
     public ResponseEntity<?> getFollowedUsers(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -199,7 +200,7 @@ public class UserController {
     /**
      * Call to retrieve Shards that inherit a User.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing a set of shardNames of Shards which inherit the User.
      *
      * @return HTTP 200 OK - If the set of Shards which inherit the User was retrieved successfully. Body contains a
@@ -208,15 +209,15 @@ public class UserController {
      */
     @GetMapping(value = "/user/{username}/inheritors")
     public ResponseEntity<?> getInheritors(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_INHERITORS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -246,7 +247,7 @@ public class UserController {
     /**
      * Call to retrieve followers of a User.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing the username of the User whose followers to return.
      *
      * @return HTTP 200 OK - If the set of followers of the User was retrieved successfully. Body contains a collection
@@ -255,15 +256,15 @@ public class UserController {
      */
     @GetMapping(value = "/user/{username}/followers")
     public ResponseEntity<?> getFollowers(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -293,7 +294,7 @@ public class UserController {
     /**
      * Call to retrieve all Posts submitted by a User.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing the username of the User whose submitted Posts to return.
      *
      * @return HTTP 200 OK - If the set of Posts submitted by the User was retrieved successfully. Body is an array of
@@ -302,15 +303,15 @@ public class UserController {
      */
     @GetMapping(value = "/user/{username}/submitted")
     public ResponseEntity<?> getSubmitted(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -341,7 +342,7 @@ public class UserController {
     /**
      * Call to retrieve all Posts upvoted by a User.
      *
-     * @param authorizationHeader A request header with key "Authorization" and body including a jwt like "Bearer {jwt}"
+     * @param accessToken A cookie with name "accessToken"
      * @param username A String containing the username of the User whose upvoted Posts to return.
      *
      * @return HTTP 200 OK - If the set of Posts upvoted by the User was retrieved successfully. Body is an array of
@@ -350,15 +351,15 @@ public class UserController {
      */
     @GetMapping(value = "/user/{username}/upvoted")
     public ResponseEntity<?> getUpvoted(
-        @RequestHeader(value = "Authorization", required = false) final String authorizationHeader,
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
-            callingUsernameLowercase = jwtTokenUtil.getUsernameFromAuthorizationHeaderOrDefaultIfNull(
-                authorizationHeader, INVALID_USERNAME_VALUE
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                accessToken, INVALID_USERNAME_VALUE
             );
         } catch (final ExpiredJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);

@@ -25,11 +25,11 @@ import java.util.Arrays;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private AccessTokenAuthenticationEntryPoint accessTokenAuthenticationEntryPoint;
     @Autowired
-    private UserDetailsService jwtUserDetailsService;
+    private UserDetailsService userDetailsService;
     @Autowired
-    private JwtRequestFilter jwtRequestFilter;
+    private AccessTokenRequestFilter accessTokenRequestFilter;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
@@ -37,7 +37,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         // configure AuthenticationManager so that it knows from where to load
         // user for matching credentials
         // Use BCryptPasswordEncoder
-        auth.userDetailsService(jwtUserDetailsService).passwordEncoder(passwordEncoder);
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
     }
 
     @Bean
@@ -87,10 +87,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 ).permitAll()
             // all other requests need to be authenticated
             .anyRequest().authenticated().and()
-            .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
+            .exceptionHandling().authenticationEntryPoint(accessTokenAuthenticationEntryPoint).and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             // Add a filter to validate the tokens with every request
-            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(accessTokenRequestFilter, UsernamePasswordAuthenticationFilter.class)
             // A hack so that the real logout url can be /logout
             .logout().logoutUrl("/defaultLogout");
     }

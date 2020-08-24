@@ -70,4 +70,6 @@ public final class GraphConstants {
      * Miscellaneous
      */
     public static final String INVALID_USERNAME_VALUE = "a";
+
+    private GraphConstants() {}
 }
