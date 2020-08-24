@@ -64,6 +64,10 @@ public class AccessTokenRequestFilter extends OncePerRequestFilter {
     }
 
     private String getAccessTokenFromAccessTokenCookie(final HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+
         for (final Cookie cookie : request.getCookies()) {
             if (ACCESS_TOKEN_COOKIE_NAME.equals(cookie.getName())) {
                 return cookie.getValue();
