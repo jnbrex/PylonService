@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
+
+import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.AuthenticationConstants.REFRESH_TOKEN_COOKIE_NAME;
 
 @RestController
@@ -30,7 +34,8 @@ public class LogoutController {
      */
     @PostMapping(value = "/logout")
     public ResponseEntity<?> logout(
-        @CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) final String refreshToken) {
+        @CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) final String refreshToken,
+        final HttpServletResponse response) {
         final long startTime = System.nanoTime();
         metricsUtil.addCountMetric(LOGOUT_METRIC_NAME);
 
@@ -41,6 +46,9 @@ public class LogoutController {
                     .build()
             );
         }
+
+        response.addCookie(new Cookie(ACCESS_TOKEN_COOKIE_NAME, ""));
+        response.addCookie(new Cookie(REFRESH_TOKEN_COOKIE_NAME, ""));
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
