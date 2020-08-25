@@ -33,6 +33,7 @@ public class AccessTokenService {
         cookie.setDomain("pylon.gg");
         cookie.setSecure(true);
         cookie.setHttpOnly(true);
+        cookie.setPath("/");
 
         return cookie;
     }

@@ -50,7 +50,8 @@ public class LogoutController {
 
         for (final Cookie cookie : request.getCookies()) {
             cookie.setMaxAge(0);
-            cookie.setValue("deleted");
+            cookie.setValue("");
+            cookie.setPath("/");
             response.addCookie(cookie);
         }
 
