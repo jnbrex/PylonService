@@ -52,6 +52,9 @@ public class LogoutController {
             cookie.setMaxAge(0);
             cookie.setValue("");
             cookie.setPath("/");
+            cookie.setDomain("pylon.gg");
+            cookie.setSecure(true);
+            cookie.setHttpOnly(true);
             response.addCookie(cookie);
         }
 
