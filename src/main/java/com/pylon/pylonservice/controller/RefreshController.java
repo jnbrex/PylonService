@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.AuthenticationConstants.REFRESH_TOKEN_COOKIE_NAME;
+import static com.pylon.pylonservice.constants.TimeConstants.ONE_DAY_IN_SECONDS;
 
 @RestController
 public class RefreshController {
@@ -54,12 +55,11 @@ public class RefreshController {
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(refresh.getUsername());
 
-        response.addCookie(
-            accessTokenService.createCookie(
+        response.addCookie(accessTokenService.createCookie(
                 ACCESS_TOKEN_COOKIE_NAME,
-                accessTokenService.generateAccessTokenForUser(userDetails)
-            )
-        );
+                accessTokenService.generateAccessTokenForUser(userDetails),
+                ONE_DAY_IN_SECONDS
+        ));
 
         metricsUtil.addSuccessMetric(REFRESH_METRIC_NAME);
         metricsUtil.addLatencyMetric(REFRESH_METRIC_NAME, System.nanoTime() - startTime);

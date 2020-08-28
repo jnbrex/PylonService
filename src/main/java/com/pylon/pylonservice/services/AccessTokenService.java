@@ -16,19 +16,20 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.Cookie;
 
+import static com.pylon.pylonservice.constants.TimeConstants.ONE_DAY_IN_MILLISECONDS;
+
 @Log4j2
 @Service
 public class AccessTokenService {
-    private static final long JWT_TOKEN_VALIDITY_MILLIS = 24 * 60 * 60 * 1000; // 24 hours
-
     private final Key secretKey;
 
     AccessTokenService(@Value("${jwt.secret}") final String secretString) {
         this.secretKey = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
     }
 
-    public Cookie createCookie(final String name, final String value) {
+    public Cookie createCookie(final String name, final String value, final int maxAge) {
         final Cookie cookie = new Cookie(name, value);
+        cookie.setMaxAge(maxAge);
 
         cookie.setDomain("pylon.gg");
         cookie.setSecure(true);
@@ -54,7 +55,7 @@ public class AccessTokenService {
         return Jwts.builder()
             .setSubject(userDetails.getUsername())
             .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY_MILLIS))
+            .setExpiration(new Date(System.currentTimeMillis() + ONE_DAY_IN_MILLISECONDS))
             .signWith(secretKey)
             .compact();
     }

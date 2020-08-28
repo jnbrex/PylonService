@@ -23,6 +23,8 @@ import java.util.UUID;
 
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.AuthenticationConstants.REFRESH_TOKEN_COOKIE_NAME;
+import static com.pylon.pylonservice.constants.TimeConstants.ONE_DAY_IN_SECONDS;
+import static com.pylon.pylonservice.constants.TimeConstants.ONE_YEAR_IN_SECONDS;
 
 @RestController
 public class AuthenticateController {
@@ -101,14 +103,17 @@ public class AuthenticateController {
             .build();
         dynamoDBMapper.save(refresh);
 
-        response.addCookie(
-            accessTokenUtil.createCookie(
-                ACCESS_TOKEN_COOKIE_NAME,
-                accessTokenUtil.generateAccessTokenForUser(userDetails)
-            )
-        );
+        response.addCookie(accessTokenUtil.createCookie(
+            ACCESS_TOKEN_COOKIE_NAME,
+            accessTokenUtil.generateAccessTokenForUser(userDetails),
+            ONE_DAY_IN_SECONDS
+        ));
 
-        response.addCookie(accessTokenUtil.createCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken));
+        response.addCookie(accessTokenUtil.createCookie(
+            REFRESH_TOKEN_COOKIE_NAME,
+            refreshToken,
+            ONE_YEAR_IN_SECONDS
+        ));
 
         metricsUtil.addSuccessMetric(AUTHENTICATE_METRIC_NAME);
         metricsUtil.addLatencyMetric(AUTHENTICATE_METRIC_NAME, System.nanoTime() - startTime);
