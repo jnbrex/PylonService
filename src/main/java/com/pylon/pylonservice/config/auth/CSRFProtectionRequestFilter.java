@@ -1,6 +1,7 @@
 package com.pylon.pylonservice.config.auth;
 
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -29,7 +30,9 @@ public class CSRFProtectionRequestFilter extends OncePerRequestFilter {
             final String xRequestedWithHeaderValue = request.getHeader("X-Requested-With");
 
             if (xRequestedWithHeaderValue == null || !xRequestedWithHeaderValue.equals("XMLHttpRequest")) {
-                throw new RuntimeException("hi jason");
+                throw new AccessDeniedException(
+                    "X-Requested-With: XMLHttpRequest is required on calls to state-changing methods"
+                );
             }
         }
 
