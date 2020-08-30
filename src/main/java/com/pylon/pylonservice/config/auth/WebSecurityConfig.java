@@ -15,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -45,6 +46,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private UserDetailsService userDetailsService;
     @Autowired
     private AccessTokenRequestFilter accessTokenRequestFilter;
+    @Autowired
+    private CSRFProtectionRequestFilter csrfProtectionRequestFilter;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
@@ -111,6 +114,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             // Add a filter to validate the tokens with every request
             .addFilterBefore(accessTokenRequestFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(csrfProtectionRequestFilter, CsrfFilter.class)
             // A hack so that the real logout url can be /logout
             .logout().logoutUrl("/defaultLogout");
     }
