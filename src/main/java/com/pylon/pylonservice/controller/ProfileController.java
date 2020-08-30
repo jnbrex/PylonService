@@ -4,7 +4,7 @@ import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
 import com.pylon.pylonservice.services.AccessTokenService;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +65,7 @@ public class ProfileController {
     @Autowired
     private AccessTokenService accessTokenService;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
 
     /**
      * Call to retrieve a User's public profile data.
@@ -82,7 +82,7 @@ public class ProfileController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_PROFILE_METRIC_NAME);
+        metricsService.addCountMetric(GET_PROFILE_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -107,8 +107,8 @@ public class ProfileController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(profile);
 
-        metricsUtil.addSuccessMetric(GET_PROFILE_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_PROFILE_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -124,7 +124,7 @@ public class ProfileController {
     @GetMapping(value = "/myProfile")
     public ResponseEntity<?> getMyProfile(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_MY_PROFILE_METRIC_NAME);
+        metricsService.addCountMetric(GET_MY_PROFILE_METRIC_NAME);
 
         final String usernameLowercase = accessTokenService.getUsernameFromAccessToken(accessToken);
 
@@ -137,8 +137,8 @@ public class ProfileController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(profile);
 
-        metricsUtil.addSuccessMetric(GET_MY_PROFILE_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_MY_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_MY_PROFILE_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_MY_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -157,7 +157,7 @@ public class ProfileController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME);
+        metricsService.addCountMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -185,8 +185,8 @@ public class ProfileController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
-        metricsUtil.addSuccessMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -205,7 +205,7 @@ public class ProfileController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
+        metricsService.addCountMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -234,8 +234,8 @@ public class ProfileController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
-        metricsUtil.addSuccessMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -254,7 +254,7 @@ public class ProfileController {
     public ResponseEntity<?> updateProfile(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                            @RequestBody final UpdateProfileRequest updateProfileRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(PUT_PROFILE_METRIC_NAME);
+        metricsService.addCountMetric(PUT_PROFILE_METRIC_NAME);
 
         final String usernameLowercase = accessTokenService.getUsernameFromAccessToken(accessToken);
 
@@ -287,8 +287,8 @@ public class ProfileController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
-        metricsUtil.addSuccessMetric(PUT_PROFILE_METRIC_NAME);
-        metricsUtil.addLatencyMetric(PUT_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(PUT_PROFILE_METRIC_NAME);
+        metricsService.addLatencyMetric(PUT_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }

@@ -6,7 +6,7 @@ import com.pylon.pylonservice.model.domain.Shard;
 import com.pylon.pylonservice.model.requests.shard.CreateShardRequest;
 import com.pylon.pylonservice.model.requests.shard.UpdateShardRequest;
 import com.pylon.pylonservice.services.AccessTokenService;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -75,7 +75,7 @@ public class ShardController {
     @Autowired
     private AccessTokenService accessTokenService;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
 
     /**
      * Call to retrieve a Shard.
@@ -92,7 +92,7 @@ public class ShardController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_SHARD_METRIC_NAME);
+        metricsService.addCountMetric(GET_SHARD_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -117,8 +117,8 @@ public class ShardController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(shard);
 
-        metricsUtil.addSuccessMetric(GET_SHARD_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_SHARD_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_SHARD_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -138,7 +138,7 @@ public class ShardController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
+        metricsService.addCountMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -179,8 +179,8 @@ public class ShardController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(shardInheritance);
 
-        metricsUtil.addSuccessMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_SHARD_INHERITANCE_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_SHARD_INHERITANCE_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -199,7 +199,7 @@ public class ShardController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+        metricsService.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -225,8 +225,8 @@ public class ShardController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
-        metricsUtil.addSuccessMetric(GET_SHARD_POSTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_SHARD_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_SHARD_POSTS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_SHARD_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -245,7 +245,7 @@ public class ShardController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String shardName) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+        metricsService.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -272,8 +272,8 @@ public class ShardController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
-        metricsUtil.addSuccessMetric(GET_SHARD_POSTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_SHARD_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_SHARD_POSTS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_SHARD_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -292,7 +292,7 @@ public class ShardController {
     public ResponseEntity<?> createShard(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                          @RequestBody final CreateShardRequest createShardRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(CREATE_SHARD_METRIC_NAME);
+        metricsService.addCountMetric(CREATE_SHARD_METRIC_NAME);
 
         if (!createShardRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -344,8 +344,8 @@ public class ShardController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.CREATED);
 
-        metricsUtil.addSuccessMetric(CREATE_SHARD_METRIC_NAME);
-        metricsUtil.addLatencyMetric(CREATE_SHARD_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(CREATE_SHARD_METRIC_NAME);
+        metricsService.addLatencyMetric(CREATE_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -366,7 +366,7 @@ public class ShardController {
     public ResponseEntity<?> updateShard(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                          @RequestBody final UpdateShardRequest updateShardRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(UPDATE_SHARD_METRIC_NAME);
+        metricsService.addCountMetric(UPDATE_SHARD_METRIC_NAME);
 
 
         if (!updateShardRequest.isValid()) {
@@ -426,8 +426,8 @@ public class ShardController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
-        metricsUtil.addSuccessMetric(UPDATE_SHARD_METRIC_NAME);
-        metricsUtil.addLatencyMetric(UPDATE_SHARD_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(UPDATE_SHARD_METRIC_NAME);
+        metricsService.addLatencyMetric(UPDATE_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 

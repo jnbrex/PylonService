@@ -8,7 +8,7 @@ import com.pylon.pylonservice.model.responses.RegisterResponse;
 import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.User;
 import com.pylon.pylonservice.util.DynamoDbUtil;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -54,7 +54,7 @@ public class RegisterController {
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
 
     /**
      * Call to register a User.
@@ -85,7 +85,7 @@ public class RegisterController {
     @PostMapping(value = "/register")
     public ResponseEntity<?> register(@RequestBody final RegisterRequest registerRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(REGISTER_METRIC_NAME);
+        metricsService.addCountMetric(REGISTER_METRIC_NAME);
 
         if (!registerRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -132,8 +132,8 @@ public class RegisterController {
             HttpStatus.CREATED
         );
 
-        metricsUtil.addSuccessMetric(REGISTER_METRIC_NAME);
-        metricsUtil.addLatencyMetric(REGISTER_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(REGISTER_METRIC_NAME);
+        metricsService.addLatencyMetric(REGISTER_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 

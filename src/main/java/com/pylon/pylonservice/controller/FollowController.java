@@ -1,7 +1,7 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.services.AccessTokenService;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -40,7 +40,7 @@ public class FollowController {
     @Autowired
     private AccessTokenService accessTokenService;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
 
     /**
      * Call to add a follow relationship from the calling User to the User with username {usernameToFollow}.
@@ -56,7 +56,7 @@ public class FollowController {
     public ResponseEntity<?> followUser(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                         @PathVariable final String usernameToFollow) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(FOLLOW_USER_METRIC_NAME);
+        metricsService.addCountMetric(FOLLOW_USER_METRIC_NAME);
         final String usernameToFollowLowercase = usernameToFollow.toLowerCase();
 
         final String followerUsername = accessTokenService.getUsernameFromAccessToken(accessToken);
@@ -83,8 +83,8 @@ public class FollowController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
-        metricsUtil.addSuccessMetric(FOLLOW_USER_METRIC_NAME);
-        metricsUtil.addLatencyMetric(FOLLOW_USER_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(FOLLOW_USER_METRIC_NAME);
+        metricsService.addLatencyMetric(FOLLOW_USER_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -101,7 +101,7 @@ public class FollowController {
     public ResponseEntity<?> followShard(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                          @PathVariable final String shardNameToFollow) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(FOLLOW_SHARD_METRIC_NAME);
+        metricsService.addCountMetric(FOLLOW_SHARD_METRIC_NAME);
         final String shardNameToFollowLowercase = shardNameToFollow.toLowerCase();
 
         final String followerUsername = accessTokenService.getUsernameFromAccessToken(accessToken);
@@ -124,8 +124,8 @@ public class FollowController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
-        metricsUtil.addSuccessMetric(FOLLOW_SHARD_METRIC_NAME);
-        metricsUtil.addLatencyMetric(FOLLOW_SHARD_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(FOLLOW_SHARD_METRIC_NAME);
+        metricsService.addLatencyMetric(FOLLOW_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -142,7 +142,7 @@ public class FollowController {
     public ResponseEntity<?> unfollowUser(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                           @PathVariable final String usernameToUnfollow) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(UNFOLLOW_USER_METRIC_NAME);
+        metricsService.addCountMetric(UNFOLLOW_USER_METRIC_NAME);
         final String usernameToUnfollowLowercase = usernameToUnfollow.toLowerCase();
 
         final String followerUsername = accessTokenService.getUsernameFromAccessToken(accessToken);
@@ -161,8 +161,8 @@ public class FollowController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
-        metricsUtil.addSuccessMetric(UNFOLLOW_USER_METRIC_NAME);
-        metricsUtil.addLatencyMetric(UNFOLLOW_USER_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(UNFOLLOW_USER_METRIC_NAME);
+        metricsService.addLatencyMetric(UNFOLLOW_USER_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -179,7 +179,7 @@ public class FollowController {
     public ResponseEntity<?> unfollowShard(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                            @PathVariable final String shardNameToUnfollow) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(UNFOLLOW_SHARD_METRIC_NAME);
+        metricsService.addCountMetric(UNFOLLOW_SHARD_METRIC_NAME);
         final String shardNameToUnfollowLowercase = shardNameToUnfollow.toLowerCase();
 
         final String followerUsername = accessTokenService.getUsernameFromAccessToken(accessToken);
@@ -198,8 +198,8 @@ public class FollowController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
-        metricsUtil.addSuccessMetric(UNFOLLOW_SHARD_METRIC_NAME);
-        metricsUtil.addLatencyMetric(UNFOLLOW_SHARD_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(UNFOLLOW_SHARD_METRIC_NAME);
+        metricsService.addLatencyMetric(UNFOLLOW_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }

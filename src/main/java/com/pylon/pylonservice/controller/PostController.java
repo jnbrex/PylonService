@@ -5,7 +5,7 @@ import com.pylon.pylonservice.model.requests.post.CreateCommentPostRequest;
 import com.pylon.pylonservice.model.requests.post.CreateTopLevelPostRequest;
 import com.pylon.pylonservice.model.responses.CreatePostResponse;
 import com.pylon.pylonservice.services.AccessTokenService;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -81,7 +81,7 @@ public class PostController {
     @Autowired
     private AccessTokenService accessTokenService;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -100,7 +100,7 @@ public class PostController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String postId) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_POST_METRIC_NAME);
+        metricsService.addCountMetric(GET_POST_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -126,8 +126,8 @@ public class PostController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(post);
 
-        metricsUtil.addSuccessMetric(GET_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_POST_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -145,7 +145,7 @@ public class PostController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String postId) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_POST_COMMENTS_METRIC_NAME);
+        metricsService.addCountMetric(GET_POST_COMMENTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -171,8 +171,8 @@ public class PostController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(root.getComments());
 
-        metricsUtil.addSuccessMetric(GET_POST_COMMENTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_POST_COMMENTS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_POST_COMMENTS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_POST_COMMENTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -189,7 +189,7 @@ public class PostController {
     public ResponseEntity<?> upvotePost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                         @PathVariable final String postId) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(UPVOTE_POST_METRIC_NAME);
+        metricsService.addCountMetric(UPVOTE_POST_METRIC_NAME);
 
         final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
@@ -211,8 +211,8 @@ public class PostController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
-        metricsUtil.addSuccessMetric(UPVOTE_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(UPVOTE_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(UPVOTE_POST_METRIC_NAME);
+        metricsService.addLatencyMetric(UPVOTE_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -230,7 +230,7 @@ public class PostController {
     public ResponseEntity<?> removeUpvoteOnPost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                                 @PathVariable final String postId) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(REMOVE_UPVOTE_POST_METRIC_NAME);
+        metricsService.addCountMetric(REMOVE_UPVOTE_POST_METRIC_NAME);
 
         final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
@@ -248,8 +248,8 @@ public class PostController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
-        metricsUtil.addSuccessMetric(REMOVE_UPVOTE_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(REMOVE_UPVOTE_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(REMOVE_UPVOTE_POST_METRIC_NAME);
+        metricsService.addLatencyMetric(REMOVE_UPVOTE_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -270,7 +270,7 @@ public class PostController {
                                              @PathVariable final String shardName,
                                              @RequestBody final CreateTopLevelPostRequest createTopLevelPostRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(CREATE_SHARD_POST_METRIC_NAME);
+        metricsService.addCountMetric(CREATE_SHARD_POST_METRIC_NAME);
         final String shardNameLowercase = shardName.toLowerCase();
 
         if (!createTopLevelPostRequest.isValid()) {
@@ -299,8 +299,8 @@ public class PostController {
             HttpStatus.CREATED
         );
 
-        metricsUtil.addSuccessMetric(CREATE_SHARD_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(CREATE_SHARD_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(CREATE_SHARD_POST_METRIC_NAME);
+        metricsService.addLatencyMetric(CREATE_SHARD_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -318,7 +318,7 @@ public class PostController {
     public ResponseEntity<?> createProfilePost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
                                                @RequestBody final CreateTopLevelPostRequest createTopLevelPostRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(CREATE_PROFILE_POST_METRIC_NAME);
+        metricsService.addCountMetric(CREATE_PROFILE_POST_METRIC_NAME);
 
         if (!createTopLevelPostRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -346,8 +346,8 @@ public class PostController {
             HttpStatus.CREATED
         );
 
-        metricsUtil.addSuccessMetric(CREATE_PROFILE_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(CREATE_PROFILE_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(CREATE_PROFILE_POST_METRIC_NAME);
+        metricsService.addLatencyMetric(CREATE_PROFILE_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -368,7 +368,7 @@ public class PostController {
                                                @PathVariable final String parentPostId,
                                                @RequestBody final CreateCommentPostRequest createCommentPostRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(CREATE_COMMENT_POST_METRIC_NAME);
+        metricsService.addCountMetric(CREATE_COMMENT_POST_METRIC_NAME);
 
         if (!createCommentPostRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -395,8 +395,8 @@ public class PostController {
             HttpStatus.CREATED
         );
 
-        metricsUtil.addSuccessMetric(CREATE_COMMENT_POST_METRIC_NAME);
-        metricsUtil.addLatencyMetric(CREATE_COMMENT_POST_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(CREATE_COMMENT_POST_METRIC_NAME);
+        metricsService.addLatencyMetric(CREATE_COMMENT_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 

@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.Cookie;
-
 import static com.pylon.pylonservice.constants.TimeConstants.ONE_DAY_IN_MILLISECONDS;
 
 @Log4j2
@@ -25,18 +23,6 @@ public class AccessTokenService {
 
     AccessTokenService(@Value("${jwt.secret}") final String secretString) {
         this.secretKey = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
-    }
-
-    public Cookie createCookie(final String name, final String value, final int maxAge) {
-        final Cookie cookie = new Cookie(name, value);
-        cookie.setMaxAge(maxAge);
-
-        cookie.setDomain("pylon.gg");
-        cookie.setSecure(true);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-
-        return cookie;
     }
 
     public boolean isAccessTokenValid(final String token, final UserDetails userDetails) {

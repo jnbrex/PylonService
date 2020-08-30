@@ -1,7 +1,7 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.services.AccessTokenService;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -17,7 +17,7 @@ public class HelloController {
     @Autowired
     private AccessTokenService accessTokenService;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
 
     /**
      * Call to receive a hello message personalized to the calling User.
@@ -28,7 +28,7 @@ public class HelloController {
     @GetMapping("/hello")
     public ResponseEntity<?> hello(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(HELLO_METRIC_NAME);
+        metricsService.addCountMetric(HELLO_METRIC_NAME);
 
         final String response = String.format(
             "Hello %s!", accessTokenService.getUsernameFromAccessToken(accessToken)
@@ -36,8 +36,8 @@ public class HelloController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok(response);
 
-        metricsUtil.addSuccessMetric(HELLO_METRIC_NAME);
-        metricsUtil.addLatencyMetric(HELLO_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(HELLO_METRIC_NAME);
+        metricsService.addLatencyMetric(HELLO_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }

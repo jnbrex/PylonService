@@ -4,7 +4,7 @@ import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.domain.Shard;
 import com.pylon.pylonservice.services.AccessTokenService;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +54,7 @@ public class UserController {
     @Autowired
     private AccessTokenService accessTokenService;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
 
     /**
      * Call to retrieve the Shards owned by a User.
@@ -71,7 +71,7 @@ public class UserController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_USER_OWNED_SHARDS_METRIC_NAME);
+        metricsService.addCountMetric(GET_USER_OWNED_SHARDS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -98,8 +98,8 @@ public class UserController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(ownedShards);
 
-        metricsUtil.addSuccessMetric(GET_USER_OWNED_SHARDS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_USER_OWNED_SHARDS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_USER_OWNED_SHARDS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_USER_OWNED_SHARDS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -118,7 +118,7 @@ public class UserController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_USER_FOLLOWED_SHARDS_METRIC_NAME);
+        metricsService.addCountMetric(GET_USER_FOLLOWED_SHARDS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -145,8 +145,8 @@ public class UserController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(followedShards);
 
-        metricsUtil.addSuccessMetric(GET_USER_FOLLOWED_SHARDS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_USER_FOLLOWED_SHARDS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_USER_FOLLOWED_SHARDS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_USER_FOLLOWED_SHARDS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -165,7 +165,7 @@ public class UserController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
+        metricsService.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -192,8 +192,8 @@ public class UserController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(followedUsers);
 
-        metricsUtil.addSuccessMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -212,7 +212,7 @@ public class UserController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_USER_INHERITORS_METRIC_NAME);
+        metricsService.addCountMetric(GET_USER_INHERITORS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -239,8 +239,8 @@ public class UserController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(inheritors);
 
-        metricsUtil.addSuccessMetric(GET_USER_INHERITORS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_USER_INHERITORS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_USER_INHERITORS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_USER_INHERITORS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -259,7 +259,7 @@ public class UserController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
+        metricsService.addCountMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -286,8 +286,8 @@ public class UserController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(followers);
 
-        metricsUtil.addSuccessMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_USER_FOLLOWED_USERS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -306,7 +306,7 @@ public class UserController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
+        metricsService.addCountMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -334,8 +334,8 @@ public class UserController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(submittedPosts);
 
-        metricsUtil.addSuccessMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
@@ -354,7 +354,7 @@ public class UserController {
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
+        metricsService.addCountMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
 
         final String callingUsernameLowercase;
         try {
@@ -382,8 +382,8 @@ public class UserController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(upvotedPosts);
 
-        metricsUtil.addSuccessMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }

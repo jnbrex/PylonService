@@ -22,14 +22,18 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.pylon.pylonservice.constants.EnvironmentConstants.BETA_ENVIRONMENT_NAME;
+import static com.pylon.pylonservice.constants.EnvironmentConstants.LOCAL_ENVIRONMENT_NAME;
+import static com.pylon.pylonservice.constants.EnvironmentConstants.PROD_ENVIRONMENT_NAME;
+
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private static final Map<String, String> ENVIRONMENT_NAME_TO_ALLOWED_ORIGIN_MAPPING = Map.of(
-        "local", "localhost",
-        "beta", "https://beta.pylon.gg",
-        "prod", "https://pylon.gg"
+        LOCAL_ENVIRONMENT_NAME, "*",
+        BETA_ENVIRONMENT_NAME, "*",
+        PROD_ENVIRONMENT_NAME, "https://pylon.gg"
     );
 
     @Value("${environment.name}")

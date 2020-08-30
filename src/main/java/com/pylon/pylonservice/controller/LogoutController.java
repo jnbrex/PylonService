@@ -2,7 +2,7 @@ package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.pylon.pylonservice.model.tables.Refresh;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +23,7 @@ public class LogoutController {
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
 
     /**
      * Call to logout a User.
@@ -38,7 +38,7 @@ public class LogoutController {
         final HttpServletRequest request,
         final HttpServletResponse response) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(LOGOUT_METRIC_NAME);
+        metricsService.addCountMetric(LOGOUT_METRIC_NAME);
 
         if (refreshToken != null) {
             dynamoDBMapper.delete(
@@ -60,8 +60,8 @@ public class LogoutController {
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
-        metricsUtil.addSuccessMetric(LOGOUT_METRIC_NAME);
-        metricsUtil.addLatencyMetric(LOGOUT_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(LOGOUT_METRIC_NAME);
+        metricsService.addLatencyMetric(LOGOUT_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }

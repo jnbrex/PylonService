@@ -1,4 +1,4 @@
-package com.pylon.pylonservice.util;
+package com.pylon.pylonservice.services;
 
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.model.Dimension;
@@ -8,12 +8,12 @@ import com.amazonaws.services.cloudwatch.model.StandardUnit;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
-@Component
-public class MetricsUtil {
+@Service
+public class MetricsService {
     private static final String ENVIRONMENT_DIMENSION_NAME = "Environment";
     private static final String LATENCY_NAMESPACE = "PYLON/LATENCY";
     private static final String COUNT_NAMESPACE = "PYLON/COUNT";
@@ -24,7 +24,7 @@ public class MetricsUtil {
     @Autowired
     private AmazonCloudWatch amazonCloudWatch;
 
-    MetricsUtil(@Value("${environment.name}") final String environmentName) {
+    MetricsService(@Value("${environment.name}") final String environmentName) {
         final String dimensionName;
 
         // This is ugly but saves money

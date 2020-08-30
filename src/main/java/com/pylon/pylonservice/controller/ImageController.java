@@ -4,7 +4,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.pylon.pylonservice.model.responses.ImageUploadResponse;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import lombok.extern.log4j.Log4j2;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ public class ImageController {
     @Autowired
     private AmazonS3 amazonS3;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
     @Autowired
     private Tika tika;
 
@@ -60,7 +60,7 @@ public class ImageController {
     @PostMapping(value = "/image")
     public ResponseEntity<?> postImage(@RequestParam("file") final MultipartFile multipartFile) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(IMAGE_METRIC_NAME);
+        metricsService.addCountMetric(IMAGE_METRIC_NAME);
 
         if (multipartFile.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -106,8 +106,8 @@ public class ImageController {
             HttpStatus.CREATED
         );
 
-        metricsUtil.addSuccessMetric(IMAGE_METRIC_NAME);
-        metricsUtil.addLatencyMetric(IMAGE_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(IMAGE_METRIC_NAME);
+        metricsService.addLatencyMetric(IMAGE_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }

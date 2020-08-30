@@ -12,7 +12,7 @@ import com.pylon.pylonservice.model.requests.auth.ResetPasswordRequest;
 import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.PasswordReset;
 import com.pylon.pylonservice.model.tables.User;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,7 +41,7 @@ public class PasswordController {
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -65,7 +65,7 @@ public class PasswordController {
     @PostMapping(value = "/password/forgot")
     public ResponseEntity<?> forgotPassword(@RequestBody final ForgotPasswordRequest forgotPasswordRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME);
+        metricsService.addCountMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME);
 
         final String emailLowercase = forgotPasswordRequest.getToEmailAddress().toLowerCase();
         final EmailUser emailUser = dynamoDBMapper.load(EmailUser.class, emailLowercase);
@@ -111,8 +111,8 @@ public class PasswordController {
             log.error(String.format("Sending email failed for ForgotPasswordRequest %s", forgotPasswordRequest), e);
         }
 
-        metricsUtil.addSuccessMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME);
-        metricsUtil.addLatencyMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME);
+        metricsService.addLatencyMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME, System.nanoTime() - startTime);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -125,7 +125,7 @@ public class PasswordController {
     @PostMapping(value = "/password/reset")
     public ResponseEntity<?> resetPassword(@RequestBody final ResetPasswordRequest resetPasswordRequest) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME);
+        metricsService.addCountMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME);
 
         final PasswordReset passwordReset =
             dynamoDBMapper.load(PasswordReset.class, resetPasswordRequest.getPasswordResetToken());
@@ -140,8 +140,8 @@ public class PasswordController {
         dynamoDBMapper.save(user);
         dynamoDBMapper.delete(passwordReset);
 
-        metricsUtil.addSuccessMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME);
-        metricsUtil.addLatencyMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME);
+        metricsService.addLatencyMetric(SEND_FORGOT_PASSWORD_EMAIL_METRIC_NAME, System.nanoTime() - startTime);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }

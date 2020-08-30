@@ -2,7 +2,7 @@ package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.services.AccessTokenService;
-import com.pylon.pylonservice.util.MetricsUtil;
+import com.pylon.pylonservice.services.MetricsService;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -38,7 +38,7 @@ public class FeedController {
     @Autowired
     private AccessTokenService accessTokenService;
     @Autowired
-    private MetricsUtil metricsUtil;
+    private MetricsService metricsService;
 
     /**
      * Call to retrieve a User's personalized feed.
@@ -51,7 +51,7 @@ public class FeedController {
     @GetMapping(value = "/myFeed")
     public ResponseEntity<?> getMyFeed(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken) {
         final long startTime = System.nanoTime();
-        metricsUtil.addCountMetric(GET_MY_FEED_METRIC_NAME);
+        metricsService.addCountMetric(GET_MY_FEED_METRIC_NAME);
 
         final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
@@ -72,8 +72,8 @@ public class FeedController {
 
         final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
-        metricsUtil.addSuccessMetric(GET_MY_FEED_METRIC_NAME);
-        metricsUtil.addLatencyMetric(GET_MY_FEED_METRIC_NAME, System.nanoTime() - startTime);
+        metricsService.addSuccessMetric(GET_MY_FEED_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_MY_FEED_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }

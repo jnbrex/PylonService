@@ -2,17 +2,14 @@ package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.services.AccessTokenService;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.testng.annotations.Test;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 public class HelloControllerTests {
     @Mock
     private AccessTokenService accessTokenService;
@@ -26,10 +23,11 @@ public class HelloControllerTests {
 
     @Test
     void testHello() {
-        final String username = "Jason";
-        when(accessTokenService.getUsernameFromAccessToken(anyString())).thenReturn(username);
-        Assertions.assertThat(helloController.hello("Bearer jwt").getBody())
-            .isEqualTo(String.format("Hello %s!", username));
-        verify(accessTokenService).getUsernameFromAccessToken("jwt");
+        final String testUsername = "Jason";
+        final String testAccessToken = "testAccessToken";
+        when(accessTokenService.getUsernameFromAccessToken(anyString())).thenReturn(testUsername);
+        Assertions.assertThat(helloController.hello(testAccessToken).getBody())
+            .isEqualTo(String.format("Hello %s!", testUsername));
+        verify(accessTokenService).getUsernameFromAccessToken(testAccessToken);
     }
 }
