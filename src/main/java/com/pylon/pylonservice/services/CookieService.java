@@ -7,6 +7,7 @@ import javax.servlet.http.Cookie;
 
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.AuthenticationConstants.REFRESH_TOKEN_COOKIE_NAME;
+import static com.pylon.pylonservice.constants.EnvironmentConstants.LOCAL_ENVIRONMENT_NAME;
 import static com.pylon.pylonservice.constants.EnvironmentConstants.PROD_ENVIRONMENT_NAME;
 import static com.pylon.pylonservice.constants.TimeConstants.ONE_DAY_IN_SECONDS;
 import static com.pylon.pylonservice.constants.TimeConstants.ONE_YEAR_IN_SECONDS;
@@ -14,9 +15,11 @@ import static com.pylon.pylonservice.constants.TimeConstants.ONE_YEAR_IN_SECONDS
 @Service
 public class CookieService {
     private final boolean isProdEnvironment;
+    private final boolean isLocalEnvironment;
 
     CookieService(@Value("${environment.name}") String environmentName) {
         this.isProdEnvironment = environmentName.equals(PROD_ENVIRONMENT_NAME);
+        this.isLocalEnvironment = environmentName.equals(LOCAL_ENVIRONMENT_NAME);
     }
 
     public Cookie createAccessTokenCookie(final String accessToken, final String requestOrigin) {
@@ -46,8 +49,8 @@ public class CookieService {
 
         cookie.setMaxAge(maxAge);
         cookie.setDomain(isProdEnvironment ? "pylon.gg" : requestOrigin);
+        cookie.setSecure(!isLocalEnvironment);
 
-        cookie.setSecure(true);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
 
