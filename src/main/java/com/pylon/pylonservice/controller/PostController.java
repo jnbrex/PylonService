@@ -48,7 +48,6 @@ import static com.pylon.pylonservice.constants.GraphConstants.POST_TITLE_PROPERT
 import static com.pylon.pylonservice.constants.GraphConstants.POST_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
-import static com.pylon.pylonservice.constants.GraphConstants.USER_PINNED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_UPVOTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
@@ -60,7 +59,6 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.flatMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.inV;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
@@ -73,7 +71,6 @@ public class PostController {
     private static final String CREATE_SHARD_POST_METRIC_NAME = "CreateShardPost";
     private static final String CREATE_PROFILE_POST_METRIC_NAME = "CreateProfilePost";
     private static final String CREATE_COMMENT_POST_METRIC_NAME = "CreateCommentPost";
-    private static final String PIN_POST_METRIC_NAME = "PinPost";
 
     @Qualifier("writer")
     @Autowired
@@ -400,55 +397,6 @@ public class PostController {
 
         metricsService.addSuccessMetric(CREATE_COMMENT_POST_METRIC_NAME);
         metricsService.addLatencyMetric(CREATE_COMMENT_POST_METRIC_NAME, System.nanoTime() - startTime);
-        return responseEntity;
-    }
-
-    /**
-     * Call to set the user's pinned post.
-     *
-     * @param accessToken A cookie with name "accessToken"
-     * @param postId The postId of the Post to pin.
-     *
-     * @return HTTP 200 Created - If the Post was pinned successfully.
-     *         HTTP 401 Unauthorized - If the User isn't authenticated.
-     *         HTTP 403 Forbidden - If the Post with postId={postId} wasn't submitted by the calling User.
-     *         HTTP 404 Not Found - If the Post with postId={postId} doesn't exist.
-     */
-    @PutMapping(value = "/post/pin/{postId}")
-    public ResponseEntity<?> pinPost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
-                                     @PathVariable final String postId) {
-        final long startTime = System.nanoTime();
-        metricsService.addCountMetric(PIN_POST_METRIC_NAME);
-
-        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
-
-        final String postSubmitterUsername = (String) rG
-            .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
-            .in(USER_SUBMITTED_POST_EDGE_LABEL)
-            .values(USER_USERNAME_PROPERTY)
-            .next();
-
-        if (postSubmitterUsername == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        if (!username.equals(postSubmitterUsername)) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        }
-
-        wG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
-            .sideEffect(out(USER_PINNED_POST_EDGE_LABEL).drop())
-            .sideEffect(
-                addE(USER_PINNED_POST_EDGE_LABEL).to(
-                    V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
-                )
-            )
-            .iterate();
-
-        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
-        metricsService.addSuccessMetric(PIN_POST_METRIC_NAME);
-        metricsService.addLatencyMetric(PIN_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 

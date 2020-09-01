@@ -26,7 +26,9 @@ import java.util.stream.Collectors;
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_ID_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_AVATAR_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_BANNER_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_BIO_PROPERTY;
@@ -35,6 +37,8 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_FACEBOOK_URL_
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FRIENDLY_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_INSTAGRAM_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_LOCATION_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_PINNED_POST_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_SUBMITTED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TIKTOK_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITCH_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITTER_URL_PROPERTY;
@@ -46,6 +50,9 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_YOUTUBE_URL_P
 import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static com.pylon.pylonservice.model.domain.Profile.projectToSingleProfile;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addE;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
 @RestController
@@ -55,6 +62,8 @@ public class ProfileController {
     private static final String GET_NEW_PROFILE_POSTS_METRIC_NAME = "GetNewProfilePosts";
     private static final String GET_POPULAR_PROFILE_POSTS_METRIC_NAME = "GetPopularProfilePosts";
     private static final String PUT_PROFILE_METRIC_NAME = "PutProfile";
+    private static final String PIN_POST_METRIC_NAME = "PinPost";
+    private static final String UNPIN_POST_METRIC_NAME = "UnpinPost";
 
     @Qualifier("writer")
     @Autowired
@@ -289,6 +298,81 @@ public class ProfileController {
 
         metricsService.addSuccessMetric(PUT_PROFILE_METRIC_NAME);
         metricsService.addLatencyMetric(PUT_PROFILE_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to set the profile's pinned post.
+     *
+     * @param accessToken A cookie with name "accessToken"
+     * @param postId The postId of the Post to pin.
+     *
+     * @return HTTP 200 OK - If the Post was pinned successfully.
+     *         HTTP 401 Unauthorized - If the User isn't authenticated.
+     *         HTTP 403 Forbidden - If the Post with postId={postId} wasn't submitted by the calling User.
+     *         HTTP 404 Not Found - If the Post with postId={postId} doesn't exist.
+     */
+    @PutMapping(value = "/profile/pin/{postId}")
+    public ResponseEntity<?> pinPost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
+                                     @PathVariable final String postId) {
+        final long startTime = System.nanoTime();
+        metricsService.addCountMetric(PIN_POST_METRIC_NAME);
+
+        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
+
+        if (!rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final String postSubmitterUsername = (String) rG
+            .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+            .in(USER_SUBMITTED_POST_EDGE_LABEL)
+            .values(USER_USERNAME_PROPERTY)
+            .next();
+
+        if (!username.equals(postSubmitterUsername)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        wG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .sideEffect(outE(USER_PINNED_POST_EDGE_LABEL).drop())
+            .sideEffect(
+                addE(USER_PINNED_POST_EDGE_LABEL).to(
+                    V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+                )
+            )
+            .iterate();
+
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+        metricsService.addSuccessMetric(PIN_POST_METRIC_NAME);
+        metricsService.addLatencyMetric(PIN_POST_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to unpin the profile's pinned post.
+     *
+     * @param accessToken A cookie with name "accessToken"
+     *
+     * @return HTTP 200 OK - If the Post was unpinned successfully or there was no pinned Post.
+     *         HTTP 401 Unauthorized - If the User isn't authenticated.
+     */
+    @PutMapping(value = "/profile/unpin")
+    public ResponseEntity<?> unpinPost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken) {
+        final long startTime = System.nanoTime();
+        metricsService.addCountMetric(UNPIN_POST_METRIC_NAME);
+
+        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
+
+        wG
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+            .outE(USER_PINNED_POST_EDGE_LABEL).drop()
+            .iterate();
+
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+        metricsService.addSuccessMetric(UNPIN_POST_METRIC_NAME);
+        metricsService.addLatencyMetric(UNPIN_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 }
