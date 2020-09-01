@@ -5,6 +5,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
@@ -107,9 +108,11 @@ public class Profile implements Serializable {
         this.numOwnedShards = (long) graphProfileMap.get(NUM_OWNED_SHARDS);
         this.numFollowedShards = (long) graphProfileMap.get(NUM_FOLLOWED_SHARDS);
         this.userIsFollowed = (long) graphProfileMap.get(USER_IS_FOLLOWED) > 0;
-        this.pinnedPost = (String) graphProfileMap.get(PINNED_POST);
         this.numFollowers = (Long) graphProfileMap.get(NUM_FOLLOWERS);
         this.numFollowed = (Long) graphProfileMap.get(NUM_FOLLOWED);
+
+        final Collection<String> pinnedPosts = (Collection<String>) graphProfileMap.get(PINNED_POST);
+        this.pinnedPost = pinnedPosts.size() > 0 ? pinnedPosts.iterator().next() : null;
 
         final Map<String, Object> profileProperties = (Map<String, Object>) graphProfileMap.get(PROPERTIES);
         this.username = (String) profileProperties.get(USER_USERNAME_PROPERTY);
@@ -142,7 +145,7 @@ public class Profile implements Serializable {
                 .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
                 .count()
             )
-            .by(out(USER_PINNED_POST_EDGE_LABEL).values(POST_ID_PROPERTY))
+            .by(out(USER_PINNED_POST_EDGE_LABEL).values(POST_ID_PROPERTY).fold())
             .by(
                 V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, profileUsername)
                     .emit()
@@ -173,6 +176,6 @@ public class Profile implements Serializable {
                     .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
                     .count()
             )
-            .by(out(USER_PINNED_POST_EDGE_LABEL).values(POST_ID_PROPERTY));
+            .by(out(USER_PINNED_POST_EDGE_LABEL).values(POST_ID_PROPERTY).fold());
     }
 }
