@@ -49,6 +49,8 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "submitterFriendlyName": "Jason Bohrer",
  *     "submitterAvatarFilename": "3e65390e-f1d0-4535-832e-4241f8a1235b.png",
  *     "submitterVerified": false,
+ *     "shardFriendlyName": "Shard friendly name",
+ *     "shardAvatarFilename": "3e65390e-f1d0-4535-832e-4241f8a1235b.png",
  *     "postLikedByUser": true,
  *     "postPostedInUser": "jason50",
  *     "postPostedInShard": null,
@@ -67,6 +69,8 @@ public class Post implements Serializable {
     private static final String SUBMITTER_FRIENDLY_NAME = "submitterFriendlyName";
     private static final String SUBMITTER_AVATAR_FILENAME = "submitterAvatarFilename";
     private static final String SUBMITTER_VERIFIED = "submitterVerified";
+    private static final String SHARD_FRIENDLY_NAME = "shardFriendlyName";
+    private static final String SHARD_AVATAR_FILENAME = "shardAvatarFilename";
     private static final String POSTED_IN_SHARD = "postedInShard";
     private static final String POSTED_IN_USER = "postedInUser";
     private static final String POST_LIKED_BY_USER = "postLikedByUser";
@@ -91,6 +95,8 @@ public class Post implements Serializable {
     String submitterFriendlyName;
     String submitterAvatarFilename;
     boolean submitterVerified;
+    String shardFriendlyName;
+    String shardAvatarFilename;
     boolean postLikedByUser;
     String postPostedInUser;
     String postPostedInShard;
@@ -112,11 +118,15 @@ public class Post implements Serializable {
         final Collection<String> postedInUserUsernames = (Collection<String>) graphPostMap.get(POSTED_IN_USER);
         final Collection<String> commentOnPosts = (Collection<String>) graphPostMap.get(COMMENT_ON_POST);
         final Collection<String> topLevelPostIds = (Collection<String>) graphPostMap.get(TOP_LEVEL_POST_ID);
+        final Collection<String> shardFriendlyNames = (Collection<String>) graphPostMap.get(SHARD_FRIENDLY_NAME);
+        final Collection<String> shardAvatarFilenames = (Collection<String>) graphPostMap.get(SHARD_AVATAR_FILENAME);
 
         this.postPostedInShard = postedInShardNames.size() > 0 ? postedInShardNames.iterator().next() : null;
         this.postPostedInUser = postedInUserUsernames.size() > 0 ? postedInUserUsernames.iterator().next() : null;
         this.commentOnPost = commentOnPosts.size() > 0 ? commentOnPosts.iterator().next() : null;
         this.topLevelPostId = topLevelPostIds.size() > 0 ? topLevelPostIds.iterator().next() : null;
+        this.shardFriendlyName = shardFriendlyNames.size() > 0 ? shardFriendlyNames.iterator().next() : null;
+        this.shardAvatarFilename = shardAvatarFilenames.size() > 0 ? shardAvatarFilenames.iterator().next() : null;
 
         final Map<String, Object> postProperties = (Map<String, Object>) graphPostMap.get(PROPERTIES);
         this.postId = (String) postProperties.get(POST_ID_PROPERTY);
@@ -131,8 +141,8 @@ public class Post implements Serializable {
 
     public static GraphTraversal<Object, Map<String, Object>> projectToPost(final String username) {
         return project(PROPERTIES, NUM_LIKES, NUM_COMMENTS, SUBMITTER_USERNAME, SUBMITTER_FRIENDLY_NAME,
-            SUBMITTER_AVATAR_FILENAME, SUBMITTER_VERIFIED, POST_LIKED_BY_USER, POSTED_IN_SHARD, POSTED_IN_USER,
-            COMMENT_ON_POST, TOP_LEVEL_POST_ID)
+            SUBMITTER_AVATAR_FILENAME, SUBMITTER_VERIFIED, SHARD_FRIENDLY_NAME, SHARD_AVATAR_FILENAME,
+            POST_LIKED_BY_USER, POSTED_IN_SHARD, POSTED_IN_USER, COMMENT_ON_POST, TOP_LEVEL_POST_ID)
             .by(valueMap().by(unfold()))
             .by(in(USER_UPVOTED_POST_EDGE_LABEL).count())
             .by(
@@ -144,6 +154,8 @@ public class Post implements Serializable {
             .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_FRIENDLY_NAME_PROPERTY))
             .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_AVATAR_FILENAME_PROPERTY))
             .by(in(USER_SUBMITTED_POST_EDGE_LABEL).values(USER_VERIFIED_PROPERTY))
+            .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_FRIENDLY_NAME).fold())
+            .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_AVATAR_FILENAME).fold())
             .by(in(USER_UPVOTED_POST_EDGE_LABEL).has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).count())
             .by(out(POST_POSTED_IN_SHARD_EDGE_LABEL).values(SHARD_NAME_PROPERTY).fold())
             .by(out(POST_POSTED_IN_USER_EDGE_LABEL).values(USER_USERNAME_PROPERTY).fold())
