@@ -15,7 +15,7 @@ public class UpdateShardRequest extends ShardRequest {
                        final String shardAvatarFilename,
                        final String shardBannerFilename,
                        final String shardDescription,
-                       final Collection<String>inheritedShardNames,
+                       final Collection<String> inheritedShardNames,
                        final Collection<String> inheritedUsers) {
         super(shardName, shardFriendlyName, shardAvatarFilename, shardBannerFilename, shardDescription, inheritedShardNames,
             inheritedUsers);

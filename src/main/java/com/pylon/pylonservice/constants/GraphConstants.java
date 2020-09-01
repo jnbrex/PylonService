@@ -17,6 +17,7 @@ public final class GraphConstants {
     public static final String USER_UPVOTED_POST_EDGE_LABEL = "userUpvotedPost";
     public static final String USER_FOLLOWS_SHARD_EDGE_LABEL = "userFollowsShard";
     public static final String USER_OWNS_SHARD_EDGE_LABEL = "userOwnsShard";
+    public static final String USER_PINNED_POST_EDGE_LABEL = "userPinnedPost";
 
     // Shard -> ?
     public static final String SHARD_INHERITS_SHARD_EDGE_LABEL = "shardInheritsShard";

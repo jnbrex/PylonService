@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.Map;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_ID_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_AVATAR_FILENAME_PROPERTY;
@@ -21,6 +22,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_USER_
 import static com.pylon.pylonservice.constants.GraphConstants.USER_INSTAGRAM_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_LOCATION_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_PINNED_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TIKTOK_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITCH_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_TWITTER_URL_PROPERTY;
@@ -58,6 +60,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "numOwnedShards": "14",
  *     "numFollowedShards": "121",
  *     "userIsFollowed": true,
+ *     "pinnedPost": "5237af6c-6cf7-46ee-8537-f0b1b90d870a",
  *     "numFollowers": "328",
  *     "numFollowed": "316"
  * }
@@ -72,6 +75,7 @@ public class Profile implements Serializable {
     private static final String NUM_OWNED_SHARDS = "numOwnedShards";
     private static final String NUM_FOLLOWED_SHARDS = "numFollowedShards";
     private static final String USER_IS_FOLLOWED = "userIsFollowed";
+    private static final String PINNED_POST = "pinnedPost";
 
     // Properties of profile vertex
     final String username;
@@ -95,6 +99,7 @@ public class Profile implements Serializable {
     long numOwnedShards;
     long numFollowedShards;
     boolean userIsFollowed;
+    String pinnedPost;
     Long numFollowers;
     Long numFollowed;
 
@@ -102,6 +107,7 @@ public class Profile implements Serializable {
         this.numOwnedShards = (long) graphProfileMap.get(NUM_OWNED_SHARDS);
         this.numFollowedShards = (long) graphProfileMap.get(NUM_FOLLOWED_SHARDS);
         this.userIsFollowed = (long) graphProfileMap.get(USER_IS_FOLLOWED) > 0;
+        this.pinnedPost = (String) graphProfileMap.get(PINNED_POST);
         this.numFollowers = (Long) graphProfileMap.get(NUM_FOLLOWERS);
         this.numFollowed = (Long) graphProfileMap.get(NUM_FOLLOWED);
 
@@ -126,7 +132,8 @@ public class Profile implements Serializable {
 
     public static GraphTraversal<Object, Map<String, Object>> projectToSingleProfile(final String profileUsername,
                                                                                      final String callingUsername) {
-        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS, USER_IS_FOLLOWED, NUM_FOLLOWERS, NUM_FOLLOWED)
+        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS, USER_IS_FOLLOWED, PINNED_POST, NUM_FOLLOWERS,
+            NUM_FOLLOWED)
             .by(valueMap().by(unfold()))
             .by(out(USER_OWNS_SHARD_EDGE_LABEL).count())
             .by(out(USER_FOLLOWS_SHARD_EDGE_LABEL).count())
@@ -135,6 +142,7 @@ public class Profile implements Serializable {
                 .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
                 .count()
             )
+            .by(out(USER_PINNED_POST_EDGE_LABEL).values(POST_ID_PROPERTY))
             .by(
                 V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, profileUsername)
                     .emit()
@@ -156,7 +164,7 @@ public class Profile implements Serializable {
     }
 
     public static GraphTraversal<Object, Map<String, Object>> projectToProfile(final String callingUsername) {
-        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS, USER_IS_FOLLOWED)
+        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_FOLLOWED_SHARDS, USER_IS_FOLLOWED, PINNED_POST)
             .by(valueMap().by(unfold()))
             .by(out(USER_OWNS_SHARD_EDGE_LABEL).count())
             .by(out(USER_FOLLOWS_SHARD_EDGE_LABEL).count())
@@ -164,6 +172,7 @@ public class Profile implements Serializable {
                 in(USER_FOLLOWS_USER_EDGE_LABEL)
                     .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
                     .count()
-            );
+            )
+            .by(out(USER_PINNED_POST_EDGE_LABEL).values(POST_ID_PROPERTY));
     }
 }

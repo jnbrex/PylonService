@@ -39,7 +39,9 @@ abstract class ShardRequest implements Serializable, Request {
     }
 
     boolean isShardNameValid() {
-        return shardName != null && SHARD_NAME_REGEX_PATTERN.matcher(shardName).matches();
+        return shardName != null
+            && SHARD_NAME_REGEX_PATTERN.matcher(shardName).matches()
+            && !shardName.toLowerCase().equals("all");
     }
 
     boolean isShardFriendlyNameValid() {
