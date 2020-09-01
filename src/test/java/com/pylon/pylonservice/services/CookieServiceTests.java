@@ -1,5 +1,6 @@
 package com.pylon.pylonservice.services;
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.Cookie;
@@ -17,36 +18,97 @@ public class CookieServiceTests {
     private static final String LOCAL_ORIGIN = "http://localhost:3000";
     private static final String BETA_ORIGIN = "https://beta.pylon.gg";
     private static final String PROD_ORIGIN = "https://pylon.gg";
-
+    private static final String PROD_COOKIE_DOMAIN = "pylon.gg";
     private static final String TEST_ACCESS_TOKEN_VALUE = "testAccessTokenValue";
+    private static final String TEST_REFRESH_TOKEN_VALUE = "af23e7ba-25c9-4844-9094-771676f26fc5";
 
-    @Test
-    public void testCreateAccessTokenCookieLocal() {
-        final CookieService cookieService = new CookieService(LOCAL_ENVIRONMENT_NAME);
+    @DataProvider
+    public Object[][] provideAccessTokenCookie() {
+        return new Object[][] {
+            {
+                LOCAL_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_ORIGIN, false
+            },
+            {
+                BETA_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_ORIGIN, true
+            },
+            {
+                BETA_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, BETA_ORIGIN, BETA_ORIGIN, true
+            },
+            {
+                PROD_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, PROD_COOKIE_DOMAIN, true
+            },
+            {
+                PROD_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, PROD_ORIGIN, PROD_COOKIE_DOMAIN, true
+            }
+        };
+    }
 
-        final Cookie accessTokenCookie =
-            cookieService.createAccessTokenCookie(TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN);
+    @Test(dataProvider = "provideAccessTokenCookie")
+    public void testCreateAccessTokenCookie(final String environmentName,
+                                            final String cookieValue,
+                                            final String requestOrigin,
+                                            final String expectedCookieDomain,
+                                            final boolean expectedCookieSecure) {
+        final CookieService cookieService = new CookieService(environmentName);
+        final Cookie accessTokenCookie = cookieService.createAccessTokenCookie(cookieValue, requestOrigin);
 
+        assertThat(accessTokenCookie).extracting(Cookie::getValue).isEqualTo(cookieValue);
+        assertThat(accessTokenCookie).extracting(Cookie::getDomain).isEqualTo(expectedCookieDomain);
+        assertThat(accessTokenCookie).extracting(Cookie::getSecure).isEqualTo(expectedCookieSecure);
+
+        assertCommonAccessTokenCookieProperties(accessTokenCookie);
+    }
+
+    @DataProvider
+    public Object[][] provideRefreshTokenCookie() {
+        return new Object[][] {
+            {
+                LOCAL_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_ORIGIN, false
+            },
+            {
+                BETA_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_ORIGIN, true
+            },
+            {
+                BETA_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, BETA_ORIGIN, BETA_ORIGIN, true
+            },
+            {
+                PROD_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, PROD_COOKIE_DOMAIN, true
+            },
+            {
+                PROD_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, PROD_ORIGIN, PROD_COOKIE_DOMAIN, true
+            }
+        };
+    }
+
+    @Test(dataProvider = "provideRefreshTokenCookie")
+    public void testCreateRefreshTokenCookie(final String environmentName,
+                                            final String cookieValue,
+                                            final String requestOrigin,
+                                            final String expectedCookieDomain,
+                                            final boolean expectedCookieSecure) {
+        final CookieService cookieService = new CookieService(environmentName);
+        final Cookie refreshTokenCookie = cookieService.createRefreshTokenCookie(cookieValue, requestOrigin);
+
+        assertThat(refreshTokenCookie).extracting(Cookie::getValue).isEqualTo(cookieValue);
+        assertThat(refreshTokenCookie).extracting(Cookie::getDomain).isEqualTo(expectedCookieDomain);
+        assertThat(refreshTokenCookie).extracting(Cookie::getSecure).isEqualTo(expectedCookieSecure);
+
+        assertCommonRefreshTokenCookieProperties(refreshTokenCookie);
+    }
+
+    private void assertCommonAccessTokenCookieProperties(final Cookie accessTokenCookie) {
         assertThat(accessTokenCookie).extracting(Cookie::getName).isEqualTo(ACCESS_TOKEN_COOKIE_NAME);
-        assertThat(accessTokenCookie).extracting(Cookie::getValue).isEqualTo(TEST_ACCESS_TOKEN_VALUE);
         assertThat(accessTokenCookie).extracting(Cookie::getMaxAge).isEqualTo(ONE_DAY_IN_SECONDS);
-        assertThat(accessTokenCookie).extracting(Cookie::getDomain).isEqualTo(LOCAL_ORIGIN);
         assertCommonCookieProperties(accessTokenCookie);
     }
 
-    @Test
-    public void testCreateAccessTokenCookieBeta() {
-        final CookieService cookieService = new CookieService("beta");
-
-    }
-
-    @Test
-    public void testCreateAccessTokenCookieProd() {
-        final CookieService cookieService = new CookieService("prod");
+    private void assertCommonRefreshTokenCookieProperties(final Cookie refreshTokenCookie) {
+        assertThat(refreshTokenCookie).extracting(Cookie::getName).isEqualTo(REFRESH_TOKEN_COOKIE_NAME);
+        assertThat(refreshTokenCookie).extracting(Cookie::getMaxAge).isEqualTo(ONE_YEAR_IN_SECONDS);
+        assertCommonCookieProperties(refreshTokenCookie);
     }
 
     private void assertCommonCookieProperties(final Cookie cookie) {
-        assertThat(cookie).extracting(Cookie::getSecure).isEqualTo(true);
         assertThat(cookie).extracting(Cookie::isHttpOnly).isEqualTo(true);
         assertThat(cookie).extracting(Cookie::getPath).isEqualTo("/");
     }
