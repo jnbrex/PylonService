@@ -49,7 +49,7 @@ public class CookieService {
 
         cookie.setMaxAge(maxAge);
         cookie.setDomain(isProdEnvironment ? "pylon.gg" : getCookieDomainFromRequestOrigin(requestOrigin));
-        cookie.setSecure(!isLocalEnvironment);
+        cookie.setSecure(isProdEnvironment || !requestOrigin.contains("localhost"));
 
         cookie.setHttpOnly(true);
         cookie.setPath("/");
