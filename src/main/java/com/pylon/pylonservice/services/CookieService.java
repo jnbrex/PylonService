@@ -48,12 +48,20 @@ public class CookieService {
         final Cookie cookie = new Cookie(name, value);
 
         cookie.setMaxAge(maxAge);
-        cookie.setDomain(isProdEnvironment ? "pylon.gg" : requestOrigin);
+        cookie.setDomain(isProdEnvironment ? "pylon.gg" : getCookieDomainFromRequestOrigin(requestOrigin));
         cookie.setSecure(!isLocalEnvironment);
 
         cookie.setHttpOnly(true);
         cookie.setPath("/");
 
         return cookie;
+    }
+
+    private String getCookieDomainFromRequestOrigin(final String requestOrigin) {
+        if (requestOrigin.contains("localhost")) {
+            return "localhost";
+        }
+
+        return "pylon.gg";
     }
 }

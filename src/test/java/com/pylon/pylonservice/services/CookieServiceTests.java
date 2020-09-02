@@ -18,7 +18,8 @@ public class CookieServiceTests {
     private static final String LOCAL_ORIGIN = "http://localhost:3000";
     private static final String BETA_ORIGIN = "https://beta.pylon.gg";
     private static final String PROD_ORIGIN = "https://pylon.gg";
-    private static final String PROD_COOKIE_DOMAIN = "pylon.gg";
+    private static final String LOCAL_COOKIE_DOMAIN = "localhost";
+    private static final String NON_LOCAL_COOKIE_DOMAIN = "pylon.gg";
     private static final String TEST_ACCESS_TOKEN_VALUE = "testAccessTokenValue";
     private static final String TEST_REFRESH_TOKEN_VALUE = "af23e7ba-25c9-4844-9094-771676f26fc5";
 
@@ -26,19 +27,19 @@ public class CookieServiceTests {
     public Object[][] provideAccessTokenCookie() {
         return new Object[][] {
             {
-                LOCAL_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_ORIGIN, false
+                LOCAL_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_COOKIE_DOMAIN, false
             },
             {
-                BETA_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_ORIGIN, true
+                BETA_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_COOKIE_DOMAIN, true
             },
             {
-                BETA_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, BETA_ORIGIN, BETA_ORIGIN, true
+                BETA_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, BETA_ORIGIN, NON_LOCAL_COOKIE_DOMAIN, true
             },
             {
-                PROD_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, PROD_COOKIE_DOMAIN, true
+                PROD_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, NON_LOCAL_COOKIE_DOMAIN, true
             },
             {
-                PROD_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, PROD_ORIGIN, PROD_COOKIE_DOMAIN, true
+                PROD_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, PROD_ORIGIN, NON_LOCAL_COOKIE_DOMAIN, true
             }
         };
     }
@@ -63,19 +64,19 @@ public class CookieServiceTests {
     public Object[][] provideRefreshTokenCookie() {
         return new Object[][] {
             {
-                LOCAL_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_ORIGIN, false
+                LOCAL_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_COOKIE_DOMAIN, false
             },
             {
-                BETA_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_ORIGIN, true
+                BETA_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_COOKIE_DOMAIN, true
             },
             {
-                BETA_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, BETA_ORIGIN, BETA_ORIGIN, true
+                BETA_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, BETA_ORIGIN, NON_LOCAL_COOKIE_DOMAIN, true
             },
             {
-                PROD_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, PROD_COOKIE_DOMAIN, true
+                PROD_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, NON_LOCAL_COOKIE_DOMAIN, true
             },
             {
-                PROD_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, PROD_ORIGIN, PROD_COOKIE_DOMAIN, true
+                PROD_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, PROD_ORIGIN, NON_LOCAL_COOKIE_DOMAIN, true
             }
         };
     }
