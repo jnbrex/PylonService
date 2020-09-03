@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.Map;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
-import static com.pylon.pylonservice.constants.GraphConstants.POST_ID_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_AVATAR_FILENAME_PROPERTY;
@@ -33,6 +32,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_VERIFIED_PROP
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_WEBSITE_URL_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_YOUTUBE_URL_PROPERTY;
+import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
@@ -61,7 +61,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "numOwnedShards": "14",
  *     "numFollowedShards": "121",
  *     "userIsFollowed": true,
- *     "pinnedPost": "5237af6c-6cf7-46ee-8537-f0b1b90d870a",
+ *     "pinnedPost": {@link Post},
  *     "numFollowers": "328",
  *     "numFollowed": "316"
  * }
@@ -100,7 +100,7 @@ public class Profile implements Serializable {
     long numOwnedShards;
     long numFollowedShards;
     boolean userIsFollowed;
-    String pinnedPost;
+    Object pinnedPost;
     Long numFollowers;
     Long numFollowed;
 
@@ -111,7 +111,7 @@ public class Profile implements Serializable {
         this.numFollowers = (Long) graphProfileMap.get(NUM_FOLLOWERS);
         this.numFollowed = (Long) graphProfileMap.get(NUM_FOLLOWED);
 
-        final Collection<String> pinnedPosts = (Collection<String>) graphProfileMap.get(PINNED_POST);
+        final Collection<Object> pinnedPosts = (Collection<Object>) graphProfileMap.get(PINNED_POST);
         this.pinnedPost = pinnedPosts.size() > 0 ? pinnedPosts.iterator().next() : null;
 
         final Map<String, Object> profileProperties = (Map<String, Object>) graphProfileMap.get(PROPERTIES);
@@ -145,7 +145,7 @@ public class Profile implements Serializable {
                 .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
                 .count()
             )
-            .by(out(USER_PINNED_POST_EDGE_LABEL).values(POST_ID_PROPERTY).fold())
+            .by(out(USER_PINNED_POST_EDGE_LABEL).flatMap(projectToPost(callingUsername)).fold())
             .by(
                 V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, profileUsername)
                     .emit()
@@ -176,6 +176,6 @@ public class Profile implements Serializable {
                     .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
                     .count()
             )
-            .by(out(USER_PINNED_POST_EDGE_LABEL).values(POST_ID_PROPERTY).fold());
+            .by(out(USER_PINNED_POST_EDGE_LABEL).flatMap(projectToPost(callingUsername)).fold());
     }
 }
