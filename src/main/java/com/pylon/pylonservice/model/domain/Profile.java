@@ -100,7 +100,7 @@ public class Profile implements Serializable {
     long numOwnedShards;
     long numFollowedShards;
     boolean userIsFollowed;
-    Object pinnedPost;
+    Post pinnedPost;
     Long numFollowers;
     Long numFollowed;
 
@@ -111,8 +111,9 @@ public class Profile implements Serializable {
         this.numFollowers = (Long) graphProfileMap.get(NUM_FOLLOWERS);
         this.numFollowed = (Long) graphProfileMap.get(NUM_FOLLOWED);
 
-        final Collection<Object> pinnedPosts = (Collection<Object>) graphProfileMap.get(PINNED_POST);
-        this.pinnedPost = pinnedPosts.size() > 0 ? pinnedPosts.iterator().next() : null;
+        final Collection<Map<String, Object>> pinnedPosts =
+            (Collection<Map<String, Object>>) graphProfileMap.get(PINNED_POST);
+        this.pinnedPost = pinnedPosts.size() > 0 ? new Post(pinnedPosts.iterator().next()) : null;
 
         final Map<String, Object> profileProperties = (Map<String, Object>) graphProfileMap.get(PROPERTIES);
         this.username = (String) profileProperties.get(USER_USERNAME_PROPERTY);

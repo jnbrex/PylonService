@@ -15,11 +15,9 @@ import static com.pylon.pylonservice.constants.TimeConstants.ONE_YEAR_IN_SECONDS
 @Service
 public class CookieService {
     private final boolean isProdEnvironment;
-    private final boolean isLocalEnvironment;
 
     CookieService(@Value("${environment.name}") String environmentName) {
         this.isProdEnvironment = environmentName.equals(PROD_ENVIRONMENT_NAME);
-        this.isLocalEnvironment = environmentName.equals(LOCAL_ENVIRONMENT_NAME);
     }
 
     public Cookie createAccessTokenCookie(final String accessToken, final String requestOrigin) {
