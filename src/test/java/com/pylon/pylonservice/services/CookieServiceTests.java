@@ -27,10 +27,10 @@ public class CookieServiceTests {
     public Object[][] provideAccessTokenCookie() {
         return new Object[][] {
             {
-                LOCAL_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_COOKIE_DOMAIN, false
+                LOCAL_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, null, false
             },
             {
-                BETA_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_COOKIE_DOMAIN, false
+                BETA_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, LOCAL_ORIGIN, null, false
             },
             {
                 BETA_ENVIRONMENT_NAME, TEST_ACCESS_TOKEN_VALUE, BETA_ORIGIN, NON_LOCAL_COOKIE_DOMAIN, true
@@ -64,10 +64,10 @@ public class CookieServiceTests {
     public Object[][] provideRefreshTokenCookie() {
         return new Object[][] {
             {
-                LOCAL_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_COOKIE_DOMAIN, false
+                LOCAL_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, null, false
             },
             {
-                BETA_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, LOCAL_COOKIE_DOMAIN, false
+                BETA_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, LOCAL_ORIGIN, null, false
             },
             {
                 BETA_ENVIRONMENT_NAME, TEST_REFRESH_TOKEN_VALUE, BETA_ORIGIN, NON_LOCAL_COOKIE_DOMAIN, true
