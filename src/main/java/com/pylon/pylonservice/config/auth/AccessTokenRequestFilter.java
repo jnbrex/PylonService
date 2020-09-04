@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.pylon.pylonservice.services.AccessTokenUserDetailsService;
 import com.pylon.pylonservice.services.AccessTokenService;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,8 +18,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import io.jsonwebtoken.ExpiredJwtException;
 
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 
@@ -40,10 +39,8 @@ public class AccessTokenRequestFilter extends OncePerRequestFilter {
             String username = null;
             try {
                 username = accessTokenService.getUsernameFromAccessToken(accessToken);
-            } catch (IllegalArgumentException e) {
-                logger.warn("Unable to get JWT Token");
-            } catch (ExpiredJwtException e) {
-                logger.warn("JWT Token has expired");
+            } catch (final JwtException e) {
+                logger.warn("Error retrieving JWT token", e);
             }
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
