@@ -12,7 +12,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.Tree;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -82,8 +81,6 @@ public class PostController {
     private AccessTokenService accessTokenService;
     @Autowired
     private MetricsService metricsService;
-    @Autowired
-    private ObjectMapper objectMapper;
 
     /**
      * Call to retrieve a Post.
