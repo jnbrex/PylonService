@@ -54,7 +54,7 @@ public class UpdateProfileRequestTests {
     private static final String INVALID_USER_TIKTOK_URL_WRONG_DOMAIN = "https://blog.tiktok.com/@charlidamelio?lang=en";
     private static final String INVALID_USER_DISCORD_URL_WRONG_DOMAIN = "https://discord.tv/pJNRzPR";
 
-    private static final int MAX_URL_LENGTH_PLUS_ONE = 201;
+    private static final int MAX_URL_LENGTH_PLUS_ONE = 501;
     private static final String INVALID_USER_FACEBOOK_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH_PLUS_ONE);
     private static final String INVALID_USER_TWITTER_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH_PLUS_ONE);
     private static final String INVALID_USER_INSTAGRAM_URL_TOO_LONG = "a".repeat(MAX_URL_LENGTH_PLUS_ONE);

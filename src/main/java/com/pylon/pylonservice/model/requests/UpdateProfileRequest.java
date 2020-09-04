@@ -22,8 +22,6 @@ public class UpdateProfileRequest implements Serializable, Request {
     private static final Pattern FILENAME_REGEX_PATTERN_NO_GIFS =
         Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(jpg|png)$");
 
-    private static final int MAX_URL_LENGTH = 201;
-
     private static final String FACEBOOK_DOMAIN = "facebook.com";
     private static final String TWITTER_DOMAIN = "twitter.com";
     private static final String INSTAGRAM_DOMAIN = "instagram.com";

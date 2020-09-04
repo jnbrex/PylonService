@@ -4,17 +4,23 @@ import lombok.Data;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_ADDITIONAL_LINKS_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_AVATAR_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_BANNER_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_DESCRIPTION_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_FEATURED_IMAGE_FILENAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_FEATURED_IMAGE_LINK_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_FRIENDLY_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.SHARD_RULES_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
@@ -33,6 +39,28 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "shardAvatarFilename": "f99269c2-9b0b-4dbf-b04a-385bc7ffa629.png",
  *     "shardBannerFilename": "f99269c2-9b0b-4dbf-b04a-385bc7ffa629.jpg",
  *     "shardDescription": "This is the best of all of the fortnite shards. JJOU(G*&^&F*D%^F&G*(F&GUOH)*OU!@#@$",
+ *     "shardFeaturedImageFilename": "f99269c2-9b0b-4dbf-b04a-385bc7ffa629.png",
+ *     "shardFeaturedImageLink": "https://google.com",
+ *     "shardRules": [
+ *         {
+ *             "ruleName": "Rule #1",
+ *             "ruleDescription": "Rule #1 description jasjoifjoihwoihfowh"
+ *         },
+ *         {
+ *             "ruleName": "Rule #2",
+ *             "ruleDescription": "Rule #2 description jasjoifjoihwoihfowh"
+ *         }
+ *     ],
+ *     "shardAdditionalLinks": [
+ *         {
+ *             "title": "facebook",
+ *             "url": "https://facebook.com"
+ *         },
+ *         {
+ *             "title": "google",
+ *             "url": "https://www.google.com/"
+ *         }
+ *     ],
  *     "createdAt": "2020-08-14T05:59:46.847+00:00",
  *     "numInheritedShards": 2,
  *     "numInheritedUsers": 2,
@@ -56,6 +84,10 @@ public class Shard implements Serializable {
     String shardAvatarFilename;
     String shardBannerFilename;
     String shardDescription;
+    String shardFeaturedImageFilename;
+    String shardFeaturedImageLink;
+    Collection<ShardRule> shardRules;
+    Collection<ShardAdditionalLink> shardAdditionalLinks;
     Date createdAt;
 
     // Derived from edges
@@ -76,7 +108,22 @@ public class Shard implements Serializable {
         this.shardAvatarFilename = (String) shardProperties.get(SHARD_AVATAR_FILENAME_PROPERTY);
         this.shardBannerFilename = (String) shardProperties.get(SHARD_BANNER_FILENAME_PROPERTY);
         this.shardDescription = (String) shardProperties.get(SHARD_DESCRIPTION_PROPERTY);
+        this.shardFeaturedImageFilename = (String) shardProperties.get(SHARD_FEATURED_IMAGE_FILENAME_PROPERTY);
+        this.shardFeaturedImageLink = (String) shardProperties.get(SHARD_FEATURED_IMAGE_LINK_PROPERTY);
         this.createdAt = (Date) shardProperties.get(COMMON_CREATED_AT_PROPERTY);
+
+        final Map<String, String> shardRulesMap = (Map<String, String>) shardProperties.get(SHARD_RULES_PROPERTY);
+        this.shardRules = shardRulesMap
+            .entrySet().stream()
+            .map(shardRule -> new ShardRule(shardRule.getKey(), shardRule.getValue()))
+            .collect(Collectors.toList());
+
+        final Map<String, String> shardAdditionalLinksMap =
+            (Map<String, String>) shardProperties.get(SHARD_ADDITIONAL_LINKS_PROPERTY);
+        this.shardAdditionalLinks = shardAdditionalLinksMap
+            .entrySet().stream()
+            .map(link -> new ShardAdditionalLink(link.getKey(), link.getValue()))
+            .collect(Collectors.toList());
     }
 
     public static GraphTraversal<Object, Map<String, Object>> projectToSingleShard(final String shardName,
