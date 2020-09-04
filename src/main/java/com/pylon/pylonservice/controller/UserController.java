@@ -45,9 +45,6 @@ public class UserController {
     private static final String GET_USER_SUBMITTED_POSTS_METRIC_NAME = "GetUserSubmittedPosts";
     private static final String GET_USER_UPVOTED_POSTS_METRIC_NAME = "GetUserUpvotedPosts";
 
-    @Qualifier("writer")
-    @Autowired
-    private GraphTraversalSource wG;
     @Qualifier("reader")
     @Autowired
     private GraphTraversalSource rG;

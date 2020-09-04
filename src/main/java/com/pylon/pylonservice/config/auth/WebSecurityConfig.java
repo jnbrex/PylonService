@@ -103,6 +103,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 ).permitAll()
                 .antMatchers(HttpMethod.GET,
                     "/health",
+                    "/popular/**",
                     "/post/**",
                     "/profile/**",
                     "/shard/**",
