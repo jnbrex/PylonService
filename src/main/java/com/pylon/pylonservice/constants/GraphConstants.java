@@ -42,6 +42,7 @@ public final class GraphConstants {
     public static final String USER_BIO_PROPERTY = "userBio";
     public static final String USER_LOCATION_PROPERTY = "userLocation";
     public static final String USER_VERIFIED_PROPERTY = "userVerified";
+    public static final String USER_FEATURED_PROPERTY = "userFeatured";
 
     // Urls
     public static final String USER_FACEBOOK_URL_PROPERTY = "userFacebookUrl";
@@ -63,6 +64,7 @@ public final class GraphConstants {
     public static final String SHARD_FEATURED_IMAGE_LINK_PROPERTY = "shardFeaturedImageLink";
     public static final String SHARD_RULES_PROPERTY = "shardRules";
     public static final String SHARD_ADDITIONAL_LINKS_PROPERTY = "shardAdditionalLinks";
+    public static final String SHARD_FEATURED_PROPERTY = "shardFeatured";
 
     // Post
     public static final String POST_ID_PROPERTY = "postId"; // unique identifier of a Post
