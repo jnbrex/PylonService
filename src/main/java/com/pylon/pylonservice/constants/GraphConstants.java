@@ -43,6 +43,7 @@ public final class GraphConstants {
     public static final String USER_LOCATION_PROPERTY = "userLocation";
     public static final String USER_VERIFIED_PROPERTY = "userVerified";
     public static final String USER_FEATURED_PROPERTY = "userFeatured";
+    public static final String USER_UPLOADED_IMAGES_PROPERTY = "userUploadedImages";
 
     // Urls
     public static final String USER_FACEBOOK_URL_PROPERTY = "userFacebookUrl";

@@ -107,8 +107,6 @@ public class RegisterController {
             );
         }
 
-        persistUser(usernameLowercase, emailLowercase, passwordEncoder.encode(registerRequest.getPassword()));
-
         wG
             .addV(USER_VERTEX_LABEL)
             .property(single, USER_USERNAME_PROPERTY, usernameLowercase)
@@ -127,6 +125,8 @@ public class RegisterController {
             .property(single, USER_TIKTOK_URL_PROPERTY, EMPTY_STRING)
             .property(single, USER_WEBSITE_URL_PROPERTY, EMPTY_STRING)
             .iterate();
+
+        persistUser(usernameLowercase, emailLowercase, passwordEncoder.encode(registerRequest.getPassword()));
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(
             HttpStatus.CREATED

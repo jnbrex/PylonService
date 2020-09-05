@@ -4,13 +4,17 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.pylon.pylonservice.model.responses.ImageUploadResponse;
+import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
 import lombok.extern.log4j.Log4j2;
 import org.apache.tika.Tika;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +25,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_UPLOADED_IMAGES_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
+import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.list;
 
 @Log4j2
 @RestController
@@ -34,6 +44,11 @@ public class ImageController {
 
     @Autowired
     private AmazonS3 amazonS3;
+    @Autowired
+    private AccessTokenService accessTokenService;
+    @Qualifier("writer")
+    @Autowired
+    private GraphTraversalSource wG;
     @Autowired
     private MetricsService metricsService;
     @Autowired
@@ -58,9 +73,12 @@ public class ImageController {
      *         HTTP 422 Unprocessable Entity - If the submitted file is not of supported type.
      */
     @PostMapping(value = "/image")
-    public ResponseEntity<?> postImage(@RequestParam("file") final MultipartFile multipartFile) {
+    public ResponseEntity<?> postImage(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
+                                       @RequestParam("file") final MultipartFile multipartFile) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(IMAGE_METRIC_NAME);
+
+        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         if (multipartFile.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -92,6 +110,11 @@ public class ImageController {
                 new PutObjectRequest(imageBucketName, filename, file)
                     .withCannedAcl(CannedAccessControlList.PublicRead)
             );
+
+            wG.V()
+                .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
+                .property(list, USER_UPLOADED_IMAGES_PROPERTY, filename)
+                .iterate();
         } catch (final Exception e) {
             log.error(e);
             throw new RuntimeException(e);
