@@ -63,8 +63,6 @@ public final class GraphConstants {
     public static final String SHARD_DESCRIPTION_PROPERTY = "shardDescription";
     public static final String SHARD_FEATURED_IMAGE_FILENAME_PROPERTY = "shardFeaturedImageFilename";
     public static final String SHARD_FEATURED_IMAGE_LINK_PROPERTY = "shardFeaturedImageLink";
-    public static final String SHARD_RULES_PROPERTY = "shardRules";
-    public static final String SHARD_ADDITIONAL_LINKS_PROPERTY = "shardAdditionalLinks";
     public static final String SHARD_FEATURED_PROPERTY = "shardFeatured";
 
     // Post

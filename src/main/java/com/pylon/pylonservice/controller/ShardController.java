@@ -3,8 +3,6 @@ package com.pylon.pylonservice.controller;
 import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.domain.Shard;
-import com.pylon.pylonservice.model.domain.ShardAdditionalLink;
-import com.pylon.pylonservice.model.domain.ShardRule;
 import com.pylon.pylonservice.model.requests.shard.CreateShardRequest;
 import com.pylon.pylonservice.model.requests.shard.UpdateShardRequest;
 import com.pylon.pylonservice.services.AccessTokenService;
@@ -39,7 +37,6 @@ import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_
 import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_POSTED_IN_USER_EDGE_LABEL;
-import static com.pylon.pylonservice.constants.GraphConstants.SHARD_ADDITIONAL_LINKS_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_AVATAR_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_BANNER_FILENAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_DESCRIPTION_PROPERTY;
@@ -49,7 +46,6 @@ import static com.pylon.pylonservice.constants.GraphConstants.SHARD_FRIENDLY_NAM
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USER_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
-import static com.pylon.pylonservice.constants.GraphConstants.SHARD_RULES_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_EDGE_LABEL;
@@ -331,8 +327,6 @@ public class ShardController {
                         single, SHARD_FEATURED_IMAGE_FILENAME_PROPERTY, ""
                     )
                     .property(single, SHARD_FEATURED_IMAGE_LINK_PROPERTY, "")
-                    .property(single, SHARD_RULES_PROPERTY, Collections.emptyMap())
-                    .property(single, SHARD_ADDITIONAL_LINKS_PROPERTY, Collections.emptyMap())
                     .property(single, COMMON_CREATED_AT_PROPERTY, new Date())
                     .as("newShard")
                 .sideEffect(
@@ -438,18 +432,6 @@ public class ShardController {
                 single, SHARD_FEATURED_IMAGE_FILENAME_PROPERTY, updateShardRequest.getShardFeaturedImageFilename()
             )
             .property(single, SHARD_FEATURED_IMAGE_LINK_PROPERTY, updateShardRequest.getShardFeaturedImageLink())
-            .property(
-                single,
-                SHARD_RULES_PROPERTY,
-                updateShardRequest.getShardRules().stream()
-                    .collect(Collectors.toMap(ShardRule::getRuleName, ShardRule::getRuleDescription, (a, b) -> b))
-            )
-            .property(
-                single,
-                SHARD_ADDITIONAL_LINKS_PROPERTY,
-                updateShardRequest.getShardAdditionalLinks().stream()
-                    .collect(Collectors.toMap(ShardAdditionalLink::getTitle, ShardAdditionalLink::getUrl, (a, b) -> b))
-            )
             .iterate();
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
