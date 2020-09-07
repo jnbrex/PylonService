@@ -30,7 +30,7 @@ import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TO
 import static com.pylon.pylonservice.constants.GraphConstants.USER_UPLOADED_IMAGES_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
-import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.list;
+import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.set;
 
 @Log4j2
 @RestController
@@ -113,7 +113,7 @@ public class ImageController {
 
             wG.V()
                 .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
-                .property(list, USER_UPLOADED_IMAGES_PROPERTY, filename)
+                .property(set, USER_UPLOADED_IMAGES_PROPERTY, filename)
                 .iterate();
         } catch (final Exception e) {
             log.error(e);
