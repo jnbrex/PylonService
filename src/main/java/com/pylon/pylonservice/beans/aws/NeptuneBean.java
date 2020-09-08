@@ -1,6 +1,7 @@
 package com.pylon.pylonservice.beans.aws;
 
 import org.apache.tinkerpop.gremlin.driver.Cluster;
+import org.apache.tinkerpop.gremlin.driver.SigV4WebSocketChannelizer;
 import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
+import static com.pylon.pylonservice.constants.EnvironmentConstants.LOCAL_ENVIRONMENT_NAME;
 import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal;
 
 @Component
@@ -33,9 +35,10 @@ public class NeptuneBean {
             .maxConnectionPoolSize(512)
             .serializer(Serializers.GRAPHBINARY_V1D0);
 
-        // Hack so that local development with an in-memory gremlin-server database works
-        if (!environmentName.equals("local")) {
+        // Make local development with an in-memory gremlin-server database work
+        if (!environmentName.equals(LOCAL_ENVIRONMENT_NAME)) {
             clusterBuilder = clusterBuilder
+                .channelizer(SigV4WebSocketChannelizer.class)
                 .enableSsl(true)
                 .keyCertChainFile("SFSRootCAG2.pem");
         }
