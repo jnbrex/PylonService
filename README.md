@@ -13,6 +13,7 @@ export JWT_SECRET={Any long and random string. Create your own, don't use the on
 export AWS_ACCESS_KEY_ID={IAM user access key}
 export AWS_SECRET_ACCESS_KEY={IAM user secret key}
 export AWS_REGION=us-east-1
+export AWS_DEFAULT_REGION=us-east-1
 export SERVICE_REGION=us-east-1
 export ENVIRONMENT_NAME=local
 export NEPTUNE_WRITER_ENDPOINT=localhost
