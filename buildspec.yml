@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      java: corretto11
+      java: openjdk8
   pre_build:
     commands:
       - export JWT_SECRET=CodebuildJwtSecretahfh8y78t675dryxctvugyigu7t6r75e6drytfuyg7tr67ftuygviuh7t8r6f7tucvyigu79t8r6fyvigu79t86fyuvigu987t8f6yvuigu79t8f
