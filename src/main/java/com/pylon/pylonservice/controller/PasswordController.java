@@ -51,9 +51,9 @@ public class PasswordController {
 
     PasswordController(@Value("${environment.name}") final String environmentName) {
         if (environmentName.equals("prod")) {
-            this.pylonForgotPasswordBaseUrl = "https://pylon.gg/forgotPassword?";
+            this.pylonForgotPasswordBaseUrl = "https://pylon.gg/resetPassword?";
         } else {
-            this.pylonForgotPasswordBaseUrl = String.format("https://%s.pylon.gg/forgotPassword?", environmentName);
+            this.pylonForgotPasswordBaseUrl = String.format("https://%s.pylon.gg/resetPassword?", environmentName);
         }
     }
 
