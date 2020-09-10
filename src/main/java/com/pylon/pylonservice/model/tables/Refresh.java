@@ -2,7 +2,6 @@ package com.pylon.pylonservice.model.tables;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,8 +17,7 @@ import lombok.Setter;
 public class Refresh {
     @NonNull
     String refreshToken;
-    @NonNull
-    String userId;
+    String username;
 
     @DynamoDBHashKey
     public String getRefreshToken() {
@@ -27,7 +25,7 @@ public class Refresh {
     }
 
     @DynamoDBAttribute
-    public String getUserId() {
-        return userId;
+    public String getUsername() {
+        return username;
     }
 }

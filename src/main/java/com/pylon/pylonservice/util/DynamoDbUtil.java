@@ -10,6 +10,8 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public final class DynamoDbUtil {
+    private DynamoDbUtil() {}
+
     public static void executeTransactionWrite(final DynamoDBMapper dynamoDBMapper,
                                                final TransactionWriteRequest transactionWriteRequest) {
         try {

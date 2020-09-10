@@ -18,7 +18,7 @@ public class EmailUser {
     @NonNull
     String email;
     @NonNull
-    String userId;
+    String username;
 
     @DynamoDBHashKey
     public String getEmail() {
@@ -26,7 +26,7 @@ public class EmailUser {
     }
 
     @DynamoDBAttribute
-    public String getUserId() {
-        return userId;
+    public String getUsername() {
+        return username;
     }
 }

@@ -18,8 +18,6 @@ import java.util.Date;
 @DynamoDBTable(tableName = "-User")
 public class User {
     @NonNull
-    String userId;
-    @NonNull
     String username;
     @NonNull
     String email;
@@ -29,11 +27,6 @@ public class User {
     Date createdAt;
 
     @DynamoDBHashKey
-    public String getUserId() {
-        return userId;
-    }
-
-    @DynamoDBAttribute
     public String getUsername() {
         return username;
     }
