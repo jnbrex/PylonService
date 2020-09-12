@@ -65,6 +65,7 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 public class ShardController {
     private static final String GET_SHARD_METRIC_NAME = "GetShard";
     private static final String GET_SHARD_INHERITANCE_METRIC_NAME = "GetShardInheritance";
+    private static final String GET_SHARD_FOLLOWERS_METRIC_NAME = "GetShardFollowers";
     private static final String GET_SHARD_POSTS_METRIC_NAME = "GetShardPosts";
     private static final String CREATE_SHARD_METRIC_NAME = "CreateShard";
     private static final String UPDATE_SHARD_METRIC_NAME = "UpdateShard";
@@ -184,6 +185,52 @@ public class ShardController {
 
         metricsService.addSuccessMetric(GET_SHARD_INHERITANCE_METRIC_NAME);
         metricsService.addLatencyMetric(GET_SHARD_INHERITANCE_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to retrieve all of the Profiles of the Users who follow a Shard directly.
+     *
+     * @param accessToken A cookie with name "accessToken"
+     * @param shardName A String containing the name of the Shard whose inheritance to return.
+     *
+     * @return HTTP 200 OK - If the Shard followers were retrieved successfully, a Set of {@link Profile}.
+     *         HTTP 404 Not Found - If the Shard doesn't exist.
+     */
+    @GetMapping(value = "/shard/{shardName}/followers")
+    public ResponseEntity<?> getShardFollowers(
+            @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
+            @PathVariable final String shardName) {
+        final long startTime = System.nanoTime();
+        metricsService.addCountMetric(GET_SHARD_FOLLOWERS_METRIC_NAME);
+
+        final String callingUsernameLowercase;
+        try {
+            callingUsernameLowercase = accessTokenService.getUsernameFromAccessTokenOrDefaultIfNull(
+                    accessToken, INVALID_USERNAME_VALUE
+            );
+        } catch (final ExpiredJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        final String shardNameLowercase = shardName.toLowerCase();
+        if (!rG.V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final Set<Profile> shardFollowers = rG
+                .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
+                .in(USER_FOLLOWS_SHARD_EDGE_LABEL)
+                .flatMap(projectToProfile(callingUsernameLowercase))
+                .toSet()
+                .stream()
+                .map(Profile::new)
+                .collect(Collectors.toSet());
+
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(shardFollowers);
+
+        metricsService.addSuccessMetric(GET_SHARD_FOLLOWERS_METRIC_NAME);
+        metricsService.addLatencyMetric(GET_SHARD_FOLLOWERS_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
