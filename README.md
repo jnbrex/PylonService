@@ -6,15 +6,16 @@
     * S3FullAccess
     * DynamoDbFullAccess
     * CloudWatchFullAccess
+    * AmazonSESFullAccess
 
 2. Set the following environment variables in your default shell (for example, in `~/.zshrc` or `~/.bash_config`):
 ```
 export JWT_SECRET={Any long and random string. Create your own, don't use the one for Beta or Prod or someone else's! Example: foawijfhi8y97guih8g76fdtcyf6d5s4dads4rxtcdyf67tuyg7t8fuh8y9guij089gui89g7yvbiuh78f6ctyvuf67d5xrs4dzerxtd54sa3ezrxs43asa2wzs34erszxtd56srxtcyuvf67vyubih8g97buhoij90h8inoj9h08g7biunoh89g7yv}
 export AWS_ACCESS_KEY_ID={IAM user access key}
 export AWS_SECRET_ACCESS_KEY={IAM user secret key}
-export AWS_REGION=us-east-1
-export AWS_DEFAULT_REGION=us-east-1
-export SERVICE_REGION=us-east-1
+export AWS_REGION=us-west-2
+export AWS_DEFAULT_REGION=us-west-2
+export SERVICE_REGION=us-west-2
 export ENVIRONMENT_NAME=local
 export NEPTUNE_WRITER_ENDPOINT=localhost
 export NEPTUNE_READER_ENDPOINT=localhost
