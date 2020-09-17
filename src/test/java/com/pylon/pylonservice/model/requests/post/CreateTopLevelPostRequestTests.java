@@ -1,6 +1,7 @@
 package com.pylon.pylonservice.model.requests.post;
 
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 public class CreateTopLevelPostRequestTests extends CreatePostRequestTests {
     private static final String VALID_TOP_LEVEL_POST_TITLE = "This is a POST TITLE!";
@@ -14,7 +15,7 @@ public class CreateTopLevelPostRequestTests extends CreatePostRequestTests {
     private static final String INVALID_TOP_LEVEL_POST_FILENAME_BAD_EXTENSION
         = "5237af6c-6cf7-46ee-8537-f0b1b90d870a.abc";
     private static final String INVALID_TOP_LEVEL_POST_CONTENT_URL_TOO_LONG = "a".repeat(10001);
-    private static final String INVALID_POST_BODY_TOO_LONG_BODY_ONLY = "a".repeat(201);
+    private static final String INVALID_QUICK_POST_BODY_TOO_LONG = "a".repeat(401);
 
     @DataProvider
     private Object[][] provideValidCreateTopLevelPostRequests() {
@@ -126,7 +127,7 @@ public class CreateTopLevelPostRequestTests extends CreatePostRequestTests {
                     "",
                     "",
                     "",
-                    INVALID_POST_BODY_TOO_LONG_BODY_ONLY
+                    INVALID_QUICK_POST_BODY_TOO_LONG
                 )
             },
             {
@@ -162,5 +163,15 @@ public class CreateTopLevelPostRequestTests extends CreatePostRequestTests {
                 )
             }
         };
+    }
+
+    @Test(dataProvider = "provideValidCreateTopLevelPostRequests")
+    public void testValidCreateTopLevelPostRequests(final CreateTopLevelPostRequest createTopLevelPostRequest) {
+        testValidCreatePostRequests(createTopLevelPostRequest);
+    }
+
+    @Test(dataProvider = "provideInvalidCreateTopLevelPostRequests")
+    public void testInvalidCreateTopLevelPostRequests(final CreateTopLevelPostRequest createTopLevelPostRequest) {
+        testInvalidCreatePostRequests(createTopLevelPostRequest);
     }
 }

@@ -8,6 +8,10 @@ import lombok.Value;
 public class CreateTopLevelPostRequest extends CreatePostRequest {
     private static final long serialVersionUID = 0L;
 
+    private static final int POST_TITLE_MAX_LENGTH = 450;
+    private static final int POST_CONTENT_URL_MAX_LENGTH = 10000;
+    private static final int QUICK_POST_BODY_MAX_LENGTH = 400;
+
     String postTitle;
     String postFilename;
     String postContentUrl;
@@ -43,12 +47,12 @@ public class CreateTopLevelPostRequest extends CreatePostRequest {
             )
                 &&
             (
-                postBody.length() < 201 || !postTitle.isEmpty()
+                postBody.length() <= QUICK_POST_BODY_MAX_LENGTH || !postTitle.isEmpty()
             );
     }
 
     private boolean isPostTitleValid() {
-        return postTitle != null && postTitle.length() < 451;
+        return postTitle != null && postTitle.length() <= POST_TITLE_MAX_LENGTH;
     }
 
     private boolean isPostFilenameValid() {
@@ -57,10 +61,10 @@ public class CreateTopLevelPostRequest extends CreatePostRequest {
     }
 
     private boolean isPostContentUrlValid() {
-        return postContentUrl != null && postContentUrl.length() < 10001;
+        return postContentUrl != null && postContentUrl.length() < POST_CONTENT_URL_MAX_LENGTH;
     }
 
     private boolean isPostBodyValid() {
-        return postBody != null && postBody.length() < 80001;
+        return postBody != null && postBody.length() <= FULL_POST_BODY_MAX_LENGTH;
     }
 }

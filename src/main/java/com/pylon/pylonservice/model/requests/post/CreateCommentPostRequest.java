@@ -19,6 +19,6 @@ public class CreateCommentPostRequest extends CreatePostRequest {
     }
 
     public boolean isValid() {
-        return postBody != null && postBody.length() > 0 && postBody.length() < 80001;
+        return postBody != null && postBody.length() > 0 && postBody.length() <= FULL_POST_BODY_MAX_LENGTH;
     }
 }

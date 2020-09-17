@@ -11,5 +11,7 @@ import java.io.Serializable;
 abstract class CreatePostRequest implements Serializable, Request {
     private static final long serialVersionUID = 0L;
 
+    static final int FULL_POST_BODY_MAX_LENGTH = 160000;
+
     String postBody;
 }
