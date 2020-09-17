@@ -2,7 +2,9 @@ package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.Profile;
+import com.pylon.pylonservice.model.requests.GetPostsRequest;
 import com.pylon.pylonservice.model.requests.UpdateProfileRequest;
+import com.pylon.pylonservice.pojo.PageRange;
 import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -49,6 +51,8 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_WEBSITE_URL_P
 import static com.pylon.pylonservice.constants.GraphConstants.USER_YOUTUBE_URL_PROPERTY;
 import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static com.pylon.pylonservice.model.domain.Profile.projectToSingleProfile;
+import static com.pylon.pylonservice.util.PaginationUtil.getPageRange;
+import static com.pylon.pylonservice.util.PaginationUtil.paginatePosts;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addE;
@@ -164,9 +168,14 @@ public class ProfileController {
     @GetMapping(value = "/profile/{username}/posts/new")
     public ResponseEntity<?> getNewProfilePosts(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
-        @PathVariable final String username) {
+        @PathVariable final String username,
+        @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_NEW_PROFILE_POSTS_METRIC_NAME);
+
+        if (getPostsRequest != null && !getPostsRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String callingUsernameLowercase;
         try {
@@ -182,10 +191,12 @@ public class ProfileController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
+        final PageRange pageRange = getPageRange(getPostsRequest);
         final List<Post> posts = rG
-            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase) // Single user vertex
-            .in(POST_POSTED_IN_USER_EDGE_LABEL) // All posts posted in the user's profile
+            .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
+            .in(POST_POSTED_IN_USER_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
+            .range(pageRange.getLow(), pageRange.getHigh())
             .flatMap(projectToPost(callingUsernameLowercase))
             .toList()
             .stream()
@@ -212,9 +223,14 @@ public class ProfileController {
     @GetMapping(value = "/profile/{username}/posts/popular")
     public ResponseEntity<?> getPopularProfilePosts(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
-        @PathVariable final String username) {
+        @PathVariable final String username,
+        @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
+
+        if (getPostsRequest != null && !getPostsRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String callingUsernameLowercase;
         try {
@@ -241,7 +257,7 @@ public class ProfileController {
             .sorted(Comparator.comparing((Post post) -> post.getPopularity(now)).reversed())
             .collect(Collectors.toList());
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(paginatePosts(posts, getPostsRequest));
 
         metricsService.addSuccessMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME);
         metricsService.addLatencyMetric(GET_POPULAR_PROFILE_POSTS_METRIC_NAME, System.nanoTime() - startTime);

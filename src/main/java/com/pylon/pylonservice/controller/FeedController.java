@@ -1,14 +1,17 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
+import com.pylon.pylonservice.model.requests.GetPostsRequest;
 import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Comparator;
@@ -26,6 +29,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_USER_
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.model.domain.Post.projectToPost;
+import static com.pylon.pylonservice.util.PaginationUtil.paginatePosts;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 
 @RestController
@@ -49,9 +53,14 @@ public class FeedController {
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @GetMapping(value = "/myFeed")
-    public ResponseEntity<?> getMyFeed(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken) {
+    public ResponseEntity<?> getMyFeed(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
+                                       @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_MY_FEED_METRIC_NAME);
+
+        if (getPostsRequest != null && !getPostsRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
 
@@ -70,7 +79,7 @@ public class FeedController {
             .sorted(Comparator.comparing((Post post) -> post.getPopularity(now)).reversed())
             .collect(Collectors.toList());
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(paginatePosts(posts, getPostsRequest));
 
         metricsService.addSuccessMetric(GET_MY_FEED_METRIC_NAME);
         metricsService.addLatencyMetric(GET_MY_FEED_METRIC_NAME, System.nanoTime() - startTime);

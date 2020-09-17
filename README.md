@@ -2,7 +2,7 @@
 
 ## Setup
 
-1. Create an IAM user in the AWS Account with accountId: 252737728016 and name: pylon with the following policies attached
+1. Create an IAM user in the AWS Account with accountId: 678434629786
     * S3FullAccess
     * DynamoDbFullAccess
     * CloudWatchFullAccess

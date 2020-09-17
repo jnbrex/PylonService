@@ -3,8 +3,10 @@ package com.pylon.pylonservice.controller;
 import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.domain.Shard;
+import com.pylon.pylonservice.model.requests.GetPostsRequest;
 import com.pylon.pylonservice.model.requests.shard.CreateShardRequest;
 import com.pylon.pylonservice.model.requests.shard.UpdateShardRequest;
+import com.pylon.pylonservice.pojo.PageRange;
 import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -24,7 +26,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -55,6 +56,8 @@ import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static com.pylon.pylonservice.model.domain.Profile.projectToProfile;
 import static com.pylon.pylonservice.model.domain.Shard.projectToShard;
 import static com.pylon.pylonservice.model.domain.Shard.projectToSingleShard;
+import static com.pylon.pylonservice.util.PaginationUtil.getPageRange;
+import static com.pylon.pylonservice.util.PaginationUtil.paginatePosts;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
@@ -247,9 +250,14 @@ public class ShardController {
     @GetMapping(value = "/shard/{shardName}/posts/new")
     public ResponseEntity<?> getNewShardPosts(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
-        @PathVariable final String shardName) {
+        @PathVariable final String shardName,
+        @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+
+        if (getPostsRequest != null && !getPostsRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String callingUsernameLowercase;
         try {
@@ -265,8 +273,10 @@ public class ShardController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
+        final PageRange pageRange = getPageRange(getPostsRequest);
         final List<Post> posts = getAllPostsInShard(shardNameLowercase)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
+            .range(pageRange.getLow(), pageRange.getHigh())
             .flatMap(projectToPost(callingUsernameLowercase))
             .toList()
             .stream()
@@ -293,9 +303,14 @@ public class ShardController {
     @GetMapping(value = "/shard/{shardName}/posts/popular")
     public ResponseEntity<?> getPopularShardPosts(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
-        @PathVariable final String shardName) {
+        @PathVariable final String shardName,
+        @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_SHARD_POSTS_METRIC_NAME);
+
+        if (getPostsRequest != null && !getPostsRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String callingUsernameLowercase;
         try {
@@ -320,7 +335,7 @@ public class ShardController {
             .sorted(Comparator.comparing((Post post) -> post.getPopularity(now)).reversed())
             .collect(Collectors.toList());
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(paginatePosts(posts, getPostsRequest));
 
         metricsService.addSuccessMetric(GET_SHARD_POSTS_METRIC_NAME);
         metricsService.addLatencyMetric(GET_SHARD_POSTS_METRIC_NAME, System.nanoTime() - startTime);

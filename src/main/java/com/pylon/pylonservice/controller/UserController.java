@@ -3,6 +3,8 @@ package com.pylon.pylonservice.controller;
 import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.domain.Shard;
+import com.pylon.pylonservice.model.requests.GetPostsRequest;
+import com.pylon.pylonservice.pojo.PageRange;
 import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -14,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -34,6 +37,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static com.pylon.pylonservice.model.domain.Profile.projectToProfile;
 import static com.pylon.pylonservice.model.domain.Shard.projectToShard;
+import static com.pylon.pylonservice.util.PaginationUtil.getPageRange;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
 
 @RestController
@@ -301,9 +305,14 @@ public class UserController {
     @GetMapping(value = "/user/{username}/submitted")
     public ResponseEntity<?> getSubmitted(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
-        @PathVariable final String username) {
+        @PathVariable final String username,
+        @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
+
+        if (getPostsRequest != null && !getPostsRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String callingUsernameLowercase;
         try {
@@ -319,17 +328,19 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final List<Post> submittedPosts = rG
+        final PageRange pageRange = getPageRange(getPostsRequest);
+        final List<Post> posts = rG
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_SUBMITTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
+            .range(pageRange.getLow(), pageRange.getHigh())
             .flatMap(projectToPost(callingUsernameLowercase))
             .toList()
             .stream()
             .map(Post::new)
             .collect(Collectors.toList());
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(submittedPosts);
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
         metricsService.addSuccessMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
         metricsService.addLatencyMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME, System.nanoTime() - startTime);
@@ -349,9 +360,14 @@ public class UserController {
     @GetMapping(value = "/user/{username}/upvoted")
     public ResponseEntity<?> getUpvoted(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
-        @PathVariable final String username) {
+        @PathVariable final String username,
+        @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
+
+        if (getPostsRequest != null && !getPostsRequest.isValid()) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
         final String callingUsernameLowercase;
         try {
@@ -367,17 +383,19 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        final List<Post> upvotedPosts = rG
+        final PageRange pageRange = getPageRange(getPostsRequest);
+        final List<Post> posts = rG
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, usernameLowercase)
             .out(USER_UPVOTED_POST_EDGE_LABEL)
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
+            .range(pageRange.getLow(), pageRange.getHigh())
             .flatMap(projectToPost(callingUsernameLowercase))
             .toList()
             .stream()
             .map(Post::new)
             .collect(Collectors.toList());
 
-        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(upvotedPosts);
+        final ResponseEntity<?> responseEntity = ResponseEntity.ok().body(posts);
 
         metricsService.addSuccessMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
         metricsService.addLatencyMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME, System.nanoTime() - startTime);
