@@ -97,6 +97,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST,
                     "/authenticate",
                     "/collectemail",
+                    "/logout",
                     "/password/**",
                     "/refresh",
                     "/register"
