@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -306,9 +307,17 @@ public class UserController {
     public ResponseEntity<?> getSubmitted(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username,
-        @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
+        @RequestParam(name = "first", required = false) final Integer firstPostToReturn,
+        @RequestParam(name = "count", required = false) final Integer countPostsToReturn) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_USER_SUBMITTED_POSTS_METRIC_NAME);
+
+        final GetPostsRequest getPostsRequest;
+        if (firstPostToReturn == null || countPostsToReturn == null) {
+            getPostsRequest = null;
+        } else {
+            getPostsRequest = new GetPostsRequest(firstPostToReturn, countPostsToReturn);
+        }
 
         if (getPostsRequest != null && !getPostsRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -361,9 +370,17 @@ public class UserController {
     public ResponseEntity<?> getUpvoted(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,
         @PathVariable final String username,
-        @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
+        @RequestParam(name = "first", required = false) final Integer firstPostToReturn,
+        @RequestParam(name = "count", required = false) final Integer countPostsToReturn) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_USER_UPVOTED_POSTS_METRIC_NAME);
+
+        final GetPostsRequest getPostsRequest;
+        if (firstPostToReturn == null || countPostsToReturn == null) {
+            getPostsRequest = null;
+        } else {
+            getPostsRequest = new GetPostsRequest(firstPostToReturn, countPostsToReturn);
+        }
 
         if (getPostsRequest != null && !getPostsRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);

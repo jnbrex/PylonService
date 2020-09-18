@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Comparator;
@@ -53,10 +54,19 @@ public class FeedController {
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @GetMapping(value = "/myFeed")
-    public ResponseEntity<?> getMyFeed(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
-                                       @RequestBody(required = false) final GetPostsRequest getPostsRequest) {
+    public ResponseEntity<?> getMyFeed(
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
+        @RequestParam(name = "first", required = false) final Integer firstPostToReturn,
+        @RequestParam(name = "count", required = false) final Integer countPostsToReturn) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_MY_FEED_METRIC_NAME);
+
+        final GetPostsRequest getPostsRequest;
+        if (firstPostToReturn == null || countPostsToReturn == null) {
+            getPostsRequest = null;
+        } else {
+            getPostsRequest = new GetPostsRequest(firstPostToReturn, countPostsToReturn);
+        }
 
         if (getPostsRequest != null && !getPostsRequest.isValid()) {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
