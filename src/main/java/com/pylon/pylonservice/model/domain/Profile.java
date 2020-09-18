@@ -1,7 +1,6 @@
 package com.pylon.pylonservice.model.domain;
 
 import lombok.Data;
-import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
 import java.io.Serializable;
@@ -62,6 +61,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "numOwnedShards": 14,
  *     "numPosts": 10
  *     "userIsFollowed": true,
+ *     "userFollowsYou": true,
  *     "pinnedPost": {@link Post},
  *     "numFollowers": 328,
  *     "numFollowed": 316,
@@ -78,6 +78,7 @@ public class Profile implements Serializable {
     private static final String NUM_POSTS = "numPosts";
     private static final String NUM_OWNED_SHARDS = "numOwnedShards";
     private static final String USER_IS_FOLLOWED = "userIsFollowed";
+    private static final String USER_FOLLOWS_YOU = "userFollowsYou";
     private static final String PINNED_POST = "pinnedPost";
     private static final String NUM_REACH = "numReach";
 
@@ -103,6 +104,7 @@ public class Profile implements Serializable {
     long numOwnedShards;
     long numPosts;
     boolean userIsFollowed;
+    boolean userFollowsYou;
     Post pinnedPost;
     long numFollowers;
     long numFollowed;
@@ -112,6 +114,7 @@ public class Profile implements Serializable {
         this.numOwnedShards = (long) graphProfileMap.get(NUM_OWNED_SHARDS);
         this.numPosts = (long) graphProfileMap.get(NUM_POSTS);
         this.userIsFollowed = (long) graphProfileMap.get(USER_IS_FOLLOWED) > 0;
+        this.userFollowsYou = (long) graphProfileMap.get(USER_FOLLOWS_YOU) > 0;
         this.numFollowers = (long) graphProfileMap.get(NUM_FOLLOWERS);
         this.numFollowed = (long) graphProfileMap.get(NUM_FOLLOWED);
         this.numReach = (Long) graphProfileMap.get(NUM_REACH);
@@ -141,8 +144,8 @@ public class Profile implements Serializable {
 
     public static GraphTraversal<Object, Map<String, Object>> projectToSingleProfile(final String profileUsername,
                                                                                      final String callingUsername) {
-        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_POSTS, USER_IS_FOLLOWED, PINNED_POST, NUM_FOLLOWERS,
-                       NUM_FOLLOWED, NUM_REACH)
+        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_POSTS, USER_IS_FOLLOWED, USER_FOLLOWS_YOU, PINNED_POST,
+                       NUM_FOLLOWERS, NUM_FOLLOWED, NUM_REACH)
             .by(valueMap().by(unfold()))
             .by(out(USER_OWNS_SHARD_EDGE_LABEL).count())
             .by(out(USER_SUBMITTED_POST_EDGE_LABEL).count())
@@ -150,6 +153,11 @@ public class Profile implements Serializable {
                 in(USER_FOLLOWS_USER_EDGE_LABEL)
                 .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
                 .count()
+            )
+            .by(
+                out(USER_FOLLOWS_USER_EDGE_LABEL)
+                    .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
+                    .count()
             )
             .by(out(USER_PINNED_POST_EDGE_LABEL).flatMap(projectToPost(callingUsername)).fold())
             .by(in(USER_FOLLOWS_USER_EDGE_LABEL, SHARD_INHERITS_USER_EDGE_LABEL).count())
@@ -165,13 +173,18 @@ public class Profile implements Serializable {
     }
 
     public static GraphTraversal<Object, Map<String, Object>> projectToProfile(final String callingUsername) {
-        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_POSTS, USER_IS_FOLLOWED, PINNED_POST, NUM_FOLLOWERS,
-                       NUM_FOLLOWED)
+        return project(PROPERTIES, NUM_OWNED_SHARDS, NUM_POSTS, USER_IS_FOLLOWED, USER_FOLLOWS_YOU, PINNED_POST,
+                       NUM_FOLLOWERS, NUM_FOLLOWED)
             .by(valueMap().by(unfold()))
             .by(out(USER_OWNS_SHARD_EDGE_LABEL).count())
             .by(out(USER_SUBMITTED_POST_EDGE_LABEL).count())
             .by(
                 in(USER_FOLLOWS_USER_EDGE_LABEL)
+                    .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
+                    .count()
+            )
+            .by(
+                out(USER_FOLLOWS_USER_EDGE_LABEL)
                     .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
                     .count()
             )
