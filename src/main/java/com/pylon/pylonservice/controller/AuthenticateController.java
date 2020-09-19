@@ -74,7 +74,7 @@ public class AuthenticateController {
 
         final String requestOrigin = request.getHeader("origin");
         if (requestOrigin == null) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Calls to /authenticate must include origin header", HttpStatus.BAD_REQUEST);
         }
 
         final String usernameOrEmail = authenticateRequest.getUsernameOrEmail().toLowerCase();
