@@ -8,6 +8,7 @@ import com.pylon.pylonservice.pojo.PageRange;
 import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
 import io.jsonwebtoken.ExpiredJwtException;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.GraphConstants.COMMON_CREATED_AT_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.INVALID_USERNAME_VALUE;
+import static com.pylon.pylonservice.constants.GraphConstants.POST_COMMENT_ON_POST_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.POST_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
@@ -32,7 +34,10 @@ import static com.pylon.pylonservice.model.domain.Post.projectToPost;
 import static com.pylon.pylonservice.model.domain.Profile.projectToProfile;
 import static com.pylon.pylonservice.model.domain.Shard.projectToShard;
 import static com.pylon.pylonservice.util.PaginationUtil.getPageRange;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 
 @RestController
 public class AllController {
@@ -141,6 +146,7 @@ public class AllController {
         final PageRange pageRange = getPageRange(getPostsRequest);
         final List<Post> posts = rG.V()
             .hasLabel(POST_VERTEX_LABEL)
+            .filter(outE(POST_COMMENT_ON_POST_EDGE_LABEL).count().is(0))
             .order().by(COMMON_CREATED_AT_PROPERTY, desc)
             .range(pageRange.getLow(), pageRange.getHigh())
             .flatMap(projectToPost(callingUsernameLowercase))
