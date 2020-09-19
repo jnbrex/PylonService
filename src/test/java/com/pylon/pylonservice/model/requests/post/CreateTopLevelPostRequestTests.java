@@ -64,14 +64,6 @@ public class CreateTopLevelPostRequestTests extends CreatePostRequestTests {
                 new CreateTopLevelPostRequest(
                     "",
                     "",
-                    VALID_TOP_LEVEL_POST_CONTENT_URL,
-                    ""
-                )
-            },
-            {
-                new CreateTopLevelPostRequest(
-                    "",
-                    "",
                     "",
                     VALID_POST_BODY
                 )
@@ -160,6 +152,22 @@ public class CreateTopLevelPostRequestTests extends CreatePostRequestTests {
                     VALID_TOP_LEVEL_POST_FILENAME_PNG,
                     VALID_TOP_LEVEL_POST_CONTENT_URL,
                     null
+                )
+            },
+            {
+                new CreateTopLevelPostRequest(
+                    "",
+                    "",
+                    VALID_TOP_LEVEL_POST_CONTENT_URL,
+                    ""
+                )
+            },
+            {
+                new CreateTopLevelPostRequest(
+                    "",
+                    VALID_TOP_LEVEL_POST_FILENAME_JPG,
+                    VALID_TOP_LEVEL_POST_CONTENT_URL,
+                    ""
                 )
             }
         };

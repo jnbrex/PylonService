@@ -42,12 +42,15 @@ public class CreateTopLevelPostRequest extends CreatePostRequest {
             (
                 !postTitle.isEmpty()
                 || !postFilename.isEmpty()
-                || !postContentUrl.isEmpty()
                 || !postBody.isEmpty()
             )
                 &&
             (
                 postBody.length() <= QUICK_POST_BODY_MAX_LENGTH || !postTitle.isEmpty()
+            )
+                &&
+            (
+                postContentUrl.isEmpty() || !postTitle.isEmpty() || !postBody.isEmpty()
             );
     }
 
