@@ -2,6 +2,7 @@ package com.pylon.pylonservice.controller;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.pylon.pylonservice.model.responses.ImageUploadResponse;
 import com.pylon.pylonservice.services.AccessTokenService;
@@ -106,9 +107,13 @@ public class ImageController {
             final FileOutputStream fos = new FileOutputStream(file);
             fos.write(multipartFile.getBytes());
             fos.close();
+
+            final ObjectMetadata objectMetadata = new ObjectMetadata();
+            objectMetadata.setCacheControl("max-age=31536000");
             amazonS3.putObject(
                 new PutObjectRequest(imageBucketName, filename, file)
                     .withCannedAcl(CannedAccessControlList.PublicRead)
+                    .withMetadata(objectMetadata)
             );
 
             wG.V()
