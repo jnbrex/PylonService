@@ -1,12 +1,15 @@
 package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
+import com.pylon.pylonservice.model.domain.notification.PostCommentNotification;
 import com.pylon.pylonservice.model.requests.post.CreateCommentPostRequest;
 import com.pylon.pylonservice.model.requests.post.CreateTopLevelPostRequest;
 import com.pylon.pylonservice.model.responses.CreatePostResponse;
 import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
+import com.pylon.pylonservice.services.NotificationService;
 import io.jsonwebtoken.ExpiredJwtException;
+import lombok.extern.log4j.Log4j2;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.Tree;
@@ -61,6 +64,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.inV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
+@Log4j2
 @RestController
 public class PostController {
     private static final String GET_POST_METRIC_NAME = "GetPost";
@@ -81,6 +85,8 @@ public class PostController {
     private AccessTokenService accessTokenService;
     @Autowired
     private MetricsService metricsService;
+    @Autowired
+    private NotificationService notificationService;
 
     /**
      * Call to retrieve a Post.
@@ -385,6 +391,8 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
+        sendPostCommentNotification(parentPostId, postId, username);
+
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(
             CreatePostResponse.builder()
                 .postId(postId)
@@ -422,6 +430,36 @@ public class PostController {
             .addE(USER_SUBMITTED_POST_EDGE_LABEL).from("user").to("post");
     }
 
+    private void sendPostCommentNotification(final String parentPostId,
+                                             final String postId,
+                                             final String fromUsername) {
+        try {
+            final String toUsername = (String) rG
+                .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, parentPostId)
+                .in(USER_SUBMITTED_POST_EDGE_LABEL)
+                .values(USER_USERNAME_PROPERTY)
+                .next();
+
+            notificationService.notify(
+                PostCommentNotification.builder()
+                    .toUsername(toUsername)
+                    .createdAt(new Date())
+                    .fromUsername(fromUsername)
+                    .isRead(false)
+                    .postId(parentPostId)
+                    .commentPostId(postId)
+                    .build()
+            );
+        } catch (final Exception e) {
+            log.error(String.format(
+                "Failed to send post comment notification for parentPostId %s, postId %s, and fromUsername %s",
+                parentPostId,
+                postId,
+                fromUsername
+            ));
+        }
+    }
+
     private static <T> Collector<T, ?, T> toSingleton() {
         return Collectors.collectingAndThen(
             Collectors.toList(),
@@ -433,8 +471,6 @@ public class PostController {
             }
         );
     }
-
-
 
     private static Post convertTreeToPostWithNestedComments(final Tree<Map<String, Object>> t) {
         final Post post = new Post(t.keySet().iterator().next());

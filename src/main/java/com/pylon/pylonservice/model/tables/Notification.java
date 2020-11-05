@@ -25,9 +25,9 @@ public class Notification {
     @NonNull
     String fromUsername;
     @NonNull
-    int notificationType;
-    @NonNull
     boolean isRead;
+    @NonNull
+    int notificationType;
     String postId;
     String commentPostId;
     String includedShardName;
@@ -49,13 +49,13 @@ public class Notification {
     }
 
     @DynamoDBAttribute
-    public int getNotificationType() {
-        return notificationType;
+    public boolean isRead() {
+        return isRead;
     }
 
     @DynamoDBAttribute
-    public boolean isRead() {
-        return isRead;
+    public int getNotificationType() {
+        return notificationType;
     }
 
     @DynamoDBAttribute

@@ -7,7 +7,6 @@ import com.pylon.pylonservice.model.requests.auth.RegisterRequest;
 import com.pylon.pylonservice.model.responses.RegisterResponse;
 import com.pylon.pylonservice.model.tables.EmailUser;
 import com.pylon.pylonservice.model.tables.User;
-import com.pylon.pylonservice.util.DynamoDbUtil;
 import com.pylon.pylonservice.services.MetricsService;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -157,6 +156,6 @@ public class RegisterController {
             new DynamoDBTransactionWriteExpression().withConditionExpression(EMAIL_DOES_NOT_EXIST_CONDITION)
         );
 
-        DynamoDbUtil.executeTransactionWrite(dynamoDBMapper, transactionWriteRequest);
+        dynamoDBMapper.transactionWrite(transactionWriteRequest);
     }
 }

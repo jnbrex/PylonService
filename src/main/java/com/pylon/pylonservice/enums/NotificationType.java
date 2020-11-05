@@ -1,6 +1,6 @@
 package com.pylon.pylonservice.enums;
 
-public enum Notification {
+public enum NotificationType {
     POST_LIKE(1),
     POST_COMMENT(2),
     PROFILE_FOLLOW(3),
@@ -8,7 +8,7 @@ public enum Notification {
 
     private final int value;
 
-    Notification(int value) {
+    NotificationType(int value) {
         this.value = value;
     }
 
