@@ -1,7 +1,11 @@
 package com.pylon.pylonservice.controller;
 
+import com.pylon.pylonservice.model.domain.notification.PostLikeNotification;
+import com.pylon.pylonservice.model.domain.notification.ProfileFollowNotification;
 import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
+import com.pylon.pylonservice.services.NotificationService;
+import lombok.extern.log4j.Log4j2;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -11,6 +15,9 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Date;
+import java.util.UUID;
 
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
@@ -24,6 +31,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.inV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 
+@Log4j2
 @RestController
 public class FollowController {
     private static final String FOLLOW_USER_METRIC_NAME = "FollowUser";
@@ -41,6 +49,8 @@ public class FollowController {
     private AccessTokenService accessTokenService;
     @Autowired
     private MetricsService metricsService;
+    @Autowired
+    private NotificationService notificationService;
 
     /**
      * Call to add a follow relationship from the calling User to the User with username {usernameToFollow}.
@@ -80,6 +90,16 @@ public class FollowController {
                 )
             )
             .iterate();
+
+        try {
+            sendProfileFollowNotification(usernameToFollow, followerUsername);
+        } catch (final Exception e) {
+            log.error(String.format(
+                "Failed to send profile follow notification for toUsername: %s and fromUsername: %s",
+                usernameToFollow,
+                followerUsername
+            ));
+        }
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
@@ -201,5 +221,17 @@ public class FollowController {
         metricsService.addSuccessMetric(UNFOLLOW_SHARD_METRIC_NAME);
         metricsService.addLatencyMetric(UNFOLLOW_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
+    }
+
+    private void sendProfileFollowNotification(final String toUsername,
+                                               final String fromUsername) {
+        notificationService.notify(
+            ProfileFollowNotification.builder()
+                .toUsername(toUsername)
+                .createdAt(new Date())
+                .fromUsername(fromUsername)
+                .isRead(false)
+                .build()
+        );
     }
 }

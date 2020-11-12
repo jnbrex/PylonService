@@ -6,6 +6,7 @@ import java.util.Date;
 
 @AllArgsConstructor
 public abstract class Notification {
+    protected final String notificationId;
     protected final String toUsername;
     protected final Date createdAt;
     protected final String fromUsername;

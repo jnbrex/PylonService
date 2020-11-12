@@ -2,6 +2,7 @@ package com.pylon.pylonservice.controller;
 
 import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.notification.PostCommentNotification;
+import com.pylon.pylonservice.model.domain.notification.PostLikeNotification;
 import com.pylon.pylonservice.model.requests.post.CreateCommentPostRequest;
 import com.pylon.pylonservice.model.requests.post.CreateTopLevelPostRequest;
 import com.pylon.pylonservice.model.responses.CreatePostResponse;
@@ -211,6 +212,16 @@ public class PostController {
                 )
             )
             .iterate();
+
+        try {
+            sendPostLikeNotification(postId, username);
+        } catch (final Exception e) {
+            log.error(String.format(
+                "Failed to send post like notification for postId %s and fromUsername %s",
+                postId,
+                username
+            ));
+        }
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
@@ -428,6 +439,25 @@ public class PostController {
     private GraphTraversal<Object, Edge> relateUserToPost(final String username) {
         return V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username).as("user")
             .addE(USER_SUBMITTED_POST_EDGE_LABEL).from("user").to("post");
+    }
+
+    private void sendPostLikeNotification(final String postId,
+                                          final String fromUsername) {
+        final String toUsername = (String) rG
+            .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+            .in(USER_SUBMITTED_POST_EDGE_LABEL)
+            .values(USER_USERNAME_PROPERTY)
+            .next();
+
+        notificationService.notify(
+            PostLikeNotification.builder()
+                .toUsername(toUsername)
+                .createdAt(new Date())
+                .fromUsername(fromUsername)
+                .isRead(false)
+                .postId(postId)
+                .build()
+        );
     }
 
     private void sendPostCommentNotification(final String parentPostId,

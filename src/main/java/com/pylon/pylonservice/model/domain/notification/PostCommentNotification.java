@@ -10,13 +10,14 @@ public class PostCommentNotification extends Notification {
     private final String commentPostId;
 
     @Builder
-    public PostCommentNotification(final String toUsername,
+    public PostCommentNotification(final String notificationId,
+                                   final String toUsername,
                                    final Date createdAt,
                                    final String fromUsername,
                                    final boolean isRead,
                                    final String postId,
                                    final String commentPostId) {
-        super(toUsername, createdAt, fromUsername, isRead);
+        super(notificationId, toUsername, createdAt, fromUsername, isRead);
         this.postId = postId;
         this.commentPostId = commentPostId;
     }

@@ -1,18 +1,21 @@
 package com.pylon.pylonservice.model.domain.notification;
 
 import com.pylon.pylonservice.enums.NotificationType;
+import lombok.Builder;
 
 import java.util.Date;
 
 public class PostLikeNotification extends Notification {
     private final String postId;
 
-    public PostLikeNotification(final String toUsername,
+    @Builder
+    public PostLikeNotification(final String notificationId,
+                                final String toUsername,
                                 final Date createdAt,
                                 final String fromUsername,
                                 final boolean isRead,
                                 final String postId) {
-        super(toUsername, createdAt, fromUsername, isRead);
+        super(notificationId, toUsername, createdAt, fromUsername, isRead);
         this.postId = postId;
     }
 

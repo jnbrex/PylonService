@@ -19,6 +19,7 @@ import static com.pylon.pylonservice.constants.GraphConstants.SHARD_INHERITS_USE
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_VERTEX_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_FOLLOWS_SHARD_EDGE_LABEL;
+import static com.pylon.pylonservice.constants.GraphConstants.USER_OWNS_SHARD_EDGE_LABEL;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_USERNAME_PROPERTY;
 import static com.pylon.pylonservice.constants.GraphConstants.USER_VERTEX_LABEL;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.V;
@@ -55,6 +56,7 @@ public class Shard implements Serializable {
     private static final String USER_FOLLOWS_SHARD = "userFollowsShard";
     private static final String NUM_FOLLOWERS = "numFollowers";
     private static final String NUM_REACH = "numReach";
+    private static final String OWNER_USERNAME = "ownerUsername";
 
     // Properties of shard vertex
     String shardName;
@@ -71,6 +73,7 @@ public class Shard implements Serializable {
     long numInheritedUsers;
     boolean userFollowsShard;
     long numFollowers;
+    String ownerUsername;
     Long numReach;
 
     public Shard(final Map<String, Object> graphShardMap) {
@@ -78,6 +81,7 @@ public class Shard implements Serializable {
         this.numInheritedUsers = (long) graphShardMap.get(NUM_INHERITED_USERS);
         this.userFollowsShard = (long) graphShardMap.get(USER_FOLLOWS_SHARD) > 0;
         this.numFollowers = (long) graphShardMap.get(NUM_FOLLOWERS);
+        this.ownerUsername = (String) graphShardMap.get(OWNER_USERNAME);
         this.numReach = (Long) graphShardMap.get(NUM_REACH);
 
         final Map<String, Object> shardProperties = (Map<String, Object>) graphShardMap.get(PROPERTIES);
@@ -94,7 +98,7 @@ public class Shard implements Serializable {
     public static GraphTraversal<Object, Map<String, Object>> projectToSingleShard(final String shardName,
                                                                                    final String callingUsername) {
         return project(PROPERTIES, NUM_INHERITED_SHARDS, NUM_INHERITED_USERS, USER_FOLLOWS_SHARD, NUM_FOLLOWERS,
-                       NUM_REACH)
+            OWNER_USERNAME, NUM_REACH)
             .by(valueMap().by(unfold()))
             .by(out(SHARD_INHERITS_SHARD_EDGE_LABEL).count())
             .by(out(SHARD_INHERITS_USER_EDGE_LABEL).count())
@@ -104,6 +108,7 @@ public class Shard implements Serializable {
                     .count()
             )
             .by(in(USER_FOLLOWS_SHARD_EDGE_LABEL).count())
+            .by(in(USER_OWNS_SHARD_EDGE_LABEL).values(USER_USERNAME_PROPERTY).unfold())
             .by(
                 V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
                     .emit()
@@ -115,7 +120,8 @@ public class Shard implements Serializable {
     }
 
     public static GraphTraversal<Object, Map<String, Object>> projectToShard(final String callingUsername) {
-        return project(PROPERTIES, NUM_INHERITED_SHARDS, NUM_INHERITED_USERS, USER_FOLLOWS_SHARD, NUM_FOLLOWERS)
+        return project(PROPERTIES, NUM_INHERITED_SHARDS, NUM_INHERITED_USERS, USER_FOLLOWS_SHARD, NUM_FOLLOWERS,
+            OWNER_USERNAME)
             .by(valueMap().by(unfold()))
             .by(out(SHARD_INHERITS_SHARD_EDGE_LABEL).count())
             .by(out(SHARD_INHERITS_USER_EDGE_LABEL).count())
@@ -124,6 +130,7 @@ public class Shard implements Serializable {
                     .has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, callingUsername)
                     .count()
             )
-            .by(in(USER_FOLLOWS_SHARD_EDGE_LABEL).count());
+            .by(in(USER_FOLLOWS_SHARD_EDGE_LABEL).count())
+            .by(in(USER_OWNS_SHARD_EDGE_LABEL).values(USER_USERNAME_PROPERTY).unfold());
     }
 }

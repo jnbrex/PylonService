@@ -1,6 +1,7 @@
 package com.pylon.pylonservice.model.domain.notification;
 
 import com.pylon.pylonservice.enums.NotificationType;
+import lombok.Builder;
 
 import java.util.Date;
 
@@ -8,13 +9,15 @@ public class OwnedShardInclusionNotification extends Notification {
     private final String includedShardName;
     private final String includingShardName;
 
-    public OwnedShardInclusionNotification(final String toUsername,
+    @Builder
+    public OwnedShardInclusionNotification(final String notificationId,
+                                           final String toUsername,
                                            final Date createdAt,
                                            final String fromUsername,
                                            final boolean isRead,
                                            final String includedShardName,
                                            final String includingShardName) {
-        super(toUsername, createdAt, fromUsername, isRead);
+        super(notificationId, toUsername, createdAt, fromUsername, isRead);
         this.includedShardName = includedShardName;
         this.includingShardName = includingShardName;
     }

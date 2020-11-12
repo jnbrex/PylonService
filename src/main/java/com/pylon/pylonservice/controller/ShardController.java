@@ -3,13 +3,18 @@ package com.pylon.pylonservice.controller;
 import com.pylon.pylonservice.model.domain.Post;
 import com.pylon.pylonservice.model.domain.Profile;
 import com.pylon.pylonservice.model.domain.Shard;
+import com.pylon.pylonservice.model.domain.notification.Notification;
+import com.pylon.pylonservice.model.domain.notification.OwnedShardInclusionNotification;
+import com.pylon.pylonservice.model.domain.notification.ProfileInclusionNotification;
 import com.pylon.pylonservice.model.requests.GetPostsRequest;
 import com.pylon.pylonservice.model.requests.shard.CreateShardRequest;
 import com.pylon.pylonservice.model.requests.shard.UpdateShardRequest;
 import com.pylon.pylonservice.pojo.PageRange;
 import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
+import com.pylon.pylonservice.services.NotificationService;
 import io.jsonwebtoken.ExpiredJwtException;
+import lombok.extern.log4j.Log4j2;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -29,9 +34,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
@@ -65,6 +72,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.out;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 
+@Log4j2
 @RestController
 public class ShardController {
     private static final String GET_SHARD_METRIC_NAME = "GetShard";
@@ -84,6 +92,8 @@ public class ShardController {
     private AccessTokenService accessTokenService;
     @Autowired
     private MetricsService metricsService;
+    @Autowired
+    private NotificationService notificationService;
 
     /**
      * Call to retrieve a Shard.
@@ -469,8 +479,8 @@ public class ShardController {
             .values(USER_USERNAME_PROPERTY)
             .next();
 
-        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
-        if (!shardOwnerUsername.equals(username)) {
+        final String callingUsernameLowercase = accessTokenService.getUsernameFromAccessToken(accessToken);
+        if (!shardOwnerUsername.equals(callingUsernameLowercase)) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
@@ -481,6 +491,23 @@ public class ShardController {
         final Set<String> inheritedUsersLowercase = updateShardRequest.getInheritedUsers()
             .stream()
             .map(String::toLowerCase)
+            .collect(Collectors.toSet());
+
+        Set<String> currentlyIncludedShardNames = rG
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
+            .out(SHARD_INHERITS_SHARD_EDGE_LABEL)
+            .values(SHARD_NAME_PROPERTY)
+            .toSet()
+            .stream()
+            .map(shardName -> (String) shardName)
+            .collect(Collectors.toSet());
+        Set<String> currentlyIncludedUsernames = rG
+            .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardNameLowercase)
+            .out(SHARD_INHERITS_USER_EDGE_LABEL)
+            .values(USER_USERNAME_PROPERTY)
+            .toSet()
+            .stream()
+            .map(username -> (String) username)
             .collect(Collectors.toSet());
 
         wG
@@ -513,11 +540,80 @@ public class ShardController {
             .property(single, SHARD_FEATURED_IMAGE_LINK_PROPERTY, updateShardRequest.getShardFeaturedImageLink())
             .iterate();
 
+        try {
+            sendShardUpdateNotifications(
+                shardNameLowercase,
+                callingUsernameLowercase,
+                inheritedShardNamesLowercase,
+                inheritedUsersLowercase,
+                currentlyIncludedShardNames,
+                currentlyIncludedUsernames
+            );
+        } catch (final Exception e) {
+            log.error(String.format(
+                "Failed to send shard update notifications for shard name: %s",
+                shardNameLowercase)
+            );
+        }
+
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
 
         metricsService.addSuccessMetric(UPDATE_SHARD_METRIC_NAME);
         metricsService.addLatencyMetric(UPDATE_SHARD_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
+    }
+
+    private void sendShardUpdateNotifications(final String shardNameLowercase,
+                                              final String callingUsernameLowercase,
+                                              final Set<String> inheritedShardNamesLowercase,
+                                              final Set<String> inheritedUsersLowercase,
+                                              final Set<String> currentlyIncludedShardNames,
+                                              final Set<String> currentlyIncludedUsernames) {
+        Set<String> newlyIncludedShardNames = new HashSet<>(inheritedShardNamesLowercase);
+        newlyIncludedShardNames.removeAll(currentlyIncludedShardNames);
+
+        Set<String> newlyIncludedProfileUsernames = new HashSet<>(inheritedUsersLowercase);
+        newlyIncludedProfileUsernames.removeAll(currentlyIncludedUsernames);
+
+        final Set<Shard> newlyIncludedShards = rG
+            .V().has(SHARD_NAME_PROPERTY, P.within(newlyIncludedShardNames))
+            .flatMap(projectToShard(callingUsernameLowercase))
+            .toSet()
+            .stream()
+            .map(Shard::new)
+            .collect(Collectors.toSet());
+
+        final Set<Notification> notifications = new HashSet<>();
+        notifications.addAll(
+            newlyIncludedShards.stream()
+                .map(
+                    shard ->
+                        OwnedShardInclusionNotification.builder()
+                            .toUsername(shard.getOwnerUsername())
+                            .createdAt(new Date())
+                            .fromUsername(callingUsernameLowercase)
+                            .isRead(false)
+                            .includedShardName(shard.getShardName())
+                            .includingShardName(shardNameLowercase)
+                            .build()
+
+                ).collect(Collectors.toSet())
+        );
+        notifications.addAll(
+            newlyIncludedProfileUsernames
+                .stream()
+                .map(
+                    toUsername -> ProfileInclusionNotification.builder()
+                        .toUsername(toUsername)
+                        .createdAt(new Date())
+                        .fromUsername(callingUsernameLowercase)
+                        .isRead(false)
+                        .includingShardName(shardNameLowercase)
+                        .build()
+                ).collect(Collectors.toSet())
+        );
+
+        notificationService.notifyBatch(notifications);
     }
 
     private GraphTraversal<Vertex, Vertex> getAllPostsInShard(final String shardName) {
