@@ -1,6 +1,5 @@
 package com.pylon.pylonservice.controller;
 
-import com.pylon.pylonservice.model.domain.notification.PostLikeNotification;
 import com.pylon.pylonservice.model.domain.notification.ProfileFollowNotification;
 import com.pylon.pylonservice.services.AccessTokenService;
 import com.pylon.pylonservice.services.MetricsService;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
-import java.util.UUID;
 
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;

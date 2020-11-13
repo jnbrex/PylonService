@@ -20,7 +20,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Setter
 @DynamoDBTable(tableName = "-Notification")
-public class Notification {
+public class DatabaseNotification {
     private static final String USER_NOTIFICATION_GSI_NAME = "UserNotification";
 
     String notificationId;
@@ -30,9 +30,7 @@ public class Notification {
     Date createdAt;
     @NonNull
     String fromUsername;
-    @NonNull
     boolean isRead;
-    @NonNull
     int notificationType;
     String postId;
     String commentPostId;
