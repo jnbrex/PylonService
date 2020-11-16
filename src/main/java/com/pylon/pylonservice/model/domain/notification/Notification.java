@@ -17,7 +17,7 @@ public abstract class Notification implements Serializable {
     protected final String toUsername;
     protected final Date createdAt;
     protected final String fromUsername;
-    protected final boolean isRead;
+    protected boolean isRead;
     protected final NotificationType notificationType;
 
     public abstract DatabaseNotification toDatabaseNotification();

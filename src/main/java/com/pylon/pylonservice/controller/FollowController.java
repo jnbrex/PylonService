@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
+import java.util.UUID;
 
 import static com.pylon.pylonservice.constants.AuthenticationConstants.ACCESS_TOKEN_COOKIE_NAME;
 import static com.pylon.pylonservice.constants.GraphConstants.SHARD_NAME_PROPERTY;
@@ -225,6 +226,7 @@ public class FollowController {
                                                final String fromUsername) {
         notificationService.notify(
             ProfileFollowNotification.builder()
+                .notificationId(UUID.randomUUID().toString())
                 .toUsername(toUsername)
                 .createdAt(new Date())
                 .fromUsername(fromUsername)

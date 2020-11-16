@@ -589,6 +589,7 @@ public class ShardController {
                 .map(
                     shard ->
                         OwnedShardInclusionNotification.builder()
+                            .notificationId(UUID.randomUUID().toString())
                             .toUsername(shard.getOwnerUsername())
                             .createdAt(new Date())
                             .fromUsername(callingUsernameLowercase)
@@ -596,7 +597,6 @@ public class ShardController {
                             .includedShardName(shard.getShardName())
                             .includingShardName(shardNameLowercase)
                             .build()
-
                 ).collect(Collectors.toSet())
         );
         notifications.addAll(
@@ -604,6 +604,7 @@ public class ShardController {
                 .stream()
                 .map(
                     toUsername -> ProfileInclusionNotification.builder()
+                        .notificationId(UUID.randomUUID().toString())
                         .toUsername(toUsername)
                         .createdAt(new Date())
                         .fromUsername(callingUsernameLowercase)

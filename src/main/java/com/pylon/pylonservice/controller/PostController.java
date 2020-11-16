@@ -451,6 +451,7 @@ public class PostController {
 
         notificationService.notify(
             PostLikeNotification.builder()
+                .notificationId(UUID.randomUUID().toString())
                 .toUsername(toUsername)
                 .createdAt(new Date())
                 .fromUsername(fromUsername)
@@ -472,6 +473,7 @@ public class PostController {
 
             notificationService.notify(
                 PostCommentNotification.builder()
+                    .notificationId(UUID.randomUUID().toString())
                     .toUsername(toUsername)
                     .createdAt(new Date())
                     .fromUsername(fromUsername)

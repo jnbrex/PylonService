@@ -50,4 +50,27 @@ public class NotificationService {
 
         return databaseNotifications.stream().map(Notification::fromDatabaseNotification).collect(Collectors.toList());
     }
+
+    public Set<Notification> loadNotifications(final Set<String> notificationIds) {
+        final Set<DatabaseNotification> databaseNotifications = notificationIds
+            .stream()
+            .map(
+                notificationId -> DatabaseNotification.builder()
+                    .notificationId(notificationId)
+                    .build()
+            ).collect(Collectors.toSet());
+
+        final Map<String, List<Object>> loadedDatabaseNotificationsMap = dynamoDBMapper.batchLoad(databaseNotifications);
+
+        final String notificationsTableName = String.format("%s-%s", environmentName, "Notification");
+        final List<Object> loadedObjects = loadedDatabaseNotificationsMap.get(notificationsTableName);
+        final Set<DatabaseNotification> loadedDatabaseNotifications = loadedObjects
+            .stream()
+            .map(obj -> (DatabaseNotification) obj)
+            .collect(Collectors.toSet());
+
+        return loadedDatabaseNotifications.stream()
+            .map(Notification::fromDatabaseNotification)
+            .collect(Collectors.toSet());
+    }
 }

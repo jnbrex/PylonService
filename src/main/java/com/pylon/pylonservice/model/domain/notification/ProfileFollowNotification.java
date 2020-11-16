@@ -33,6 +33,7 @@ public class ProfileFollowNotification extends Notification {
 
     public DatabaseNotification toDatabaseNotification() {
         return DatabaseNotification.builder()
+            .notificationId(notificationId)
             .toUsername(toUsername)
             .createdAt(createdAt)
             .fromUsername(fromUsername)
