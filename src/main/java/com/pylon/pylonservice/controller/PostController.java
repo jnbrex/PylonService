@@ -124,7 +124,7 @@ public class PostController {
                 .stream()
                 .map(Post::new)
                 .collect(toSingleton());
-        } catch (final NoSuchElementException e) {
+        } catch (final NoSuchElementException | IllegalStateException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
