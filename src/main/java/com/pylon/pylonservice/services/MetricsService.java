@@ -6,12 +6,14 @@ import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
 import com.amazonaws.services.cloudwatch.model.StandardUnit;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
+@Log4j2
 @Service
 public class MetricsService {
     private static final String ENVIRONMENT_DIMENSION_NAME = "Environment";
@@ -70,10 +72,20 @@ public class MetricsService {
     }
 
     private void addMetric(@NonNull final MetricDatum metricDatum, @NonNull final String namespace) {
-        amazonCloudWatch.putMetricData(
-            new PutMetricDataRequest()
-                .withNamespace(namespace)
-                .withMetricData(metricDatum)
-        );
+        final PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
+            .withNamespace(namespace)
+            .withMetricData(metricDatum);
+
+        try {
+            amazonCloudWatch.putMetricData(putMetricDataRequest);
+        } catch (final Exception e) {
+            log.error(
+                String.format(
+                    "Failed to put metrics with put metric data request %s",
+                    putMetricDataRequest
+                ),
+                e
+            );
+        }
     }
 }
