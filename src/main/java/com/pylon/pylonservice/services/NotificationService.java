@@ -60,7 +60,8 @@ public class NotificationService {
                     .build()
             ).collect(Collectors.toSet());
 
-        final Map<String, List<Object>> loadedDatabaseNotificationsMap = dynamoDBMapper.batchLoad(databaseNotifications);
+        final Map<String, List<Object>> loadedDatabaseNotificationsMap =
+            dynamoDBMapper.batchLoad(databaseNotifications);
 
         final String notificationsTableName = String.format("%s-%s", environmentName, "Notification");
         final List<Object> loadedObjects = loadedDatabaseNotificationsMap.get(notificationsTableName);
