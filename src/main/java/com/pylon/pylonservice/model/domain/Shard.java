@@ -112,7 +112,7 @@ public class Shard implements Serializable {
             .by(
                 V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
                     .emit()
-                    .repeat(in(SHARD_INHERITS_SHARD_EDGE_LABEL))
+                    .repeat(in(SHARD_INHERITS_SHARD_EDGE_LABEL).simplePath())
                     .in(USER_FOLLOWS_SHARD_EDGE_LABEL)
                     .dedup()
                     .count()

@@ -165,7 +165,7 @@ public class Profile implements Serializable {
             .by(
                 V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, profileUsername)
                     .emit()
-                    .repeat(in(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
+                    .repeat(in(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL).simplePath())
                     .in(USER_FOLLOWS_SHARD_EDGE_LABEL, USER_FOLLOWS_USER_EDGE_LABEL)
                     .dedup()
                     .count()
