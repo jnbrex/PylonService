@@ -621,7 +621,7 @@ public class ShardController {
         return rG
             .V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, shardName)
             .emit()
-            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
+            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL).simplePath())
             .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
             .dedup();
     }

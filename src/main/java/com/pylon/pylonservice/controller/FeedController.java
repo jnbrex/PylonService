@@ -79,7 +79,7 @@ public class FeedController {
             .V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, username)
             .out(USER_FOLLOWS_USER_EDGE_LABEL, USER_FOLLOWS_SHARD_EDGE_LABEL)
             .emit()
-            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL))
+            .repeat(out(SHARD_INHERITS_USER_EDGE_LABEL, SHARD_INHERITS_SHARD_EDGE_LABEL).simplePath())
             .in(POST_POSTED_IN_USER_EDGE_LABEL, POST_POSTED_IN_SHARD_EDGE_LABEL)
             .dedup()
             .flatMap(projectToPost(username))
