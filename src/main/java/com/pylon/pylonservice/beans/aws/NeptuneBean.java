@@ -33,6 +33,7 @@ public class NeptuneBean {
             .port(8182)
             .minConnectionPoolSize(2)
             .maxConnectionPoolSize(512)
+            .maxContentLength(1024000)
             .serializer(Serializers.GRAPHBINARY_V1D0);
 
         // Make local development with an in-memory gremlin-server database work
