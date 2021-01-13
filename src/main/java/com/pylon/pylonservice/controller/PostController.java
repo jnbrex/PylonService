@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,6 +62,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.flatMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.inE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.inV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.outE;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
@@ -75,6 +77,11 @@ public class PostController {
     private static final String CREATE_SHARD_POST_METRIC_NAME = "CreateShardPost";
     private static final String CREATE_PROFILE_POST_METRIC_NAME = "CreateProfilePost";
     private static final String CREATE_COMMENT_POST_METRIC_NAME = "CreateCommentPost";
+    private static final String DELETE_POST_METRIC_NAME = "DeletePost";
+
+    private static final String DELETE_POST_MESSAGE = "[deleted by submitter]";
+    private static final String DELETED_POST_SUBMITTER_USERNAME = "deleted";
+    private static final String GRAVEYARD_SHARD_NAME = "graveyard";
 
     @Qualifier("writer")
     @Autowired
@@ -388,21 +395,21 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
-        final String username = accessTokenService.getUsernameFromAccessToken(accessToken);
+        final String callingUsernameLowercase = accessTokenService.getUsernameFromAccessToken(accessToken);
 
         final String postId = UUID.randomUUID().toString();
         final Optional<Edge> result = wG
             .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, parentPostId).as("parentPost")
             .flatMap(addCommentPost(createCommentPostRequest, postId)).as("post")
             .addE(POST_COMMENT_ON_POST_EDGE_LABEL).from("post").to("parentPost")
-            .flatMap(relateUserToPost(username))
+            .flatMap(relateUserToPost(callingUsernameLowercase))
             .tryNext();
 
         if (result.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        sendPostCommentNotification(parentPostId, postId, username);
+        sendPostCommentNotification(parentPostId, postId, callingUsernameLowercase);
 
         final ResponseEntity<?> responseEntity = new ResponseEntity<>(
             CreatePostResponse.builder()
@@ -413,6 +420,83 @@ public class PostController {
 
         metricsService.addSuccessMetric(CREATE_COMMENT_POST_METRIC_NAME);
         metricsService.addLatencyMetric(CREATE_COMMENT_POST_METRIC_NAME, System.nanoTime() - startTime);
+        return responseEntity;
+    }
+
+    /**
+     * Call to delete a post. This moves profile posts and shard posts to the special /s/graveyard shard and replaces
+     * the body of comment posts with "[deleted by submitter]"
+     *
+     * @param accessToken A cookie with name "accessToken"
+     * @param postId A String containing the postId of the Post to return.
+     *
+     * @return HTTP 200 OK - If the Post was deleted successfully.
+     *         HTTP 401 Unauthorized - If the User isn't authenticated.
+     *         HTTP 403 Forbidden - If the User is attempting to delete a Post they didn't submit.
+     *         HTTP 404 Not Found - If the Post to be updated doesn't exist.
+     */
+    @DeleteMapping(value = "/post/{postId}")
+    public ResponseEntity<?> deletePost(@CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
+                                        @PathVariable final String postId) {
+        final long startTime = System.nanoTime();
+        metricsService.addCountMetric(DELETE_POST_METRIC_NAME);
+
+        if (!rG.V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final String postSubmitterUsername = (String) rG
+            .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+            .in(USER_SUBMITTED_POST_EDGE_LABEL)
+            .values(USER_USERNAME_PROPERTY)
+            .next();
+
+        final String callingUsernameLowercase = accessTokenService.getUsernameFromAccessToken(accessToken);
+        if (!postSubmitterUsername.equals(callingUsernameLowercase)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        final boolean isCommentPost = rG
+            .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId)
+            .out(POST_COMMENT_ON_POST_EDGE_LABEL)
+            .hasNext();
+
+        if (isCommentPost) {
+            wG
+                .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).as("postToMove")
+                .property(single, POST_BODY_PROPERTY, DELETE_POST_MESSAGE)
+                .sideEffect(
+                    inE(USER_SUBMITTED_POST_EDGE_LABEL).drop()
+                )
+                .sideEffect(
+                    V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, DELETED_POST_SUBMITTER_USERNAME)
+                        .addE(USER_SUBMITTED_POST_EDGE_LABEL).to("postToMove")
+                )
+                .iterate();
+        } else {
+            wG
+                .V().has(POST_VERTEX_LABEL, POST_ID_PROPERTY, postId).as("postToMove")
+                .sideEffect(
+                    inE(USER_SUBMITTED_POST_EDGE_LABEL).drop()
+                )
+                .sideEffect(
+                    V().has(USER_VERTEX_LABEL, USER_USERNAME_PROPERTY, DELETED_POST_SUBMITTER_USERNAME)
+                        .addE(USER_SUBMITTED_POST_EDGE_LABEL).to("postToMove")
+                )
+                .sideEffect(
+                    outE(POST_POSTED_IN_SHARD_EDGE_LABEL, POST_POSTED_IN_USER_EDGE_LABEL).drop()
+                )
+                .sideEffect(
+                    V().has(SHARD_VERTEX_LABEL, SHARD_NAME_PROPERTY, GRAVEYARD_SHARD_NAME)
+                        .addE(POST_POSTED_IN_SHARD_EDGE_LABEL).from("postToMove")
+                )
+                .iterate();
+        }
+
+        final ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+
+        metricsService.addSuccessMetric(DELETE_POST_METRIC_NAME);
+        metricsService.addLatencyMetric(DELETE_POST_METRIC_NAME, System.nanoTime() - startTime);
         return responseEntity;
     }
 
