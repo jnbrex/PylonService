@@ -84,11 +84,11 @@ public class ProfileController {
     /**
      * Call to retrieve a User's public profile data.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing the username of the User's profile to return
      *
      * @return HTTP 200 OK - If the User's public profile data was retrieved successfully. Body is a
-     *                       {@link com.pylon.pylonservice.model.domain.Profile Profile}.
+     *                       {@link Profile}.
      *         HTTP 404 Not Found - If the User doesn't exist.
      */
     @GetMapping(value = "/profile/{username}")
@@ -129,10 +129,10 @@ public class ProfileController {
     /**
      * Call to retrieve a User's public profile data.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      *
      * @return HTTP 200 OK - If the User's public profile data was retrieved successfully. Body is a
-     *                       {@link com.pylon.pylonservice.model.domain.Profile Profile}.
+     *                       {@link Profile}.
      *              HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @GetMapping(value = "/myProfile")
@@ -159,11 +159,14 @@ public class ProfileController {
     /**
      * Call to retrieve all the post headers for a Profile, newest posts first.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing the username of the User's Profile to return.
+     * @param firstPostToReturn The first post to return, used for pagination.
+     * @param countPostsToReturn The number of posts to return, used for pagination. It should be called with
+     *                           value less than or equal to 100.
      *
      * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully. Body is an array of
-     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
+     *                       {@link Post}.
      *         HTTP 404 Not Found - If the Profile doesn't exist.
      */
     @GetMapping(value = "/profile/{username}/posts/new")
@@ -222,11 +225,14 @@ public class ProfileController {
     /**
      * Call to retrieve all the post headers for a Profile, most popular posts first.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing the username of the User's Profile to return.
+     * @param firstPostToReturn The first post to return, used for pagination.
+     * @param countPostsToReturn The number of posts to return, used for pagination. It should be called with
+     *                           value less than or equal to 100.
      *
      * @return HTTP 200 OK - If the Posts on the Profile were retrieved successfully. Body is an array of
-     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
+     *                       {@link Post}.
      *         HTTP 404 Not Found - If the Profile doesn't exist.
      */
     @GetMapping(value = "/profile/{username}/posts/popular")
@@ -285,7 +291,7 @@ public class ProfileController {
      * Call to update a User's public profile data. This is an idempotent operation, so all fields must be included. For
      * any fields which should not be present on the User's profile, send an empty string.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param updateProfileRequest A {@link UpdateProfileRequest}
      *
      * @return HTTP 200 OK - If the User's public Profile data was updated successfully.
@@ -337,7 +343,7 @@ public class ProfileController {
     /**
      * Call to set the profile's pinned post.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param postId The postId of the Post to pin.
      *
      * @return HTTP 200 OK - If the Post was pinned successfully.
@@ -386,7 +392,7 @@ public class ProfileController {
     /**
      * Call to unpin the profile's pinned post.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      *
      * @return HTTP 200 OK - If the Post was unpinned successfully or there was no pinned Post.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.

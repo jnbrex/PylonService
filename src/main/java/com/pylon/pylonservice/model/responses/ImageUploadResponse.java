@@ -5,6 +5,11 @@ import lombok.Value;
 
 import java.io.Serializable;
 
+/**
+ * {
+ *     "filename": "123456.png"
+ * }
+ */
 @Builder
 @Value
 public class ImageUploadResponse implements Serializable {

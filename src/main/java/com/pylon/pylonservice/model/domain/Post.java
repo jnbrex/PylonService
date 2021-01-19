@@ -36,6 +36,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 
 /**
+ * <pre>
  * {
  *     "postId": "3e65390e-f1d0-4535-832e-4241f8a1235b",
  *     "postTitle": "This is a profile post on jason50's profile two (for real though)!",
@@ -46,7 +47,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "numLikes": 1,
  *     "numComments": 9,
  *     "submitterUsername": "jason50",
- *     "submitterFriendlyName": "Jason Bohrer",
+ *     "submitterFriendlyName": "Jason asjkldf",
  *     "submitterAvatarFilename": "3e65390e-f1d0-4535-832e-4241f8a1235b.png",
  *     "submitterVerified": false,
  *     "shardFriendlyName": "Shard friendly name",
@@ -60,6 +61,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "commentOnPost": null,
  *     "topLevelPostId": "3e65390e-f1d0-4535-832e-4241f8a1235b"
  * }
+ * </pre>
  */
 @Data
 public class Post implements Serializable {

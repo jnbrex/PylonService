@@ -99,11 +99,11 @@ public class PostController {
     /**
      * Call to retrieve a Post.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param postId A String containing the postId of the Post to return.
      *
      * @return HTTP 200 OK - If the Post was retrieved successfully. Body is an array of
-     *                       {@link com.pylon.pylonservice.model.domain.Post Post}.
+     *                       {@link Post}.
      *         HTTP 404 Not Found - If the Post doesn't exist.
      */
     @GetMapping(value = "/post/{postId}")
@@ -145,10 +145,10 @@ public class PostController {
     /**
      * Call to retrieve all comments on a Post.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param postId A String containing the postId of the Post for which the comments should be returned.
      *
-     * @return HTTP 200 OK - If the Post's comments were retrieved successfully.
+     * @return HTTP 200 OK - A List of {@link Post}.
      *         HTTP 404 Not Found - If the Post doesn't exist.
      */
     @GetMapping(value = "/post/{postId}/comments")
@@ -190,7 +190,7 @@ public class PostController {
     /**
      * Call for the calling User to upvote a Post.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param postId A String containing the postId of the Post to upvote.
      *
      * @return HTTP 200 OK - If the Post was upvoted successfully or was already upvoted by the calling User.
@@ -240,7 +240,7 @@ public class PostController {
     /**
      * Call for the calling User to remove their upvote on a Post.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param postId A String containing the postId of the Post to remove their upvote on.
      *
      * @return HTTP 200 OK - If the upvote on the Post was removed successfully or if the Post hadn't been upvoted by
@@ -278,11 +278,11 @@ public class PostController {
      * Call to create a Post in a Shard.
      * @see CreateTopLevelPostRequest#isValid() for validation rules.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param shardName The name of a Shard
      * @param createTopLevelPostRequest A {@link CreateTopLevelPostRequest}
      *
-     * @return HTTP 201 Created - If the Post was created successfully.
+     * @return HTTP 201 Created - A {@link CreatePostResponse}.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      *         HTTP 404 Not Found - If the Shard with shardName={shardName} doesn't exist.
      */
@@ -329,10 +329,10 @@ public class PostController {
      * Call to create a Post in the calling User's public profile.
      * @see CreateTopLevelPostRequest#isValid() for validation rules.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param createTopLevelPostRequest A {@link CreateTopLevelPostRequest}
      *
-     * @return HTTP 201 Created - If the Post was created successfully.
+     * @return HTTP 201 Created - A {@link CreatePostResponse}.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @PostMapping(value = "/post/profile")
@@ -376,11 +376,11 @@ public class PostController {
      * Call to create a Post as a comment on another Post.
      * @see CreateCommentPostRequest#isValid() for validation rules.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param parentPostId The postId of the parent Post.
      * @param createCommentPostRequest A {@link CreateCommentPostRequest}
      *
-     * @return HTTP 201 Created - If the Post was created successfully.
+     * @return HTTP 201 Created - A {@link CreatePostResponse}.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      *         HTTP 404 Not Found - If the Post with postId={parentPostId} doesn't exist.
      */
@@ -427,7 +427,7 @@ public class PostController {
      * Call to delete a post. This moves profile posts and shard posts to the special /s/graveyard shard and replaces
      * the body of comment posts with "[deleted by submitter]"
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param postId A String containing the postId of the Post to return.
      *
      * @return HTTP 200 OK - If the Post was deleted successfully.

@@ -6,6 +6,15 @@ import lombok.NoArgsConstructor;
 
 import java.util.Set;
 
+/**
+ * {
+ *     "notificationIds": {
+ *         "notificationId1",
+ *         "notificationId2",
+ *         "notificationId3"
+ *     }
+ * }
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

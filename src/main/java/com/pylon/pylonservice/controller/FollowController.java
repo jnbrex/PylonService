@@ -54,7 +54,7 @@ public class FollowController {
     /**
      * Call to add a follow relationship from the calling User to the User with username {usernameToFollow}.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param usernameToFollow A String containing the username of the User who the calling User should follow.
      *
      * @return HTTP 200 OK - If the follow relationship was added or already existed.
@@ -110,7 +110,7 @@ public class FollowController {
     /**
      * Call to add a follow relationship from the calling User to the Shard with shardName {shardNameToFollow}.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param shardNameToFollow A String containing the shardName of the Shard who the calling User should follow.
      *
      * @return HTTP 200 OK - If the follow relationship was added or already existed.
@@ -151,7 +151,7 @@ public class FollowController {
     /**
      * Call to remove a follow relationship from the calling User to the User with username {usernameToUnfollow}.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param usernameToUnfollow A String containing the username of the User who the calling User should follow.
      *
      * @return HTTP 200 OK - If the follow relationship was removed or did not exist.
@@ -188,7 +188,7 @@ public class FollowController {
     /**
      * Call to remove a follow relationship from the calling User to the Shard with shardName {shardNameToUnfollow}.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param shardNameToUnfollow A String containing the shardName of the Shard who the calling User should follow.
      *
      * @return HTTP 200 OK - If the follow relationship was removed or did not exist.

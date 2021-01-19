@@ -49,6 +49,12 @@ public class AllController {
     @Autowired
     private MetricsService metricsService;
 
+    /**
+     * Call to retrieve all the shards, most newly created first. Not yet paginated.
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
+     * @return HTTP 200 OK - A List of {@link Shard}.
+     */
+
     @GetMapping("/all/shards/new")
     public ResponseEntity<?> getAllShards(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken) {
@@ -80,6 +86,11 @@ public class AllController {
         return responseEntity;
     }
 
+    /**
+     * Call to retrieve all the profiles, most newly created first. Not yet paginated.
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
+     * @return HTTP 200 OK - A List of {@link Profile}.
+     */
     @GetMapping("/all/profiles/new")
     public ResponseEntity<?> getAllProfiles(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken) {
@@ -111,6 +122,15 @@ public class AllController {
         return responseEntity;
     }
 
+    /**
+     * Call to retrieve all the posts, most newly created first.
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
+     * @param firstPostToReturn The first post to return, used for pagination.
+     * @param countPostsToReturn The number of posts to return, used for pagination. It should be called with
+     *                           value less than or equal to 100.
+     *
+     * @return HTTP 200 OK - A List of {@link Post}.
+     */
     @GetMapping("/all/posts/new")
     public ResponseEntity<?> getAllPosts(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken,

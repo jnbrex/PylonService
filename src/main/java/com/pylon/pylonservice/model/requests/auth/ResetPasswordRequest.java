@@ -5,6 +5,12 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * {
+ *     "passwordResetToken": "abcd1234",
+ *     "newPassword": "abcd12345"
+ * }
+ */
 @Data
 @NoArgsConstructor
 public class ResetPasswordRequest implements Serializable {

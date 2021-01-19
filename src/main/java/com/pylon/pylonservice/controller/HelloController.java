@@ -22,7 +22,7 @@ public class HelloController {
     /**
      * Call to receive a hello message personalized to the calling User.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @return HTTP 200 OK - String like "Hello Jason!".
      */
     @GetMapping("/hello")

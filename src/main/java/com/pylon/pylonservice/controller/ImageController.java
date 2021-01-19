@@ -65,12 +65,9 @@ public class ImageController {
     /**
      * Call to upload an image. Only supports png, jpeg/jpg, and gif.
      *
-     * @param multipartFile A multipart file of mime type image/png, image/jpeg, or image/gif.
+     * @param multipartFile A MultipartFile of mime type image/png, image/jpeg, or image/gif.
      *
-     * @return HTTP 201 Created - If the image was uploaded successfully. Returns a response with body like
-     *                            {
-     *                                "filename": "a88fed16-330a-4b64-a704-eb9c81e33e10.png"
-     *                            }
+     * @return HTTP 201 Created - An {@link ImageUploadResponse}.
      *         HTTP 422 Unprocessable Entity - If the submitted file is not of supported type.
      */
     @PostMapping(value = "/image")

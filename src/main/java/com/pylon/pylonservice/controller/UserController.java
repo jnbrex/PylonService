@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -61,7 +60,7 @@ public class UserController {
     /**
      * Call to retrieve the Shards owned by a User.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing the username of the User whose owned Shards to return.
      *
      * @return HTTP 200 OK - If the set of owned Shards was retrieved successfully. Body contains a collection of
@@ -108,7 +107,7 @@ public class UserController {
     /**
      * Call to retrieve the Shards followed by a User.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing the username of the User whose followed Shards to return.
      *
      * @return HTTP 200 OK - If the set of followed Shards was retrieved successfully. Body contains a collection of
@@ -155,7 +154,7 @@ public class UserController {
     /**
      * Call to retrieve the Users followed by a User.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing the username of the User whose followed Users to return.
      *
      * @return HTTP 200 OK - If the set of followed Users was retrieved successfully. Body contains a collection of
@@ -202,7 +201,7 @@ public class UserController {
     /**
      * Call to retrieve Shards that inherit a User.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing a set of shardNames of Shards which inherit the User.
      *
      * @return HTTP 200 OK - If the set of Shards which inherit the User was retrieved successfully. Body contains a
@@ -249,7 +248,7 @@ public class UserController {
     /**
      * Call to retrieve followers of a User.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing the username of the User whose followers to return.
      *
      * @return HTTP 200 OK - If the set of followers of the User was retrieved successfully. Body contains a collection
@@ -296,8 +295,11 @@ public class UserController {
     /**
      * Call to retrieve all Posts submitted by a User.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing the username of the User whose submitted Posts to return.
+     * @param firstPostToReturn The first post to return, used for pagination.
+     * @param countPostsToReturn The number of posts to return, used for pagination. It should be called with
+     *                           value less than or equal to 100.
      *
      * @return HTTP 200 OK - If the set of Posts submitted by the User was retrieved successfully. Body is an array of
      *                       {@link Post}.
@@ -359,8 +361,11 @@ public class UserController {
     /**
      * Call to retrieve all Posts upvoted by a User.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param username A String containing the username of the User whose upvoted Posts to return.
+     * @param firstPostToReturn The first post to return, used for pagination.
+     * @param countPostsToReturn The number of posts to return, used for pagination. It should be called with
+     *                           value less than or equal to 100.
      *
      * @return HTTP 200 OK - If the set of Posts upvoted by the User was retrieved successfully. Body is an array of
      *                       {@link Post}.

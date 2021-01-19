@@ -4,6 +4,11 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 
+/**
+ * {
+ *     "postBody": "hi guys"
+ * }
+ */
 @Value
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)

@@ -5,6 +5,11 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * {
+ *     "toEmailAddress": "jason@gmail.com"
+ * }
+ */
 @Data
 @NoArgsConstructor
 public class ForgotPasswordRequest implements Serializable {

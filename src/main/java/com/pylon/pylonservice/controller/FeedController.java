@@ -48,9 +48,12 @@ public class FeedController {
     /**
      * Call to retrieve a User's personalized feed.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
+     * @param firstPostToReturn The first post to return, used for pagination.
+     * @param countPostsToReturn The number of posts to return, used for pagination. It should be called with
+     *                           value less than or equal to 100.
      *
-     * @return HTTP 200 OK - If the Shard was retrieved successfully.
+     * @return HTTP 200 OK - A List of {@link Post}.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      */
     @GetMapping(value = "/myFeed")

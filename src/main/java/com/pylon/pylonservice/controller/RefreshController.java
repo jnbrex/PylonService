@@ -39,7 +39,7 @@ public class RefreshController {
      *
      * @param refreshToken A cookie with name "refreshToken"
      *
-     * @return HTTP 200 OK - Responds with an accessToken Set-Cookie header
+     * @return HTTP 200 OK - Responds with an accessToken Set-Cookie header.
      *         HTTP 400 Bad Request - If the request does not include an origin header.
      *         HTTP 404 Not Found - If the refresh token does not exist.
      */

@@ -41,22 +41,23 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 
 /**
+ * <pre>
  * {
  *     "username": "jason",
- *     "userFriendlyName": "Jason Bohrer",
+ *     "userFriendlyName": "Jason asfdjkl",
  *     "userAvatarFilename": "5237af6c-6cf7-46ee-8537-f0b1b90d870a.png",
  *     "userBannerFilename": "5237af6c-6cf7-46ee-8537-f0b1b90d870a.jpg",
- *     "userBio": "My name is Jason and I'm one of the newest in a long line of Bohrers.",
+ *     "userBio": "My name is Jason and I'm one of the newest in a long line of aljksfd.",
  *     "userLocation": "Seattle, Washington",
  *     "userVerified": true,
- *     "userFacebookUrl": "https://facebook.com/jason.bohrer.10",
- *     "userTwitterUrl": "https://twitter.com/bohrer_jason",
- *     "userInstagramUrl": "https://instagram.com/jnbrex",
+ *     "userFacebookUrl": "https://facebook.com/jason.afsjdkl",
+ *     "userTwitterUrl": "https://twitter.com/asfjldka",
+ *     "userInstagramUrl": "https://instagram.com/ajlksfd",
  *     "userTwitchUrl": "https://twitch.tv/haste",
- *     "userYoutubeUrl": "https://youtube.com/pewdiepie",
- *     "userTiktokUrl": "https://www.tiktok.com/@charlidamelio",
+ *     "userYoutubeUrl": "https://youtube.com/aldfkjs",
+ *     "userTiktokUrl": "https://www.tiktok.com/@ajslkfd",
  *     "userDiscordUrl": "https://discord.gg/pJNRzPR",
- *     "userWebsiteUrl": "https://jnbrex.wordpress.com/",
+ *     "userWebsiteUrl": "https://sajlkfd.wordpress.com/",
  *     "createdAt": "2020-08-06T23:05:34.206+00:00",
  *     "numOwnedShards": 14,
  *     "numPosts": 10
@@ -67,6 +68,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "numFollowed": 316,
  *     "numReach": 346
  * }
+ * </pre>
  */
 @Data
 public class Profile implements Serializable {

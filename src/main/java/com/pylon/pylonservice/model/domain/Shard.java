@@ -30,12 +30,13 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 
 /**
+ * <pre>
  * {
  *     "shardName": "fortnite47",
  *     "shardFriendlyName": "Fortnite Battle Royale",
  *     "shardAvatarFilename": "f99269c2-9b0b-4dbf-b04a-385bc7ffa629.png",
  *     "shardBannerFilename": "f99269c2-9b0b-4dbf-b04a-385bc7ffa629.jpg",
- *     "shardDescription": "This is the best of all of the fortnite shards. JJOU(G*&^&F*D%^F&G*(F&GUOH)*OU!@#@$",
+ *     "shardDescription": "This is the best of all of the fortnite shards. J",
  *     "shardFeaturedImageFilename": "f99269c2-9b0b-4dbf-b04a-385bc7ffa629.png",
  *     "shardFeaturedImageLink": "https://google.com",
  *     "createdAt": "2020-08-14T05:59:46.847+00:00",
@@ -45,6 +46,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
  *     "numFollowers": 1,
  *     "numReach": "5"
  * }
+ * </pre>
  */
 @Data
 public class Shard implements Serializable {

@@ -98,7 +98,7 @@ public class ShardController {
     /**
      * Call to retrieve a Shard.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param shardName A String containing the name of the Shard to return.
      *
      * @return HTTP 200 OK - If the Shard was retrieved successfully returns a {@link Shard}.
@@ -143,7 +143,7 @@ public class ShardController {
     /**
      * Call to retrieve all of the Shards and Users that a Shard directly inherits.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param shardName A String containing the name of the Shard whose inheritance to return.
      *
      * @return HTTP 200 OK - If the Shard inheritance was retrieved successfully, a Map with two keys: "shards" which
@@ -205,7 +205,7 @@ public class ShardController {
     /**
      * Call to retrieve all of the Profiles of the Users who follow a Shard directly.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param shardName A String containing the name of the Shard whose inheritance to return.
      *
      * @return HTTP 200 OK - If the Shard followers were retrieved successfully, a Set of {@link Profile}.
@@ -251,8 +251,11 @@ public class ShardController {
     /**
      * Call to retrieve all the post headers for a Shard, ordered by newest post first.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param shardName A String containing the shardName of the Shard whose posts to return.
+     * @param firstPostToReturn The first post to return, used for pagination.
+     * @param countPostsToReturn The number of posts to return, used for pagination. It should be called with
+     *                           value less than or equal to 100.
      *
      * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully. Body is an array of
      *                       {@link Post}.
@@ -312,8 +315,11 @@ public class ShardController {
     /**
      * Call to retrieve all the post headers for a Shard, ordered by most popular post first.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param shardName A String containing the shardName of the Shard whose posts to return.
+     * @param firstPostToReturn The first post to return, used for pagination.
+     * @param countPostsToReturn The number of posts to return, used for pagination. It should be called with
+     *                           value less than or equal to 100.
      *
      * @return HTTP 200 OK - If the Posts in the Shard were retrieved successfully. Body is an array of
      *                       {@link Post}.
@@ -372,7 +378,7 @@ public class ShardController {
     /**
      * Call to create a Shard.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param createShardRequest A {@link CreateShardRequest}.
      *
      * @return HTTP 201 Created - If the Shard was created successfully.
@@ -449,7 +455,7 @@ public class ShardController {
      * Call to update a Shard. This is an idempotent operation and replaces the inherited shards and inherited users of
      * the shard with the ones in the request.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      * @param updateShardRequest An {@link UpdateShardRequest}.
      *
      * @return HTTP 200 Created - If the Shard was updated successfully.

@@ -17,7 +17,7 @@ public class RegisterRequestTests {
                 new RegisterRequest(VALID_USERNAME, VALID_PASSWORD, VALID_EMAIL)
             },
             {
-                new RegisterRequest("jason.bohrer_1", "abcdefghi1234567890!@#$%^&*()7g8f6g6fd5ctf5d6CV^F&%CTVYUG*F^&CTV", "foo@bar.edu")
+                new RegisterRequest("jason.abcdef_1", "abcdefghi1234567890!@#$%^&*()7g8f6g6fd5ctf5d6CV^F&%CTVYUG*F^&CTV", "foo@bar.edu")
             }
         };
     }

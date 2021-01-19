@@ -39,6 +39,11 @@ public class FeaturedController {
     @Autowired
     private MetricsService metricsService;
 
+    /**
+     * Call to retrieve the featured shards.
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
+     * @return A List of {@link Shard}.
+     */
     @GetMapping("/featured/shards")
     public ResponseEntity<?> getFeaturedShards(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken) {
@@ -69,6 +74,11 @@ public class FeaturedController {
         return responseEntity;
     }
 
+    /**
+     * Call to retrieve the featured profiles.
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
+     * @return A List of {@link Profile}.
+     */
     @GetMapping("/featured/profiles")
     public ResponseEntity<?> getFeaturedProfiles(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken) {

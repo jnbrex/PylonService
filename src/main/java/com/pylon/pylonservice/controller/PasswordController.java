@@ -58,6 +58,7 @@ public class PasswordController {
     }
 
     /**
+     * Call to send a user an email containing a link they can use to reset their password.
      *
      * @param forgotPasswordRequest Contains the email address of the user who forgot their password.
      * @return 200 OK - Regardless of whether the email was sent or not.
@@ -117,7 +118,7 @@ public class PasswordController {
     }
 
     /**
-     *
+     * Call to reset a user's password.
      * @param resetPasswordRequest Contains the email address of the user who forgot their password.
      * @return 200 OK - If the user's password was changed successfully.
      *         404 Not Found - If the password reset token wasn't found or expired.

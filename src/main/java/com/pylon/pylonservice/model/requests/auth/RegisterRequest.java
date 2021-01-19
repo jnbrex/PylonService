@@ -6,6 +6,11 @@ import lombok.Value;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 
+/**
+ * "username": "jason",
+ * "password": "abcd1234",
+ * "email": "jason@gmail.com"
+ */
 @Value
 public class RegisterRequest implements Serializable {
     private static final long serialVersionUID = 0L;

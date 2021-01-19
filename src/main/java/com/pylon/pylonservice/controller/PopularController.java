@@ -41,6 +41,11 @@ public class PopularController {
     @Autowired
     private MetricsService metricsService;
 
+    /**
+     * Call to retrieve the 5 most popular shards, determined by number of followers.
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
+     * @return HTTP 200 OK - A List of {@link Shard}.
+     */
     @GetMapping("/popular/shards")
     public ResponseEntity<?> getPopularShards(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken) {
@@ -73,6 +78,11 @@ public class PopularController {
         return responseEntity;
     }
 
+    /**
+     * Call to retrieve the 5 most popular profiles determined by number of followers.
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
+     * @return HTTP 200 OK - A List of {@link Profile}.
+     */
     @GetMapping("/popular/profiles")
     public ResponseEntity<?> getPopularProfiles(
         @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME, required = false) final String accessToken) {

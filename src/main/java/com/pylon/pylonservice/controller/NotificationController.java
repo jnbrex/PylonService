@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -36,14 +35,13 @@ public class NotificationController {
     /**
      * Call to retrieve all notifications for the calling user.
      *
-     * @param accessToken A cookie with name "accessToken"
+     * @param accessToken A cookie with name "accessToken" issued by PylonService.
      *
-     * @return HTTP 200 OK - If the notifications were retrieved successfully.
+     * @return HTTP 200 OK - A List of {@link Notification}.
      */
     @GetMapping(value = "/notifications/all")
     public ResponseEntity<?> getAllNotifications(
-        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken,
-        @RequestParam(required = false) final Integer lastNotificationId) {
+        @CookieValue(name = ACCESS_TOKEN_COOKIE_NAME) final String accessToken) {
         final long startTime = System.nanoTime();
         metricsService.addCountMetric(GET_NOTIFICATIONS_METRIC_NAME);
 
@@ -61,9 +59,9 @@ public class NotificationController {
     /**
      * Call to mark notifications as read.
      *
-     * @param accessToken A cookie with name "accessToken"
-     *
-     * @return HTTP 200 OK - If the notifications were marked as read successfully.
+     * @param accessToken A PylonService-issued access token cookie.
+     * @param readNotificationsRequest A {@link ReadNotificationsRequest}
+     * @return HTTP 200 OK - A List of the updated {@link Notification}.
      *         HTTP 401 Unauthorized - If the User isn't authenticated.
      *         HTTP 403 Forbidden - If the User is attempting to read a notification for another user.
      */

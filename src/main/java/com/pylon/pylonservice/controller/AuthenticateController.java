@@ -52,10 +52,7 @@ public class AuthenticateController {
      *
      *                              or
      *
-     *                              {
-     *                                  "usernameOrEmail": "exampleEmail@email.com",
-     *                                  "password": "examplePassword"
-     *                              }
+     *
      *
      * @return HTTP 200 OK - If the User was authenticated successfully, a JSON object like
      *                       {

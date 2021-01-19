@@ -58,14 +58,7 @@ public class RegisterController {
     /**
      * Call to register a User.
      *
-     * @param registerRequest A JSON object containing the username, password, and email address of the User who is
-     *                        attempting to register like
-     *                        {
-     *                            "username": "exampleUsername",
-     *                            "password": "examplePassword",
-     *                            "email": "exampleEmailAddress"
-     *                        }
-     *
+     * @param registerRequest A {@link RegisterRequest}.
      *                        Validation rules
      *                        username: * Between 3 and 30 characters, inclusive
      *                                  * Only contains alphanumeric characters, ".", and "_"

@@ -9,6 +9,24 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.regex.Pattern;
 
+/**
+ * {
+ *     "userFriendlyName": "jason 1",
+ *     "userAvatarFilename": "b403b2fc-9d17-4ab1-b1c3-b7edca25d069.png",
+ *     "userBannerFilename": "0f6c4b76-c1b4-40ba-abdc-43508f85c58c.gif",
+ *     "userBio": "",
+ *     "userLocation": "",
+ *     "userVerified": false,
+ *     "userFacebookUrl": "facebook.com/jasonsfdlka0",
+ *     "userTwitterUrl": "http://twitter.com",
+ *     "userInstagramUrl": "https://instagram.com",
+ *     "userTwitchUrl": "https://www.twitch.tv/",
+ *     "userYoutubeUrl": "http://www.youtube.com/jlasjkdljfkljal",
+ *     "userTiktokUrl": "https://tiktok.com/asldfjk",
+ *     "userDiscordUrl": "http://www.discord.com/jlasjkdljfkljal",
+ *     "userWebsiteUrl": "jason.org"
+ * }
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

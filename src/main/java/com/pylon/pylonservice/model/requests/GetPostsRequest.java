@@ -6,6 +6,12 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * {
+ *     "firstPostToReturn": 0,
+ *     "numPostsToReturn": 20
+ * }
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

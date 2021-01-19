@@ -6,6 +6,11 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * {
+ *     "postBody": "hi guys"
+ * }
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 abstract class CreatePostRequest implements Serializable, Request {

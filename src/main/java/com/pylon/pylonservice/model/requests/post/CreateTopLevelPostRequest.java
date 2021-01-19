@@ -3,6 +3,14 @@ package com.pylon.pylonservice.model.requests.post;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
+/**
+ * {
+ *     "postTitle": "title",
+ *     "postFilename": "filename",
+ *     "postContentUrl": "google.com"
+ *     "postBody": "hi guys"
+ * }
+ */
 @Value
 @EqualsAndHashCode(callSuper=true)
 public class CreateTopLevelPostRequest extends CreatePostRequest {

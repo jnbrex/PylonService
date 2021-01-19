@@ -5,6 +5,12 @@ import lombok.Value;
 
 import java.io.Serializable;
 
+/**
+ * {
+ *     "postisUsernameInUseId": true,
+ *     "isEmailInUse": false
+ * }
+ */
 @Builder
 @Value
 public class RegisterResponse implements Serializable {

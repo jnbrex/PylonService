@@ -5,6 +5,11 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * {
+ *     "email": "jason@gmail.com"
+ * }
+ */
 @Data
 @NoArgsConstructor
 public class CollectEmailRequest implements Serializable {
